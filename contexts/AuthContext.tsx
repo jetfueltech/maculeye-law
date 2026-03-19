@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: emailData, error: lookupError } = await supabase.rpc('get_email_by_username', { p_username: username });
     if (lookupError || !emailData) return { error: 'Invalid username or password.' };
     const { data, error } = await supabase.auth.signInWithPassword({ email: emailData, password });
-    if (error) return { error: error.message };
+    if (error) return { error: 'Invalid username or password.' };
     if (data.user) {
       await fetchProfile(data.user.id);
     }

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { FirmProvider } from './contexts/FirmContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { useFirm } from './contexts/FirmContext';
 import { LoginScreen } from './components/LoginScreen';
 import { Sidebar } from './components/Sidebar';
@@ -245,8 +245,7 @@ const ADDITIONAL_CASES: CaseFile[] = [
 
 function AppContent() {
   const { activeFirm } = useFirm();
-  const { user, loading: authLoading } = useAuth();
-  const isLoggedIn = !!user;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState<CaseFile | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -603,16 +602,8 @@ function AppContent() {
       });
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   if (!isLoggedIn) {
-    return <LoginScreen onLogin={() => {}} />;
+    return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
   }
 
   return (
