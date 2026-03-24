@@ -24,22 +24,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
   const [draggedCaseId, setDraggedCaseId] = useState<string | null>(null);
 
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
-  const [statusMenuPosition, setStatusMenuPosition] = useState<'below' | 'above'>('below');
+  const [statusMenuPos, setStatusMenuPos] = useState<{ top: number; left: number; direction: 'below' | 'above' }>({ top: 0, left: 0, direction: 'below' });
   const statusMenuRef = useRef<HTMLDivElement>(null);
   const statusButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; caseNumber?: string } | null>(null);
 
-  // Click outside listener for status menu
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
           if (statusMenuRef.current && !statusMenuRef.current.contains(event.target as Node)) {
               setEditingStatusId(null);
           }
       };
+      const handleScroll = () => setEditingStatusId(null);
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      window.addEventListener('scroll', handleScroll, true);
+      return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+          window.removeEventListener('scroll', handleScroll, true);
+      };
   }, []);
 
   // Filter Logic
@@ -264,8 +268,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
       />
 
       {viewMode === 'table' ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
-             <div className="overflow-x-auto w-full max-h-[70vh] overflow-y-auto relative">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm min-h-[200px]">
+             <div className="overflow-x-auto w-full relative">
                 <table className="w-full" style={{ minWidth: '1300px', tableLayout: 'fixed' }}>
                     <colgroup>
                         <col style={{ width: '100px' }} />
@@ -348,7 +352,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                                 } else {
                                                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                                                   const spaceBelow = window.innerHeight - rect.bottom;
-                                                  setStatusMenuPosition(spaceBelow < 320 ? 'above' : 'below');
+                                                  const goAbove = spaceBelow < 320;
+                                                  setStatusMenuPos({
+                                                    top: goAbove ? rect.top : rect.bottom + 4,
+                                                    left: rect.left,
+                                                    direction: goAbove ? 'above' : 'below',
+                                                  });
                                                   setEditingStatusId(c.id);
                                                 }
                                             }}
@@ -360,9 +369,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         {editingStatusId === c.id && (
                                             <div
                                               ref={statusMenuRef}
-                                              className={`absolute left-0 z-50 bg-white border border-slate-200 shadow-xl rounded-xl w-48 py-1 animate-fade-in ${
-                                                statusMenuPosition === 'above' ? 'bottom-8' : 'top-8'
-                                              }`}
+                                              className="fixed z-[100] bg-white border border-slate-200 shadow-xl rounded-xl w-48 py-1 animate-fade-in"
+                                              style={{
+                                                top: statusMenuPos.direction === 'above' ? undefined : statusMenuPos.top,
+                                                bottom: statusMenuPos.direction === 'above' ? window.innerHeight - statusMenuPos.top + 4 : undefined,
+                                                left: statusMenuPos.left,
+                                              }}
                                               onClick={(e) => e.stopPropagation()}
                                             >
                                                 <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50 rounded-t-xl">Update Status</div>
