@@ -1,17 +1,28 @@
 import { supabase } from './supabaseClient';
 import { CaseFile, DocumentAttachment } from '../types';
 
-function stripFileData(documents: DocumentAttachment[]): DocumentAttachment[] {
-  return documents.map(({ fileData, ...rest }) => ({ ...rest, fileData: null }));
+function stripLargeFields(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'string') {
+    if (obj.length > 50000) return null;
+    return obj;
+  }
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(stripLargeFields);
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    if (key === 'fileData') {
+      result[key] = null;
+      continue;
+    }
+    result[key] = stripLargeFields(value);
+  }
+  return result;
 }
 
 function prepareCaseData(caseFile: CaseFile, firmId: string): Record<string, unknown> {
-  const sanitized = {
-    ...caseFile,
-    firm_id: firmId,
-    documents: stripFileData(caseFile.documents || []),
-  };
-  return sanitized;
+  const raw = { ...caseFile, firm_id: firmId };
+  return stripLargeFields(raw) as Record<string, unknown>;
 }
 
 export async function getCasesByFirm(firmId: string): Promise<CaseFile[]> {
@@ -45,24 +56,33 @@ export async function generateCaseNumber(firmId: string): Promise<string | null>
 }
 
 export async function upsertCase(caseFile: CaseFile, firmId: string): Promise<{ error: string | null }> {
-  const { error } = await supabase
-    .from('cases')
-    .upsert({
-      id: caseFile.id,
-      firm_id: firmId,
-      data: prepareCaseData(caseFile, firmId),
-      client_name: caseFile.clientName,
-      status: caseFile.status,
-      case_number: caseFile.caseNumber || null,
-      created_at: caseFile.createdAt,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
+  try {
+    const sanitizedData = prepareCaseData(caseFile, firmId);
+    JSON.stringify(sanitizedData);
 
-  if (error) {
-    console.error('Error upserting case:', error);
-    return { error: error.message };
+    const { error } = await supabase
+      .from('cases')
+      .upsert({
+        id: caseFile.id,
+        firm_id: firmId,
+        data: sanitizedData,
+        client_name: caseFile.clientName || '',
+        status: caseFile.status || 'NEW',
+        case_number: caseFile.caseNumber || null,
+        created_at: caseFile.createdAt || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+
+    if (error) {
+      console.error('Error upserting case:', error);
+      return { error: error.message };
+    }
+    return { error: null };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error saving case';
+    console.error('Exception in upsertCase:', err);
+    return { error: msg };
   }
-  return { error: null };
 }
 
 export async function deleteCase(caseId: string): Promise<{ error: string | null }> {
