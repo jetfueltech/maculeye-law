@@ -23,9 +23,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
   // Kanban Drag State
   const [draggedCaseId, setDraggedCaseId] = useState<string | null>(null);
 
-  // Table Edit State
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
+  const [statusMenuPosition, setStatusMenuPosition] = useState<'below' | 'above'>('below');
   const statusMenuRef = useRef<HTMLDivElement>(null);
+  const statusButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; caseNumber?: string } | null>(null);
@@ -263,8 +264,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
       />
 
       {viewMode === 'table' ? (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-             <div className="overflow-x-auto w-full">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+             <div className="overflow-x-auto w-full max-h-[70vh] overflow-y-auto relative">
                 <table className="w-full" style={{ minWidth: '1300px', tableLayout: 'fixed' }}>
                     <colgroup>
                         <col style={{ width: '100px' }} />
@@ -279,13 +280,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                         <col style={{ width: '80px' }} />
                         <col style={{ width: '80px' }} />
                     </colgroup>
-                    <thead>
+                    <thead className="sticky top-0 z-20">
                         <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Case ID</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Client Name</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Case ID</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Status</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Client Name</th>
                             <th
-                                className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer group hover:text-blue-600 transition-colors select-none"
+                                className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer group hover:text-blue-600 transition-colors select-none bg-slate-50"
                                 onClick={() => handleSort('accidentDate')}
                             >
                                 <span className="flex items-center">
@@ -296,18 +297,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                     </span>
                                 </span>
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">
                                 <span className="flex items-center">
                                     SOL Deadline
                                     <svg className="w-3 h-3 ml-1 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                                 </span>
                             </th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Description</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Impact</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Assignee</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Insurance</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Alerts</th>
-                            <th className="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Description</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Impact</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Assignee</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Insurance</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Alerts</th>
+                            <th className="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -339,9 +340,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                 <td className="px-3 py-3 align-middle">
                                     <div className="relative">
                                         <button
+                                            ref={(el) => { if (el) statusButtonRefs.current.set(c.id, el); }}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setEditingStatusId(editingStatusId === c.id ? null : c.id);
+                                                if (editingStatusId === c.id) {
+                                                  setEditingStatusId(null);
+                                                } else {
+                                                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                                                  const spaceBelow = window.innerHeight - rect.bottom;
+                                                  setStatusMenuPosition(spaceBelow < 320 ? 'above' : 'below');
+                                                  setEditingStatusId(c.id);
+                                                }
                                             }}
                                             className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border shadow-sm hover:opacity-80 transition-opacity ${getStatusStyle(c.status)}`}
                                         >
@@ -349,8 +358,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                             <svg className="w-3 h-3 ml-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                                         </button>
                                         {editingStatusId === c.id && (
-                                            <div ref={statusMenuRef} className="absolute top-8 left-0 z-50 bg-white border border-slate-200 shadow-xl rounded-xl w-48 py-1 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-                                                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50">Update Status</div>
+                                            <div
+                                              ref={statusMenuRef}
+                                              className={`absolute left-0 z-50 bg-white border border-slate-200 shadow-xl rounded-xl w-48 py-1 animate-fade-in ${
+                                                statusMenuPosition === 'above' ? 'bottom-8' : 'top-8'
+                                              }`}
+                                              onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 bg-slate-50 rounded-t-xl">Update Status</div>
                                                 <div className="max-h-60 overflow-y-auto">
                                                     {Object.values(CaseStatus).map((status) => (
                                                         <button
@@ -506,34 +521,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                     onClick={() => onSelectCase(c)}
                                     className={`bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group active:cursor-grabbing ${draggedCaseId === c.id ? 'opacity-50 border-dashed border-slate-400' : ''}`}
                                 >
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors pointer-events-none">{c.clientName}</h4>
-                                        <span className="text-[10px] font-medium text-slate-400 pointer-events-none">{new Date(c.accidentDate).toLocaleDateString(undefined, { month:'numeric', day:'numeric'})}</span>
+                                    <div className="flex justify-between items-start mb-1 pointer-events-none">
+                                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors truncate mr-2">{c.clientName}</h4>
+                                        <span className="text-[10px] font-medium text-slate-400 flex-shrink-0">{new Date(c.accidentDate).toLocaleDateString(undefined, { month:'numeric', day:'numeric'})}</span>
                                     </div>
-                                    <p className="text-xs text-slate-500 line-clamp-2 mb-2 pointer-events-none">{c.description}</p>
-
-                                    {/* Statute of Limitations */}
-                                    {c.statuteOfLimitationsDate ? (() => {
-                                        const solDate = new Date(c.statuteOfLimitationsDate);
-                                        const today = new Date();
-                                        const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                                        const isCritical = daysRemaining < 30;
-                                        const isUrgent = daysRemaining < 90;
-
-                                        return (
-                                            <div className={`mb-3 px-2 py-1 rounded text-[10px] font-bold pointer-events-none ${
-                                                isCritical ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                                                isUrgent ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                                'bg-slate-50 text-slate-600 border border-slate-200'
-                                            }`}>
-                                                SOL: {solDate.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'2-digit'})} ({daysRemaining > 0 ? `${daysRemaining}d` : 'EXPIRED'})
-                                            </div>
-                                        );
-                                    })() : (
-                                        <div className="mb-3 px-2 py-1 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 pointer-events-none">
-                                            SOL: NOT SET
-                                        </div>
-                                    )}
+                                    <div className="flex items-center gap-2 mb-2 pointer-events-none">
+                                        <p className="text-xs text-slate-500 line-clamp-1 flex-1 min-w-0">{c.description}</p>
+                                        {c.statuteOfLimitationsDate ? (() => {
+                                            const solDate = new Date(c.statuteOfLimitationsDate);
+                                            const today = new Date();
+                                            const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                            const isCritical = daysRemaining < 30;
+                                            const isUrgent = daysRemaining < 90;
+                                            return (
+                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap ${
+                                                    isCritical ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                                                    isUrgent ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                                    'bg-slate-50 text-slate-500 border border-slate-200'
+                                                }`}>
+                                                    {daysRemaining > 0 ? `${daysRemaining}d` : 'EXP'}
+                                                </span>
+                                            );
+                                        })() : (
+                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 flex-shrink-0">
+                                                SOL?
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {getCaseAlerts(c).length > 0 && (
                                         <div className="flex flex-wrap gap-1 mb-2 pointer-events-none">
