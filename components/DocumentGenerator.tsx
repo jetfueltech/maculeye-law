@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CaseFile, ExtendedIntakeData, MedicalProvider, ERVisit } from '../types';
+import { DistributionSheetRenderer } from './DistributionSheetRenderer';
 
 export type DocumentFormType =
   | 'rep_lien'
@@ -11,7 +12,8 @@ export type DocumentFormType =
   | 'records_request'
   | 'hipaa_auth'
   | 'er_bill_request'
-  | 'er_records_request';
+  | 'er_records_request'
+  | 'distribution_sheet';
 
 export interface DocumentContext {
   provider?: MedicalProvider;
@@ -847,6 +849,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     hipaa_auth: 'HIPAA Authorization',
     er_bill_request: `ER Bill Request — ${providerName}`,
     er_records_request: `ER Records Request — ${providerName}`,
+    distribution_sheet: 'Distribution Sheet',
   };
 
   return (
@@ -900,6 +903,14 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 {formType === 'hipaa_auth' && renderHIPAAAuth()}
                 {formType === 'er_bill_request' && renderBillRequest()}
                 {formType === 'er_records_request' && renderRecordsRequest()}
+                {formType === 'distribution_sheet' && (
+                  <DistributionSheetRenderer
+                    caseData={caseData}
+                    firmName={attorneyFirm}
+                    firmAddress1={attorneyAddress}
+                    firmAddress2={attorneyCity}
+                  />
+                )}
             </div>
         </div>
     </div>
