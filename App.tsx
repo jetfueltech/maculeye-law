@@ -162,6 +162,8 @@ function AppContent() {
       const { error } = await upsertCase(withWorkflow, activeFirm.id);
       if (error) {
         console.error('Failed to save case:', error);
+        alert('Failed to save case. Please try again.');
+        return;
       }
       setCases(prev => [withWorkflow, ...prev]);
     } else {

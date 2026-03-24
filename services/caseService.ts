@@ -1,5 +1,18 @@
 import { supabase } from './supabaseClient';
-import { CaseFile } from '../types';
+import { CaseFile, DocumentAttachment } from '../types';
+
+function stripFileData(documents: DocumentAttachment[]): DocumentAttachment[] {
+  return documents.map(({ fileData, ...rest }) => ({ ...rest, fileData: null }));
+}
+
+function prepareCaseData(caseFile: CaseFile, firmId: string): Record<string, unknown> {
+  const sanitized = {
+    ...caseFile,
+    firm_id: firmId,
+    documents: stripFileData(caseFile.documents || []),
+  };
+  return sanitized;
+}
 
 export async function getCasesByFirm(firmId: string): Promise<CaseFile[]> {
   const { data, error } = await supabase
@@ -37,7 +50,7 @@ export async function upsertCase(caseFile: CaseFile, firmId: string): Promise<{ 
     .upsert({
       id: caseFile.id,
       firm_id: firmId,
-      data: { ...caseFile, firm_id: firmId },
+      data: prepareCaseData(caseFile, firmId),
       client_name: caseFile.clientName,
       status: caseFile.status,
       case_number: caseFile.caseNumber || null,
