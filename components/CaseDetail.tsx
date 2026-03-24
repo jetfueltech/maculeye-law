@@ -9,6 +9,7 @@ import { CoverageTracker } from './CoverageTracker';
 import { CaseTasksPanel } from './CaseTasksPanel';
 import { DocumentsPanel } from './DocumentsPanel';
 import { MemberPicker } from './MemberPicker';
+import { FinancialsTab } from './FinancialsTab';
 
 interface CaseDetailProps {
   caseData: CaseFile;
@@ -18,7 +19,7 @@ interface CaseDetailProps {
 
 export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase }) => {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'extended' | 'medical' | 'documents' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'extended' | 'medical' | 'documents' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials'>('overview');
   const [analyzing, setAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
@@ -526,6 +527,10 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                  )}
                  {activeTab === 'tasks' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
+             <button onClick={() => setActiveTab('financials')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'financials' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                 Financials
+                 {activeTab === 'financials' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
+             </button>
              <button onClick={() => setActiveTab('activity_log')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'activity_log' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
                  Activity Log
                  {activeTab === 'activity_log' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
@@ -534,7 +539,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       </div>
 
       {/* 2. Content Area */}
-      {activeTab === 'extended' ? (
+      {activeTab === 'financials' ? (
+          <FinancialsTab caseData={caseData} onUpdateCase={onUpdateCase} />
+      ) : activeTab === 'extended' ? (
           <div className="animate-fade-in"><ExtendedIntakeForm caseData={caseData} onSave={handleExtendedIntakeSave} onUpdateCase={onUpdateCase} /></div>
       ) : activeTab === 'coverage' ? (
           <div className="animate-fade-in"><CoverageTracker caseData={caseData} onUpdateCase={onUpdateCase} /></div>

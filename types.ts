@@ -584,4 +584,24 @@ export interface CaseFile {
   lorDefendantSentDate?: string;
   lorClientInsSentDate?: string;
   crashReportRequestedDate?: string;
+
+  financials?: CaseFinancials;
+}
+
+export interface CaseFinancials {
+  demandAmount?: number;
+  demandNotes?: string;
+  settlementAmount?: number;
+  settlementDate?: string;
+  feeType?: 'percentage' | 'flat';
+  feePercentage?: number;
+  feeFlatAmount?: number;
+  costs?: CaseCost[];
+}
+
+export interface CaseCost {
+  id: string;
+  description: string;
+  amount: number;
+  date?: string;
 }
