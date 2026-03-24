@@ -307,7 +307,7 @@ export const FirmManagement: React.FC = () => {
     setCreatingAccount(true);
     setCreateAccountError('');
     setCreateAccountSuccess('');
-    const { error } = await createMemberAccount(newAccount);
+    const { error } = await createMemberAccount({ ...newAccount, firm_id: selectedFirmId });
     setCreatingAccount(false);
     if (error) {
       setCreateAccountError(error);

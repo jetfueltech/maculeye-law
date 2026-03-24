@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const { full_name, username, email, password, system_role } = await req.json();
+    const { full_name, username, email, password, system_role, firm_id } = await req.json();
 
     if (!email || !password || !username) {
       return new Response(
@@ -79,6 +79,17 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: profileError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (firm_id) {
+      await supabaseAdmin
+        .from("firm_members")
+        .upsert({
+          id: crypto.randomUUID(),
+          firm_id,
+          user_id: authData.user.id,
+          role: "member",
+        }, { onConflict: "firm_id,user_id" });
     }
 
     return new Response(

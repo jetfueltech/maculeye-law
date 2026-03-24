@@ -115,6 +115,7 @@ export interface CreateMemberParams {
   email: string;
   password: string;
   system_role: 'admin' | 'manager' | 'member';
+  firm_id?: string;
 }
 
 export async function createMemberAccount(params: CreateMemberParams): Promise<{ user_id: string | null; error: string | null }> {
