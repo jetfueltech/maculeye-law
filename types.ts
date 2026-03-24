@@ -173,6 +173,7 @@ export interface DocumentAttachment {
   storageUrl?: string;
   billAmount?: number;
   documentTypeKey?: string;
+  generatedFormType?: string;
 }
 
 export type MedicalProviderType = 'hospital' | 'er' | 'urgent_care' | 'chiropractor' | 'physical_therapy' | 'orthopedic' | 'neurologist' | 'pain_management' | 'primary_care' | 'imaging' | 'surgery_center' | 'other';

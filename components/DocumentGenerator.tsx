@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CaseFile, ExtendedIntakeData, MedicalProvider, ERVisit } from '../types';
 
 export type DocumentFormType =
@@ -29,6 +29,12 @@ interface DocumentGeneratorProps {
 }
 
 export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, caseData, formType, context, onSaveToDocuments }) => {
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSaved(false);
+  }, [formType]);
+
   if (!isOpen || !formType) return null;
 
   const intake = caseData.extendedIntake || {};
@@ -855,11 +861,21 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                     </h3>
                     <p className="text-xs text-slate-400">Generated on {today}</p>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex items-center space-x-3">
+                    {saved && (
+                      <div className="flex items-center gap-1.5 text-sm text-emerald-400 font-medium animate-fade-in mr-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                        Saved to case
+                      </div>
+                    )}
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
-                    {onSaveToDocuments && (
+                    {onSaveToDocuments && !saved && (
                       <button
-                        onClick={() => onSaveToDocuments(FORM_TITLES[formType], formType)}
+                        onClick={() => {
+                          onSaveToDocuments(FORM_TITLES[formType], formType);
+                          setSaved(true);
+                          setTimeout(() => setSaved(false), 3000);
+                        }}
                         className="px-4 py-2 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 shadow-lg flex items-center"
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>

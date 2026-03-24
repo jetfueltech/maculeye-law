@@ -975,6 +975,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
               mimeType: 'application/pdf',
               source: 'Generated',
               tags: [docName],
+              generatedFormType: docFormType,
             };
             onUpdateCase({ ...caseData, documents: [...caseData.documents, newDoc] });
           } : undefined}

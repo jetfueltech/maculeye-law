@@ -263,6 +263,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
       source: 'Generated',
       tags: [cfg.title, 'workflow-generated'],
       linkedFacilityId: provider?.id || erVisit?.id,
+      generatedFormType: docFormType,
     };
     const updated = {
       ...caseData,

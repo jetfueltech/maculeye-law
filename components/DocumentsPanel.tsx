@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { CaseFile, DocumentAttachment, DocumentType, DOCUMENT_NAMING_RULES, PhotoCategory, PHOTO_CATEGORY_LABELS } from '../types';
 import { uploadDocument, deleteDocument } from '../services/documentStorageService';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
+import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 
 interface DocumentsPanelProps {
   caseData: CaseFile;
@@ -30,6 +31,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [generatedDocPreview, setGeneratedDocPreview] = useState<DocumentFormType | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [activeDocIndex, setActiveDocIndex] = useState<number | null>(null);
   const [renamingDocIndex, setRenamingDocIndex] = useState<number | null>(null);
@@ -367,7 +369,13 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                   <tr
                     key={idx}
                     className="hover:bg-blue-50/40 transition-colors cursor-pointer group/row"
-                    onClick={() => setPreviewIndex(idx)}
+                    onClick={() => {
+                      if (doc.generatedFormType) {
+                        setGeneratedDocPreview(doc.generatedFormType as DocumentFormType);
+                      } else {
+                        setPreviewIndex(idx);
+                      }
+                    }}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -473,6 +481,13 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
           onNavigate={setPreviewIndex}
         />
       )}
+
+      <DocumentGenerator
+        isOpen={generatedDocPreview !== null}
+        onClose={() => setGeneratedDocPreview(null)}
+        caseData={caseData}
+        formType={generatedDocPreview}
+      />
     </div>
   );
 };
