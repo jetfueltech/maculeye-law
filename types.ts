@@ -451,6 +451,15 @@ export interface ExtendedIntakeData {
   notes?: string;
 }
 
+export interface TeamNote {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorInitials: string;
+  content: string;
+  createdAt: string;
+}
+
 export interface Assignee {
   id: string;
   name: string;
@@ -563,6 +572,7 @@ export interface CaseFile {
   chatHistory?: ChatMessage[];
 
   notes?: string;
+  teamNotes?: TeamNote[];
 
   tasks?: CaseTask[];
   erVisits?: ERVisit[];

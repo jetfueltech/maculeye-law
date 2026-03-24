@@ -1,7 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee } from '../types';
+import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote } from '../types';
 import { analyzeIntakeCase } from '../services/geminiService';
+import { useAuth } from '../contexts/AuthContext';
 import { ExtendedIntakeForm } from './ExtendedIntakeForm';
 import { MedicalTreatment } from './MedicalTreatment';
 import { CoverageTracker } from './CoverageTracker';
@@ -16,6 +17,7 @@ interface CaseDetailProps {
 }
 
 export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase }) => {
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'extended' | 'medical' | 'documents' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks'>('overview');
   const [analyzing, setAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -43,7 +45,28 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
   const [cmsLoading, setCmsLoading] = useState(false);
   const [newNote, setNewNote] = useState('');
-  
+  const notesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleAddNote = () => {
+    const trimmed = newNote.trim();
+    if (!trimmed || !profile) return;
+    const note: TeamNote = {
+      id: crypto.randomUUID(),
+      authorId: profile.id,
+      authorName: profile.full_name || profile.email,
+      authorInitials: profile.avatar_initials || profile.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || '??',
+      content: trimmed,
+      createdAt: new Date().toISOString(),
+    };
+    const updatedCase = {
+      ...caseData,
+      teamNotes: [...(caseData.teamNotes || []), note],
+    };
+    onUpdateCase(updatedCase);
+    setNewNote('');
+    setTimeout(() => notesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  };
+
   // Chat State
   const [chatMessage, setChatMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -868,42 +891,70 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
                   {/* Team Notes Section */}
                   <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                      <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
+                      <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-slate-800 flex items-center">
                               <svg className="w-5 h-5 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                               Team Notes
                           </h3>
-                          {!isEditing && (
-                              <button
-                                  onClick={() => setIsEditing(true)}
-                                  className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
-                              >
-                                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                  Edit
-                              </button>
-                          )}
+                          <span className="text-xs font-medium text-slate-400">{(caseData.teamNotes || []).length} {(caseData.teamNotes || []).length === 1 ? 'note' : 'notes'}</span>
                       </div>
-                      <div className="p-8">
-                          {isEditing ? (
-                              <textarea
-                                  className="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                  placeholder="Add case notes here... (e.g., follow-up items, important details, team observations)"
-                                  value={editForm.notes || ''}
-                                  onChange={e => setEditForm({...editForm, notes: e.target.value})}
-                              />
+                      <div className="max-h-[400px] overflow-y-auto">
+                          {(caseData.teamNotes || []).length > 0 ? (
+                              <div className="divide-y divide-slate-100">
+                                  {(caseData.teamNotes || []).map((note) => (
+                                      <div key={note.id} className="px-8 py-4 hover:bg-slate-50/50 transition-colors">
+                                          <div className="flex items-start gap-3">
+                                              <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
+                                                  {note.authorInitials}
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                  <div className="flex items-center gap-2 mb-1">
+                                                      <span className="text-sm font-semibold text-slate-800">{note.authorName}</span>
+                                                      <span className="text-[11px] text-slate-400">
+                                                          {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(note.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                                      </span>
+                                                  </div>
+                                                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  ))}
+                                  <div ref={notesEndRef} />
+                              </div>
                           ) : (
-                              <div className="min-h-[100px]">
-                                  {caseData.notes ? (
-                                      <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-                                          {caseData.notes}
-                                      </div>
-                                  ) : (
-                                      <div className="text-center py-8 text-slate-400 text-sm italic">
-                                          No notes added yet. Click Edit to add notes.
-                                      </div>
-                                  )}
+                              <div className="px-8 py-10 text-center text-slate-400 text-sm">
+                                  No notes yet. Add a note below.
                               </div>
                           )}
+                      </div>
+                      <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                          <div className="flex items-start gap-3">
+                              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-1">
+                                  {profile?.avatar_initials || '??'}
+                              </div>
+                              <div className="flex-1">
+                                  <textarea
+                                      className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder-slate-400 transition-shadow"
+                                      rows={2}
+                                      placeholder="Add a note..."
+                                      value={newNote}
+                                      onChange={e => setNewNote(e.target.value)}
+                                      onKeyDown={e => {
+                                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
+                                      }}
+                                  />
+                                  <div className="flex items-center justify-between mt-2">
+                                      <span className="text-[11px] text-slate-400">Cmd+Enter to submit</span>
+                                      <button
+                                          onClick={handleAddNote}
+                                          disabled={!newNote.trim()}
+                                          className="px-4 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      >
+                                          Add Note
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
                       </div>
                   </div>
 
