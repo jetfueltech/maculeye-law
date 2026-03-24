@@ -234,7 +234,7 @@ function AppContent() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -245,7 +245,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans">
+    <div className="flex min-h-screen bg-slate-100 font-sans">
       <Sidebar
         currentView={currentView}
         setCurrentView={(view) => {
