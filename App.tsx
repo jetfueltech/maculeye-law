@@ -620,8 +620,8 @@ function AppContent() {
         toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
 
-      <main className={`flex-1 p-8 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
-        <div className="max-w-7xl mx-auto">
+      <main className={`flex-1 p-4 transition-all duration-300 ${isSidebarCollapsed ? 'ml-20' : 'ml-64'}`}>
+        <div className="max-w-full mx-auto">
           {casesLoading && (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
