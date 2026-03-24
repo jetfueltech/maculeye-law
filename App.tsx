@@ -17,7 +17,7 @@ import { TasksView } from './components/TasksView';
 import { Workspace } from './components/Workspace';
 import { classifyAttachmentType } from './services/geminiService';
 import { applyWorkflowToCase } from './services/workflowEngine';
-import { getCasesByFirm, upsertCase } from './services/caseService';
+import { getCasesByFirm, upsertCase, generateCaseNumber, deleteCase } from './services/caseService';
 
 // Initial Mock Emails moved from Inbox to App for persistence
 const MOCK_EMAILS: Email[] = [
@@ -545,10 +545,27 @@ function AppContent() {
   };
 
   const handleNewCase = async (newCase: CaseFile) => {
-    const withWorkflow = applyWorkflowToCase(newCase);
+    let caseWithNumber = { ...newCase };
+    if (activeFirm) {
+      const caseNumber = await generateCaseNumber(activeFirm.id);
+      if (caseNumber) {
+        caseWithNumber.caseNumber = caseNumber;
+      }
+    }
+    const withWorkflow = applyWorkflowToCase(caseWithNumber);
     setCases([withWorkflow, ...cases]);
     if (activeFirm) {
       await upsertCase(withWorkflow, activeFirm.id);
+    }
+  };
+
+  const handleDeleteCase = async (caseId: string) => {
+    const { error } = await deleteCase(caseId);
+    if (!error) {
+      setCases(prev => prev.filter(c => c.id !== caseId));
+      if (selectedCase?.id === caseId) {
+        setSelectedCase(null);
+      }
     }
   };
 
@@ -635,6 +652,7 @@ function AppContent() {
               }}
               onOpenNewIntake={() => setCurrentView('new-intake')}
               onUpdateCase={handleCaseUpdate}
+              onDeleteCase={handleDeleteCase}
             />
           )}
 

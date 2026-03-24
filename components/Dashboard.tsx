@@ -8,9 +8,10 @@ interface DashboardProps {
   onSelectCase: (c: CaseFile) => void;
   onOpenNewIntake: () => void;
   onUpdateCase: (c: CaseFile) => void;
+  onDeleteCase: (caseId: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpenNewIntake, onUpdateCase }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpenNewIntake, onUpdateCase, onDeleteCase }) => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [teamFilter, setTeamFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
@@ -22,6 +23,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
   // Table Edit State
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null);
   const statusMenuRef = useRef<HTMLDivElement>(null);
+
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; caseNumber?: string } | null>(null);
 
   // Click outside listener for status menu
   useEffect(() => {
@@ -246,25 +250,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
       {viewMode === 'table' ? (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
              <div className="overflow-x-auto w-full">
-                <table className="w-full" style={{ minWidth: '1200px', tableLayout: 'fixed' }}>
+                <table className="w-full" style={{ minWidth: '1300px', tableLayout: 'fixed' }}>
                     <colgroup>
-                        <col style={{ width: '130px' }} />
+                        <col style={{ width: '100px' }} />
+                        <col style={{ width: '120px' }} />
                         <col style={{ width: '160px' }} />
                         <col style={{ width: '90px' }} />
-                        <col style={{ width: '110px' }} />
-                        <col style={{ width: '220px' }} />
-                        <col style={{ width: '140px' }} />
-                        <col style={{ width: '110px' }} />
-                        <col style={{ width: '170px' }} />
-                        <col style={{ width: '90px' }} />
-                        <col style={{ width: '50px' }} />
+                        <col style={{ width: '100px' }} />
+                        <col style={{ width: '200px' }} />
+                        <col style={{ width: '120px' }} />
+                        <col style={{ width: '100px' }} />
+                        <col style={{ width: '150px' }} />
+                        <col style={{ width: '80px' }} />
+                        <col style={{ width: '80px' }} />
                     </colgroup>
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-100">
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Client Name</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Case ID</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Client Name</th>
                             <th
-                                className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer group hover:text-blue-600 transition-colors select-none"
+                                className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer group hover:text-blue-600 transition-colors select-none"
                                 onClick={() => handleSort('accidentDate')}
                             >
                                 <span className="flex items-center">
@@ -275,24 +281,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                     </span>
                                 </span>
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 <span className="flex items-center">
                                     SOL Deadline
                                     <svg className="w-3 h-3 ml-1 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                                 </span>
                             </th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Description</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Impact</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Source</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Insurance</th>
-                            <th className="px-4 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Alerts</th>
-                            <th className="px-4 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Action</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Description</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Impact</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Source</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Insurance</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Alerts</th>
+                            <th className="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                     {cases.length === 0 ? (
                         <tr>
-                            <td colSpan={10} className="p-16 text-center text-slate-400 bg-slate-50/50">
+                            <td colSpan={11} className="p-16 text-center text-slate-400 bg-slate-50/50">
                                 <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm border border-slate-100">
                                     <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
                                 </div>
@@ -302,7 +308,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                         </tr>
                     ) : sortedCases.length === 0 ? (
                         <tr>
-                            <td colSpan={10} className="p-16 text-center text-slate-400">
+                            <td colSpan={11} className="p-16 text-center text-slate-400">
                                 <p className="text-lg font-medium text-slate-500">No cases match your filters.</p>
                                 <button onClick={() => { setStatusFilter('ALL'); setTeamFilter('ALL'); }} className="text-blue-600 font-bold mt-2 hover:underline">Clear Filters</button>
                             </td>
@@ -310,7 +316,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                     ) : (
                         sortedCases.map((c) => (
                             <tr key={c.id} className="hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => onSelectCase(c)}>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
+                                    <span className="text-[11px] font-mono font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 whitespace-nowrap">
+                                        {c.caseNumber || c.id.substring(0, 8)}
+                                    </span>
+                                </td>
+                                <td className="px-3 py-3 align-middle">
                                     <div className="relative">
                                         <button
                                             onClick={(e) => {
@@ -342,7 +353,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     <div className="relative group/name">
                                         <div className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors text-sm truncate">{c.clientName}</div>
                                         <div className="absolute left-0 bottom-full mb-1 z-50 hidden group-hover/name:block pointer-events-none">
@@ -350,10 +361,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     <div className="text-xs text-slate-500 font-medium whitespace-nowrap">{new Date(c.accidentDate).toLocaleDateString()}</div>
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     {c.statuteOfLimitationsDate ? (() => {
                                         const solDate = new Date(c.statuteOfLimitationsDate);
                                         const today = new Date();
@@ -378,7 +389,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         <span className="text-[10px] text-rose-500 font-bold">NOT SET</span>
                                     )}
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     <div className="relative group/desc">
                                         <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{c.description}</p>
                                         <div className="absolute left-0 bottom-full mb-1 z-50 hidden group-hover/desc:block pointer-events-none">
@@ -386,7 +397,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     <div className="relative group/impact">
                                         {c.impact ? (
                                             <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded border border-slate-200 inline-block truncate max-w-full">
@@ -402,7 +413,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     <div className="relative group/source">
                                         <div className="text-xs text-slate-500 font-medium truncate">{c.referralSource}</div>
                                         <div className="absolute left-0 bottom-full mb-1 z-50 hidden group-hover/source:block pointer-events-none">
@@ -410,7 +421,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     <div className="relative group/ins">
                                         <span className="text-xs font-medium text-slate-700 block truncate">
                                             {getInsuranceSummary(c)}
@@ -420,17 +431,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 align-middle">
+                                <td className="px-3 py-3 align-middle">
                                     <div className="flex flex-wrap gap-1">
                                         {getCaseAlerts(c).map((alert, idx) => (
                                             <span key={idx} className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${alert.color}`}>{alert.label}</span>
                                         ))}
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 align-middle text-right">
-                                    <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                                    </button>
+                                <td className="px-3 py-3 align-middle">
+                                    <div className="flex items-center justify-center gap-1">
+                                        <button className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="View Case">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setDeleteConfirm({ id: c.id, name: c.clientName, caseNumber: c.caseNumber });
+                                            }}
+                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                            title="Delete Case"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))
@@ -527,6 +550,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                     </div>
                 );
             })}
+        </div>
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in" onClick={() => setDeleteConfirm(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 text-center">Delete Case</h3>
+              <p className="text-sm text-slate-500 text-center mt-2">
+                Are you sure you want to permanently delete the case for <span className="font-semibold text-slate-700">{deleteConfirm.name}</span>
+                {deleteConfirm.caseNumber && <> (<span className="font-mono text-blue-600">{deleteConfirm.caseNumber}</span>)</>}
+                ? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex border-t border-slate-100">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteCase(deleteConfirm.id);
+                  setDeleteConfirm(null);
+                }}
+                className="flex-1 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors border-l border-slate-100"
+              >
+                Delete Case
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

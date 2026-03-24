@@ -510,6 +510,7 @@ export interface SpecialsItem {
 export interface CaseFile {
   id: string;
   firm_id?: string;
+  caseNumber?: string;
 
   clientName: string;
   clientDob?: string;

@@ -17,6 +17,8 @@ export interface Firm {
   zip: string;
   country: string;
   description: string;
+  case_prefix: string | null;
+  next_case_number: number;
 }
 
 export interface FirmMember {

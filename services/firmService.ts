@@ -18,11 +18,23 @@ export interface FirmDetails {
   zip?: string;
   country?: string;
   description?: string;
+  case_prefix?: string;
+}
+
+function generateCasePrefix(name: string): string {
+  const words = name.replace(/[^a-zA-Z\s]/g, '').trim().split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 0) return 'FRM';
+  if (words.length === 1) {
+    return words[0].substring(0, 3).toUpperCase();
+  }
+  const initials = words.map(w => w[0]).join('').toUpperCase();
+  return initials.substring(0, 4);
 }
 
 export async function createFirm(details: FirmDetails, createdBy: string | null): Promise<{ firm: Firm | null; error: string | null }> {
   const slug = details.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  const insertData: Record<string, unknown> = { ...details, slug };
+  const case_prefix = details.case_prefix || generateCasePrefix(details.name);
+  const insertData: Record<string, unknown> = { ...details, slug, case_prefix };
   if (createdBy) insertData.created_by = createdBy;
   const { data, error } = await supabase
     .from('firms')
