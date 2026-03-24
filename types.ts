@@ -591,17 +591,57 @@ export interface CaseFile {
 export interface CaseFinancials {
   demandAmount?: number;
   demandNotes?: string;
-  settlementAmount?: number;
-  settlementDate?: string;
-  feeType?: 'percentage' | 'flat';
+
+  thirdPartySettlement?: number;
+  umUimSettlement?: number;
+  medicalPayments?: number;
+
   feePercentage?: number;
-  feeFlatAmount?: number;
-  costs?: CaseCost[];
+
+  adminCosts?: number;
+  litigationCosts?: number;
+  otherCosts?: number;
+  otherCostsDescription?: string;
+
+  financialLiens?: FinancialLien[];
+  thirdPartyLoans?: ThirdPartyLoan[];
+  medicalExpenses?: MedicalExpense[];
+  healthInsuranceSubs?: HealthInsuranceSub[];
 }
 
-export interface CaseCost {
+export interface FinancialLien {
   id: string;
-  description: string;
+  description?: string;
   amount: number;
   date?: string;
+  reducedAmount: number;
+  checkNumber?: string;
+}
+
+export interface ThirdPartyLoan {
+  id: string;
+  description?: string;
+  loanAmount: number;
+  loanDate?: string;
+  finalAmount: number;
+  dateDue?: string;
+}
+
+export interface MedicalExpense {
+  id: string;
+  facility: string;
+  totalCharges: number;
+  amountDue: number;
+  reductionAmount: number;
+  clientResponsible: number;
+  notes?: string;
+}
+
+export interface HealthInsuranceSub {
+  id: string;
+  carrier: string;
+  originalBill: number;
+  compromisedBill: number;
+  reductionAmount: number;
+  notes?: string;
 }
