@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { CaseFinancials, MedicalExpense, HealthInsuranceSub } from '../../types';
+import { CaseFinancials, MedicalExpense, HealthInsuranceSub, MedicalProvider } from '../../types';
 import { currency } from './helpers';
 
 interface Props {
   fin: CaseFinancials;
   onUpdate: (updated: CaseFinancials) => void;
+  medicalProviders?: MedicalProvider[];
 }
 
 const inputClass = "w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow";
 const thClass = "text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3 py-2";
 
-export const MedicalExpensesSection: React.FC<Props> = ({ fin, onUpdate }) => {
+export const MedicalExpensesSection: React.FC<Props> = ({ fin, onUpdate, medicalProviders }) => {
   const expenses = fin.medicalExpenses || [];
   const subs = fin.healthInsuranceSubs || [];
+  const providers = medicalProviders || [];
 
   const totals = {
     charges: expenses.reduce((s, e) => s + e.totalCharges, 0),
@@ -29,6 +31,13 @@ export const MedicalExpensesSection: React.FC<Props> = ({ fin, onUpdate }) => {
 
   const [expForm, setExpForm] = useState({ facility: '', totalCharges: '', amountDue: '', reductionAmount: '', clientResponsible: '', notes: '' });
   const [subForm, setSubForm] = useState({ carrier: '', originalBill: '', compromisedBill: '', reductionAmount: '', notes: '' });
+  const [editingExpId, setEditingExpId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<MedicalExpense | null>(null);
+
+  const unlinkedProviders = providers.filter(p =>
+    p.totalCost && p.totalCost > 0 &&
+    !expenses.some(e => e.linkedProviderId === p.id)
+  );
 
   const addExpense = () => {
     if (!expForm.facility) return;
@@ -45,8 +54,60 @@ export const MedicalExpensesSection: React.FC<Props> = ({ fin, onUpdate }) => {
     setExpForm({ facility: '', totalCharges: '', amountDue: '', reductionAmount: '', clientResponsible: '', notes: '' });
   };
 
+  const importProvider = (provider: MedicalProvider) => {
+    const exp: MedicalExpense = {
+      id: crypto.randomUUID(),
+      facility: provider.name,
+      totalCharges: provider.totalCost || 0,
+      amountDue: 0,
+      reductionAmount: 0,
+      clientResponsible: 0,
+      notes: '',
+      linkedProviderId: provider.id,
+    };
+    onUpdate({ ...fin, medicalExpenses: [...expenses, exp] });
+  };
+
+  const importAllProviders = () => {
+    const newExpenses = unlinkedProviders.map(provider => ({
+      id: crypto.randomUUID(),
+      facility: provider.name,
+      totalCharges: provider.totalCost || 0,
+      amountDue: 0,
+      reductionAmount: 0,
+      clientResponsible: 0,
+      notes: '',
+      linkedProviderId: provider.id,
+    }));
+    onUpdate({ ...fin, medicalExpenses: [...expenses, ...newExpenses] });
+  };
+
   const removeExpense = (id: string) => {
     onUpdate({ ...fin, medicalExpenses: expenses.filter(e => e.id !== id) });
+    if (editingExpId === id) {
+      setEditingExpId(null);
+      setEditForm(null);
+    }
+  };
+
+  const startEditExpense = (exp: MedicalExpense) => {
+    setEditingExpId(exp.id);
+    setEditForm({ ...exp });
+  };
+
+  const saveEditExpense = () => {
+    if (!editForm || !editingExpId) return;
+    onUpdate({
+      ...fin,
+      medicalExpenses: expenses.map(e => e.id === editingExpId ? { ...editForm } : e),
+    });
+    setEditingExpId(null);
+    setEditForm(null);
+  };
+
+  const cancelEditExpense = () => {
+    setEditingExpId(null);
+    setEditForm(null);
   };
 
   const addSub = () => {
@@ -67,8 +128,44 @@ export const MedicalExpensesSection: React.FC<Props> = ({ fin, onUpdate }) => {
     onUpdate({ ...fin, healthInsuranceSubs: subs.filter(s => s.id !== id) });
   };
 
+  const editInputClass = "w-full px-2 py-1 bg-white border border-blue-300 rounded text-sm outline-none focus:ring-1 focus:ring-blue-500";
+
   return (
     <div className="space-y-6">
+      {/* Import from Medical Treatment */}
+      {unlinkedProviders.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span className="text-sm font-semibold text-blue-800">{unlinkedProviders.length} medical provider{unlinkedProviders.length !== 1 ? 's' : ''} not yet in financials</span>
+            </div>
+            <button
+              onClick={importAllProviders}
+              className="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Import All
+            </button>
+          </div>
+          <div className="space-y-1.5">
+            {unlinkedProviders.map(p => (
+              <div key={p.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-blue-100">
+                <div>
+                  <span className="text-sm font-medium text-slate-800">{p.name}</span>
+                  <span className="ml-2 text-xs text-slate-500">({currency(p.totalCost)})</span>
+                </div>
+                <button
+                  onClick={() => importProvider(p)}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  Import
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Medical Expenses */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
@@ -84,25 +181,73 @@ export const MedicalExpensesSection: React.FC<Props> = ({ fin, onUpdate }) => {
                 <th className={thClass + ' text-right'}>Reduction Amt</th>
                 <th className={thClass + ' text-right'}>Client Resp.</th>
                 <th className={thClass}>Notes</th>
-                <th className="w-10"></th>
+                <th className="w-20"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {expenses.map((exp, i) => (
-                <tr key={exp.id} className="hover:bg-slate-50/50">
-                  <td className="px-3 py-2 text-sm text-slate-700">{String.fromCharCode(65 + i)}. {exp.facility}</td>
-                  <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.totalCharges)}</td>
-                  <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.amountDue)}</td>
-                  <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.reductionAmount)}</td>
-                  <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.clientResponsible)}</td>
-                  <td className="px-3 py-2 text-xs text-slate-500 italic">{exp.notes || ''}</td>
-                  <td className="pr-3">
-                    <button onClick={() => removeExpense(exp.id)} className="p-1 text-slate-400 hover:text-rose-500 transition-colors">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {expenses.map((exp, i) => {
+                const isEditing = editingExpId === exp.id;
+                const ef = editForm;
+                if (isEditing && ef) {
+                  return (
+                    <tr key={exp.id} className="bg-blue-50/50">
+                      <td className="px-3 py-2">
+                        <input className={editInputClass} value={ef.facility} onChange={e => setEditForm({ ...ef, facility: e.target.value })} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input className={editInputClass + ' text-right'} value={ef.totalCharges || ''} onChange={e => setEditForm({ ...ef, totalCharges: parseFloat(e.target.value) || 0 })} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input className={editInputClass + ' text-right'} value={ef.amountDue || ''} onChange={e => setEditForm({ ...ef, amountDue: parseFloat(e.target.value) || 0 })} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input className={editInputClass + ' text-right'} value={ef.reductionAmount || ''} onChange={e => setEditForm({ ...ef, reductionAmount: parseFloat(e.target.value) || 0 })} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input className={editInputClass + ' text-right'} value={ef.clientResponsible || ''} onChange={e => setEditForm({ ...ef, clientResponsible: parseFloat(e.target.value) || 0 })} />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input className={editInputClass} value={ef.notes || ''} onChange={e => setEditForm({ ...ef, notes: e.target.value })} />
+                      </td>
+                      <td className="pr-3">
+                        <div className="flex items-center gap-1">
+                          <button onClick={saveEditExpense} className="p-1 text-emerald-600 hover:text-emerald-800 transition-colors" title="Save">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          </button>
+                          <button onClick={cancelEditExpense} className="p-1 text-slate-400 hover:text-slate-600 transition-colors" title="Cancel">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={exp.id} className="hover:bg-slate-50/50 group">
+                    <td className="px-3 py-2 text-sm text-slate-700">
+                      {String.fromCharCode(65 + i)}. {exp.facility}
+                      {exp.linkedProviderId && (
+                        <span className="ml-1.5 inline-block w-1.5 h-1.5 bg-blue-400 rounded-full" title="Linked to medical treatment provider"></span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.totalCharges)}</td>
+                    <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.amountDue)}</td>
+                    <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.reductionAmount)}</td>
+                    <td className="px-3 py-2 text-sm text-slate-800 tabular-nums text-right">{currency(exp.clientResponsible)}</td>
+                    <td className="px-3 py-2 text-xs text-slate-500 italic">{exp.notes || ''}</td>
+                    <td className="pr-3">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => startEditExpense(exp)} className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Edit">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button onClick={() => removeExpense(exp.id)} className="p-1 text-slate-400 hover:text-rose-500 transition-colors" title="Remove">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {expenses.length === 0 && (
                 <tr><td colSpan={7} className="px-6 py-4 text-center text-sm text-slate-400">No medical expenses recorded</td></tr>
               )}

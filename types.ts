@@ -635,6 +635,7 @@ export interface MedicalExpense {
   reductionAmount: number;
   clientResponsible: number;
   notes?: string;
+  linkedProviderId?: string;
 }
 
 export interface HealthInsuranceSub {

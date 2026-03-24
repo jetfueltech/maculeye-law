@@ -25,7 +25,21 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ caseData, onUpdate
   };
 
   const save = () => {
-    onUpdateCase({ ...caseData, financials: { ...form } });
+    const currentFin = caseData.financials || {};
+    const merged: CaseFinancials = {
+      ...currentFin,
+      demandAmount: form.demandAmount,
+      demandNotes: form.demandNotes,
+      thirdPartySettlement: form.thirdPartySettlement,
+      umUimSettlement: form.umUimSettlement,
+      medicalPayments: form.medicalPayments,
+      feePercentage: form.feePercentage,
+      adminCosts: form.adminCosts,
+      litigationCosts: form.litigationCosts,
+      otherCosts: form.otherCosts,
+      otherCostsDescription: form.otherCostsDescription,
+    };
+    onUpdateCase({ ...caseData, financials: merged });
     setEditing(false);
   };
 
@@ -122,7 +136,7 @@ export const FinancialsTab: React.FC<FinancialsTabProps> = ({ caseData, onUpdate
       <LiensAndLoansSection fin={fin} onUpdate={updateFinancials} />
 
       {/* Medical Expenses & Health Insurance Subrogation */}
-      <MedicalExpensesSection fin={fin} onUpdate={updateFinancials} />
+      <MedicalExpensesSection fin={fin} onUpdate={updateFinancials} medicalProviders={caseData.medicalProviders} />
 
       {/* Total Fees, Costs, Financial Liens, and Expenses */}
       <div className="bg-slate-100 rounded-2xl border border-slate-200 px-6 py-4 flex justify-between items-center">
