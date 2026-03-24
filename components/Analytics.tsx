@@ -45,9 +45,16 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
   ];
   const maxFunnelVal = funnelStages[0].val || 1;
 
-  const teamACases = cases.filter(c => c.assignedTeam === 'Team A').length;
-  const teamBCases = cases.filter(c => c.assignedTeam === 'Team B').length;
-  const maxTeam = Math.max(teamACases, teamBCases, 1);
+  const { firmMembers } = useFirm();
+  const memberCaseloads = firmMembers.map(m => ({
+    id: m.user_id,
+    name: m.user_profiles?.full_name || m.user_profiles?.email || 'Unknown',
+    initials: m.user_profiles?.avatar_initials || (m.user_profiles?.full_name || '??').split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2),
+    role: m.role,
+    count: cases.filter(c => c.assignedTo?.id === m.user_id).length,
+  }));
+  const unassignedCount = cases.filter(c => !c.assignedTo).length;
+  const maxMemberLoad = Math.max(...memberCaseloads.map(m => m.count), 1);
 
   return (
     <div className="space-y-8 animate-fade-in pb-10">
@@ -172,64 +179,42 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
         </div>
 
         <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-6 text-lg">Team Case Load</h3>
+          <h3 className="font-bold text-slate-800 mb-6 text-lg">Member Case Load</h3>
 
-          <div className="space-y-8">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3">A</div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Team A</h4>
-                    <p className="text-xs text-slate-500">2 Senior • 3 Junior</p>
+          <div className="space-y-6">
+            {memberCaseloads.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm">No team members found. Add members in Settings.</div>
+            ) : (
+              memberCaseloads.map(m => (
+                <div key={m.id}>
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold mr-3">{m.initials}</div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-sm">{m.name}</h4>
+                        <p className="text-xs text-slate-500 capitalize">{m.role}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="block font-bold text-slate-900 text-lg">{m.count} Active</span>
+                    </div>
+                  </div>
+                  <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 rounded-full transition-all duration-700" style={{ width: `${maxMemberLoad > 0 ? (m.count / maxMemberLoad) * 100 : 0}%` }}></div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="block font-bold text-slate-900 text-lg">{teamACases} Active</span>
-                  <span className="text-xs text-emerald-600 font-medium">{maxTeam > 0 ? Math.round((teamACases / maxTeam) * 100) : 0}% Capacity</span>
-                </div>
-              </div>
-              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full transition-all duration-700" style={{ width: `${maxTeam > 0 ? (teamACases / maxTeam) * 100 : 0}%` }}></div>
-              </div>
-              <div className="flex gap-4 mt-2">
-                <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded">Avg Close: 24h</span>
-                <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded">Satisfaction: 4.8/5</span>
-              </div>
-            </div>
+              ))
+            )}
 
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold mr-3">B</div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Team B</h4>
-                    <p className="text-xs text-slate-500">1 Senior • 4 Junior</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="block font-bold text-slate-900 text-lg">{teamBCases} Active</span>
-                  <span className="text-xs text-slate-500 font-medium">{maxTeam > 0 ? Math.round((teamBCases / maxTeam) * 100) : 0}% Capacity</span>
-                </div>
+            {unassignedCount > 0 && (
+              <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start">
+                <div className="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 font-bold">!</div>
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  <strong>{unassignedCount} unassigned case{unassignedCount !== 1 ? 's' : ''}.</strong> Assign them to team members from the dashboard.
+                </p>
               </div>
-              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-cyan-500 rounded-full transition-all duration-700" style={{ width: `${maxTeam > 0 ? (teamBCases / maxTeam) * 100 : 0}%` }}></div>
-              </div>
-              <div className="flex gap-4 mt-2">
-                <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded">Avg Close: 31h</span>
-                <span className="text-[10px] text-slate-500 bg-slate-50 px-2 py-0.5 rounded">Satisfaction: 4.6/5</span>
-              </div>
-            </div>
+            )}
           </div>
-
-          {teamACases > teamBCases * 1.3 && (
-            <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-100 flex items-start">
-              <div className="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 font-bold">!</div>
-              <p className="text-xs text-amber-800 leading-relaxed">
-                <strong>Load Balancing Recommendation:</strong> Team A is carrying significantly more cases. Consider routing new cases to Team B.
-              </p>
-            </div>
-          )}
         </div>
       </div>
 

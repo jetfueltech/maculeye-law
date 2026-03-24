@@ -450,6 +450,12 @@ export interface ExtendedIntakeData {
   notes?: string;
 }
 
+export interface Assignee {
+  id: string;
+  name: string;
+  initials: string;
+}
+
 export interface CaseTask {
   id: string;
   caseId: string;
@@ -460,6 +466,7 @@ export interface CaseTask {
   dueDate: string;
   completedDate?: string;
   assignedTeam?: 'Team A' | 'Team B';
+  assignedTo?: Assignee;
   recurrence?: 'one-time' | 'weekly' | 'monthly';
   priority: 'high' | 'medium' | 'low';
   createdAt: string;
@@ -544,6 +551,7 @@ export interface CaseFile {
   assignedDate?: string;
 
   assignedTeam?: 'Team A' | 'Team B';
+  assignedTo?: Assignee;
   cmsSyncStatus?: 'PENDING' | 'SYNCED' | 'FAILED';
 
   extendedIntake?: ExtendedIntakeData;

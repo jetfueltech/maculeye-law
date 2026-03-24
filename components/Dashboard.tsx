@@ -1,7 +1,9 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { CaseFile, CaseStatus } from '../types';
+import { CaseFile, CaseStatus, Assignee } from '../types';
 import { NeedsAttentionPanel } from './NeedsAttentionPanel';
+import { MemberPicker } from './MemberPicker';
+import { useFirm } from '../contexts/FirmContext';
 
 interface DashboardProps {
   cases: CaseFile[];
@@ -12,6 +14,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpenNewIntake, onUpdateCase, onDeleteCase }) => {
+  const { firmMembers } = useFirm();
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [teamFilter, setTeamFilter] = useState<string>('ALL');
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
@@ -41,7 +44,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
   // Filter Logic
   const filteredCases = cases.filter(c => {
       const matchStatus = statusFilter === 'ALL' || c.status === statusFilter;
-      const matchTeam = teamFilter === 'ALL' || (teamFilter === 'Unassigned' ? !c.assignedTeam : c.assignedTeam === teamFilter);
+      let matchTeam = true;
+      if (teamFilter !== 'ALL') {
+        if (teamFilter === 'Unassigned') {
+          matchTeam = !c.assignedTo && !c.assignedTeam;
+        } else if (teamFilter.startsWith('member:')) {
+          matchTeam = c.assignedTo?.id === teamFilter.replace('member:', '');
+        } else {
+          matchTeam = c.assignedTeam === teamFilter;
+        }
+      }
       return matchStatus && matchTeam;
   });
 
@@ -218,15 +230,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                 <option value={CaseStatus.INTAKE_COMPLETE}>Complete</option>
             </select>
 
-            <select 
+            <select
                 className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer hover:bg-slate-100 transition-colors"
                 value={teamFilter}
                 onChange={(e) => setTeamFilter(e.target.value)}
             >
-                <option value="ALL">All Teams</option>
+                <option value="ALL">All Assignees</option>
                 <option value="Unassigned">Unassigned</option>
-                <option value="Team A">Team A</option>
-                <option value="Team B">Team B</option>
+                {firmMembers.map(m => (
+                  <option key={m.user_id} value={`member:${m.user_id}`}>
+                    {m.user_profiles?.full_name || m.user_profiles?.email || 'Unknown'}
+                  </option>
+                ))}
             </select>
             
             {(statusFilter !== 'ALL' || teamFilter !== 'ALL') && (
@@ -254,13 +269,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                     <colgroup>
                         <col style={{ width: '100px' }} />
                         <col style={{ width: '120px' }} />
-                        <col style={{ width: '160px' }} />
+                        <col style={{ width: '150px' }} />
                         <col style={{ width: '90px' }} />
                         <col style={{ width: '100px' }} />
-                        <col style={{ width: '200px' }} />
-                        <col style={{ width: '120px' }} />
-                        <col style={{ width: '100px' }} />
-                        <col style={{ width: '150px' }} />
+                        <col style={{ width: '180px' }} />
+                        <col style={{ width: '110px' }} />
+                        <col style={{ width: '60px' }} />
+                        <col style={{ width: '140px' }} />
                         <col style={{ width: '80px' }} />
                         <col style={{ width: '80px' }} />
                     </colgroup>
@@ -289,7 +304,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Description</th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Impact</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Source</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Assignee</th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Insurance</th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Alerts</th>
                             <th className="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -414,12 +429,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                     </div>
                                 </td>
                                 <td className="px-3 py-3 align-middle">
-                                    <div className="relative group/source">
-                                        <div className="text-xs text-slate-500 font-medium truncate">{c.referralSource}</div>
-                                        <div className="absolute left-0 bottom-full mb-1 z-50 hidden group-hover/source:block pointer-events-none">
-                                            <div className="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap max-w-xs">{c.referralSource}</div>
-                                        </div>
-                                    </div>
+                                    <MemberPicker
+                                      compact
+                                      value={c.assignedTo || null}
+                                      onChange={(member) => {
+                                        const updated = { ...c, assignedTo: member || undefined };
+                                        onUpdateCase(updated);
+                                      }}
+                                    />
                                 </td>
                                 <td className="px-3 py-3 align-middle">
                                     <div className="relative group/ins">

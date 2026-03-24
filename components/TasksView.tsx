@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { CaseFile, CaseTask, TaskType, TaskStatus } from '../types';
+import { MemberPicker } from './MemberPicker';
+import { useFirm } from '../contexts/FirmContext';
 
 interface TasksViewProps {
   cases: CaseFile[];
@@ -90,8 +92,10 @@ function getDaysUntil(dateStr: string): number {
 }
 
 export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpdateCase }) => {
+  const { firmMembers } = useFirm();
   const [filter, setFilter] = useState<'all' | 'overdue' | 'today' | 'upcoming'>('all');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
+  const [memberFilter, setMemberFilter] = useState<string>('ALL');
 
   const allTasks = useMemo(() => {
     const tasks: (CaseTask & { caseName: string; caseObj: CaseFile })[] = [];
@@ -115,12 +119,19 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
     if (typeFilter !== 'ALL') {
       result = result.filter(t => t.type === typeFilter);
     }
+    if (memberFilter !== 'ALL') {
+      if (memberFilter === 'Unassigned') {
+        result = result.filter(t => !t.assignedTo);
+      } else {
+        result = result.filter(t => t.assignedTo?.id === memberFilter);
+      }
+    }
     return result.sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     });
-  }, [allTasks, filter, typeFilter]);
+  }, [allTasks, filter, typeFilter, memberFilter]);
 
   const overdueCount = allTasks.filter(t => t.status !== 'completed' && getDaysUntil(t.dueDate) < 0).length;
   const openCount = allTasks.filter(t => t.status !== 'completed').length;
@@ -193,6 +204,19 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
             <option key={val} value={val}>{label}</option>
           ))}
         </select>
+        <select
+          className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 outline-none cursor-pointer"
+          value={memberFilter}
+          onChange={e => setMemberFilter(e.target.value)}
+        >
+          <option value="ALL">All Assignees</option>
+          <option value="Unassigned">Unassigned</option>
+          {firmMembers.map(m => (
+            <option key={m.user_id} value={m.user_id}>
+              {m.user_profiles?.full_name || m.user_profiles?.email || 'Unknown'}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -248,9 +272,19 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
                       >
                         {task.caseName}
                       </button>
-                      {task.assignedTeam && (
-                        <span className="text-[10px] text-slate-400 font-medium">{task.assignedTeam}</span>
-                      )}
+                      <MemberPicker
+                        compact
+                        value={task.assignedTo || null}
+                        onChange={(member) => {
+                          const updated = {
+                            ...task.caseObj,
+                            tasks: (task.caseObj.tasks || []).map(t =>
+                              t.id === task.id ? { ...t, assignedTo: member || undefined } : t
+                            ),
+                          };
+                          onUpdateCase(updated);
+                        }}
+                      />
                       {task.recurrence && task.recurrence !== 'one-time' && (
                         <span className="text-[10px] text-slate-400 font-medium flex items-center gap-0.5">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>

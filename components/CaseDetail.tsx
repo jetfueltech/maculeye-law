@@ -1,12 +1,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage } from '../types';
+import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee } from '../types';
 import { analyzeIntakeCase } from '../services/geminiService';
 import { ExtendedIntakeForm } from './ExtendedIntakeForm';
 import { MedicalTreatment } from './MedicalTreatment';
 import { CoverageTracker } from './CoverageTracker';
 import { CaseTasksPanel } from './CaseTasksPanel';
 import { DocumentsPanel } from './DocumentsPanel';
+import { MemberPicker } from './MemberPicker';
 
 interface CaseDetailProps {
   caseData: CaseFile;
@@ -414,12 +415,26 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                             </div>
                          </div>
                      </div>
-                     <div className="flex items-center gap-2 text-slate-500 text-sm">
+                     <div className="flex items-center gap-2 text-slate-500 text-sm flex-wrap">
+                         {caseData.caseNumber && (
+                           <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{caseData.caseNumber}</span>
+                         )}
                          <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600">ID: {caseData.id}</span>
                          <span>•</span>
                          <span>{caseData.accidentDate}</span>
                          <span>•</span>
                          <span>{caseData.location || 'Location Pending'}</span>
+                     </div>
+                     <div className="flex items-center gap-2 mt-2">
+                       <span className="text-xs font-semibold text-slate-400">Assigned to:</span>
+                       <MemberPicker
+                         compact
+                         value={caseData.assignedTo || null}
+                         onChange={(member: Assignee | null) => {
+                           onUpdateCase({ ...caseData, assignedTo: member || undefined });
+                         }}
+                       />
+                       {caseData.assignedTo && <span className="text-xs text-slate-600 font-medium">{caseData.assignedTo.name}</span>}
                      </div>
                  </div>
              </div>

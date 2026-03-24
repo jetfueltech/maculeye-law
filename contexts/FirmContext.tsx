@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getAllFirms } from '../services/firmService';
+import { getAllFirms, getFirmMembers, FirmMemberWithProfile } from '../services/firmService';
 
 export interface Firm {
   id: string;
@@ -44,6 +44,8 @@ interface FirmContextValue {
   refreshFirms: () => Promise<void>;
   loading: boolean;
   canViewCombinedAnalytics: boolean;
+  firmMembers: FirmMemberWithProfile[];
+  refreshFirmMembers: () => Promise<void>;
 }
 
 const FirmContext = createContext<FirmContextValue | null>(null);
@@ -53,7 +55,19 @@ const ACTIVE_FIRM_KEY = 'legalflow_active_firm_id';
 export function FirmProvider({ children }: { children: React.ReactNode }) {
   const [firms, setFirms] = useState<Firm[]>([]);
   const [activeFirm, setActiveFirm] = useState<Firm | null>(null);
+  const [firmMembers, setFirmMembers] = useState<FirmMemberWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const loadFirmMembers = useCallback(async (firmId: string) => {
+    const members = await getFirmMembers(firmId);
+    setFirmMembers(members);
+  }, []);
+
+  const refreshFirmMembers = useCallback(async () => {
+    if (activeFirm) {
+      await loadFirmMembers(activeFirm.id);
+    }
+  }, [activeFirm, loadFirmMembers]);
 
   const loadFirms = useCallback(async () => {
     const data = await getAllFirms();
@@ -76,6 +90,14 @@ export function FirmProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     loadFirms();
   }, [loadFirms]);
+
+  useEffect(() => {
+    if (activeFirm) {
+      loadFirmMembers(activeFirm.id);
+    } else {
+      setFirmMembers([]);
+    }
+  }, [activeFirm?.id, loadFirmMembers]);
 
   const switchFirm = useCallback((firmId: string) => {
     const firm = firms.find(f => f.id === firmId);
@@ -108,6 +130,8 @@ export function FirmProvider({ children }: { children: React.ReactNode }) {
       refreshFirms,
       loading,
       canViewCombinedAnalytics: true,
+      firmMembers,
+      refreshFirmMembers,
     }}>
       {children}
     </FirmContext.Provider>
