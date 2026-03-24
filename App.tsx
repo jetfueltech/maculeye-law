@@ -93,10 +93,14 @@ function AppContent() {
 
   const [cases, setCases] = useState<CaseFile[]>([]);
 
+  const activeFirmIdRef = React.useRef<string | null>(null);
+  const loadedFirmIdRef = React.useRef<string | null>(null);
+
   const loadCasesForFirm = useCallback(async (firmId: string) => {
     setCasesLoading(true);
     setSelectedCase(null);
     const dbCases = await getCasesByFirm(firmId);
+    if (activeFirmIdRef.current !== firmId) return;
     const processed = dbCases.map(c => {
       let updated = c;
       if (!updated.statuteOfLimitationsDate && updated.accidentDate) {
@@ -107,21 +111,39 @@ function AppContent() {
       return applyWorkflowToCase(updated);
     });
     setCases(processed);
+    loadedFirmIdRef.current = firmId;
     setCasesLoading(false);
   }, []);
 
   useEffect(() => {
-    if (activeFirm) {
-      loadCasesForFirm(activeFirm.id);
-    } else {
+    const firmId = activeFirm?.id || null;
+    activeFirmIdRef.current = firmId;
+    if (firmId && firmId !== loadedFirmIdRef.current) {
+      loadCasesForFirm(firmId);
+    } else if (!firmId) {
       setCases([]);
       setSelectedCase(null);
       setCasesLoading(false);
     }
-  }, [activeFirm?.id]);
+  }, [activeFirm?.id, loadCasesForFirm]);
 
   const handleCaseUpdate = async (updatedCase: CaseFile) => {
-    const withWorkflow = applyWorkflowToCase(updatedCase);
+    const previousCase = cases.find(c => c.id === updatedCase.id);
+    let caseToSave = { ...updatedCase };
+
+    if (previousCase && previousCase.assignedTo?.id !== caseToSave.assignedTo?.id) {
+      const prevName = previousCase.assignedTo?.name || 'Unassigned';
+      const newName = caseToSave.assignedTo?.name || 'Unassigned';
+      const log = {
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'system' as const,
+        message: `Case reassigned from ${prevName} to ${newName}.`,
+        timestamp: new Date().toISOString(),
+      };
+      caseToSave.activityLog = [log, ...(caseToSave.activityLog || [])];
+    }
+
+    const withWorkflow = applyWorkflowToCase(caseToSave);
     setCases(prev => prev.map(c => c.id === withWorkflow.id ? withWorkflow : c));
     setSelectedCase(prev => prev?.id === withWorkflow.id ? withWorkflow : prev);
     if (activeFirm) {
@@ -136,11 +158,15 @@ function AppContent() {
       if (caseNumber) {
         caseWithNumber.caseNumber = caseNumber;
       }
-    }
-    const withWorkflow = applyWorkflowToCase(caseWithNumber);
-    setCases(prev => [withWorkflow, ...prev]);
-    if (activeFirm) {
-      await upsertCase(withWorkflow, activeFirm.id);
+      const withWorkflow = applyWorkflowToCase(caseWithNumber);
+      const { error } = await upsertCase(withWorkflow, activeFirm.id);
+      if (error) {
+        console.error('Failed to save case:', error);
+      }
+      setCases(prev => [withWorkflow, ...prev]);
+    } else {
+      const withWorkflow = applyWorkflowToCase(caseWithNumber);
+      setCases(prev => [withWorkflow, ...prev]);
     }
   };
 

@@ -542,19 +542,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                             ))}
                                         </div>
                                     )}
-                                    <div className="flex items-center justify-between pointer-events-none">
-                                        <div className="flex gap-1">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <MemberPicker
+                                              compact
+                                              value={c.assignedTo || null}
+                                              onChange={(member) => {
+                                                onUpdateCase({ ...c, assignedTo: member || undefined });
+                                              }}
+                                            />
+                                            {c.assignedTo && (
+                                              <span className="text-[10px] text-slate-500 font-medium pointer-events-none">{c.assignedTo.name.split(' ')[0]}</span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1 pointer-events-none">
                                             {c.impact && (
                                                 <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
                                                     {c.impact}
                                                 </span>
                                             )}
+                                            {c.aiAnalysis && (
+                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.aiAnalysis.caseScore >= 8 ? 'bg-green-100 text-green-700' : c.aiAnalysis.caseScore >= 5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                                    AI: {c.aiAnalysis.caseScore}/10
+                                                </span>
+                                            )}
                                         </div>
-                                        {c.aiAnalysis && (
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.aiAnalysis.caseScore >= 8 ? 'bg-green-100 text-green-700' : c.aiAnalysis.caseScore >= 5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                                AI: {c.aiAnalysis.caseScore}/10
-                                            </span>
-                                        )}
                                     </div>
                                 </div>
                             ))}

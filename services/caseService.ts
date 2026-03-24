@@ -31,7 +31,7 @@ export async function generateCaseNumber(firmId: string): Promise<string | null>
   return data as string | null;
 }
 
-export async function upsertCase(caseFile: CaseFile, firmId: string): Promise<void> {
+export async function upsertCase(caseFile: CaseFile, firmId: string): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('cases')
     .upsert({
@@ -47,7 +47,9 @@ export async function upsertCase(caseFile: CaseFile, firmId: string): Promise<vo
 
   if (error) {
     console.error('Error upserting case:', error);
+    return { error: error.message };
   }
+  return { error: null };
 }
 
 export async function deleteCase(caseId: string): Promise<{ error: string | null }> {
