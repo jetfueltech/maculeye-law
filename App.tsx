@@ -162,7 +162,7 @@ function AppContent() {
       const { error } = await upsertCase(withWorkflow, activeFirm.id);
       if (error) {
         console.error('Failed to save case:', error);
-        alert('Failed to save case. Please try again.');
+        alert(`Failed to save case: ${error}`);
         return;
       }
       setCases(prev => [withWorkflow, ...prev]);
@@ -289,8 +289,8 @@ function AppContent() {
           {!casesLoading && currentView === 'new-intake' && !selectedCase && (
             <NewIntakePage
               onBack={() => setCurrentView('dashboard')}
-              onSubmit={(c) => {
-                handleNewCase(c);
+              onSubmit={async (c) => {
+                await handleNewCase(c);
                 setCurrentView('dashboard');
               }}
             />

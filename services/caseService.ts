@@ -1,28 +1,14 @@
 import { supabase } from './supabaseClient';
-import { CaseFile, DocumentAttachment } from '../types';
-
-function stripLargeFields(obj: unknown): unknown {
-  if (obj === null || obj === undefined) return obj;
-  if (typeof obj === 'string') {
-    if (obj.length > 50000) return null;
-    return obj;
-  }
-  if (typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(stripLargeFields);
-  const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-    if (key === 'fileData') {
-      result[key] = null;
-      continue;
-    }
-    result[key] = stripLargeFields(value);
-  }
-  return result;
-}
+import { CaseFile } from '../types';
 
 function prepareCaseData(caseFile: CaseFile, firmId: string): Record<string, unknown> {
   const raw = { ...caseFile, firm_id: firmId };
-  return stripLargeFields(raw) as Record<string, unknown>;
+  const jsonStr = JSON.stringify(raw, (key, value) => {
+    if (key === 'fileData') return null;
+    if (typeof value === 'string' && value.length > 50000) return null;
+    return value;
+  });
+  return JSON.parse(jsonStr);
 }
 
 export async function getCasesByFirm(firmId: string): Promise<CaseFile[]> {
@@ -58,7 +44,6 @@ export async function generateCaseNumber(firmId: string): Promise<string | null>
 export async function upsertCase(caseFile: CaseFile, firmId: string): Promise<{ error: string | null }> {
   try {
     const sanitizedData = prepareCaseData(caseFile, firmId);
-    JSON.stringify(sanitizedData);
 
     const { error } = await supabase
       .from('cases')
