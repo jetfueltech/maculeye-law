@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-interface LoginScreenProps {
-  onLogin: () => void;
-}
-
-export function LoginScreen({ onLogin }: LoginScreenProps) {
+export function LoginScreen() {
   const { signIn } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -19,10 +15,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     const { error: signInError } = await signIn(username.trim(), password);
     if (signInError) {
       setError(signInError);
-      setIsLoading(false);
-    } else {
-      onLogin();
     }
+    setIsLoading(false);
   };
 
   return (

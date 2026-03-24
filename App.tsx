@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { FirmProvider } from './contexts/FirmContext';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useFirm } from './contexts/FirmContext';
 import { LoginScreen } from './components/LoginScreen';
 import { Sidebar } from './components/Sidebar';
@@ -82,7 +82,7 @@ const MOCK_EMAILS: Email[] = [
 
 function AppContent() {
   const { activeFirm } = useFirm();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { session, loading: authLoading } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState<CaseFile | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -204,8 +204,16 @@ function AppContent() {
       });
   };
 
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoginScreen />;
   }
 
   return (
