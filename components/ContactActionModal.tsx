@@ -31,7 +31,7 @@ export const ContactActionModal: React.FC<ContactActionModalProps> = ({
   onEmailBodyChange, onSendEmail, onSwitchMode,
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-    <div className="bg-white w-[420px] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="bg-white w-full max-w-[420px] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
       <div className="bg-slate-900 text-white p-4 flex justify-between items-start">
         <div>
           <div className="flex items-center space-x-2">

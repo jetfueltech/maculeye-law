@@ -271,22 +271,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
       />
 
       {viewMode === 'table' ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm min-h-[200px]">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm min-h-[200px] overflow-hidden">
              <div className="overflow-x-auto w-full relative">
-                <table className="w-full" style={{ minWidth: '1400px', tableLayout: 'fixed' }}>
-                    <colgroup>
-                        <col style={{ width: '100px' }} />
-                        <col style={{ width: '120px' }} />
-                        <col style={{ width: '160px' }} />
-                        <col style={{ width: '90px' }} />
-                        <col style={{ width: '110px' }} />
-                        <col style={{ width: '180px' }} />
-                        <col style={{ width: '100px' }} />
-                        <col style={{ width: '100px' }} />
-                        <col style={{ width: '150px' }} />
-                        <col style={{ width: '80px' }} />
-                        <col style={{ width: '100px' }} />
-                    </colgroup>
+                <table className="w-full min-w-[900px]">
                     <thead className="sticky top-0 z-20">
                         <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Case ID</th>
