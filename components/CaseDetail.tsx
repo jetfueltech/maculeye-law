@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote } from '../types';
+import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote, CaseTeamMember } from '../types';
 import { analyzeIntakeCase } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { ExtendedIntakeForm } from './ExtendedIntakeForm';
@@ -9,6 +9,7 @@ import { CoverageTracker } from './CoverageTracker';
 import { CaseTasksPanel } from './CaseTasksPanel';
 import { DocumentsPanel } from './DocumentsPanel';
 import { MemberPicker } from './MemberPicker';
+import { CaseTeamPanel } from './CaseTeamPanel';
 import { FinancialsTab } from './FinancialsTab';
 
 interface CaseDetailProps {
@@ -450,15 +451,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                          <span>{caseData.location || 'Location Pending'}</span>
                      </div>
                      <div className="flex items-center gap-2 mt-2">
-                       <span className="text-xs font-semibold text-slate-400">Assigned to:</span>
-                       <MemberPicker
+                       <span className="text-xs font-semibold text-slate-400">Team:</span>
+                       <CaseTeamPanel
                          compact
-                         value={caseData.assignedTo || null}
-                         onChange={(member: Assignee | null) => {
-                           onUpdateCase({ ...caseData, assignedTo: member || undefined });
+                         team={caseData.caseTeam || []}
+                         onChange={(newTeam: CaseTeamMember[]) => {
+                           onUpdateCase({ ...caseData, caseTeam: newTeam });
                          }}
                        />
-                       {caseData.assignedTo && <span className="text-xs text-slate-600 font-medium">{caseData.assignedTo.name}</span>}
                      </div>
                  </div>
              </div>
@@ -637,6 +637,16 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       ) : (
           <div className="grid grid-cols-12 gap-8 animate-fade-in">
               <div className="col-span-12 lg:col-span-8 space-y-8">
+                  {/* Case Team */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                    <CaseTeamPanel
+                      team={caseData.caseTeam || []}
+                      onChange={(newTeam: CaseTeamMember[]) => {
+                        onUpdateCase({ ...caseData, caseTeam: newTeam });
+                      }}
+                    />
+                  </div>
+
                   {/* Case Information Grid */}
                   <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300">
                       <div 

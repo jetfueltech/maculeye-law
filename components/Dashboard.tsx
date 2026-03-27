@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { CaseFile, CaseStatus, Assignee } from '../types';
+import { CaseFile, CaseStatus } from '../types';
 import { NeedsAttentionPanel } from './NeedsAttentionPanel';
-import { MemberPicker } from './MemberPicker';
+import { CaseTeamPanel } from './CaseTeamPanel';
 import { useFirm } from '../contexts/FirmContext';
 
 interface DashboardProps {
@@ -55,9 +55,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
       let matchTeam = true;
       if (teamFilter !== 'ALL') {
         if (teamFilter === 'Unassigned') {
-          matchTeam = !c.assignedTo && !c.assignedTeam;
+          matchTeam = (!c.caseTeam || c.caseTeam.length === 0) && !c.assignedTo && !c.assignedTeam;
         } else if (teamFilter.startsWith('member:')) {
-          matchTeam = c.assignedTo?.id === teamFilter.replace('member:', '');
+          const memberId = teamFilter.replace('member:', '');
+          matchTeam = c.caseTeam?.some(m => m.userId === memberId) || c.assignedTo?.id === memberId || false;
         } else {
           matchTeam = c.assignedTeam === teamFilter;
         }
@@ -299,7 +300,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                             </th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Description</th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Impact</th>
-                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Assignee</th>
+                            <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Team</th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Insurance</th>
                             <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Alerts</th>
                             <th className="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-50">Actions</th>
@@ -446,12 +447,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                     </div>
                                 </td>
                                 <td className="px-3 py-3 align-middle">
-                                    <MemberPicker
+                                    <CaseTeamPanel
                                       compact
-                                      value={c.assignedTo || null}
-                                      onChange={(member) => {
-                                        const updated = { ...c, assignedTo: member || undefined };
-                                        onUpdateCase(updated);
+                                      team={c.caseTeam || []}
+                                      onChange={(newTeam) => {
+                                        onUpdateCase({ ...c, caseTeam: newTeam });
                                       }}
                                     />
                                 </td>
@@ -559,17 +559,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         </div>
                                     )}
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <MemberPicker
+                                        <div className="flex items-center gap-2 pointer-events-none">
+                                            <CaseTeamPanel
                                               compact
-                                              value={c.assignedTo || null}
-                                              onChange={(member) => {
-                                                onUpdateCase({ ...c, assignedTo: member || undefined });
-                                              }}
+                                              team={c.caseTeam || []}
+                                              onChange={() => {}}
                                             />
-                                            {c.assignedTo && (
-                                              <span className="text-[10px] text-slate-500 font-medium pointer-events-none">{c.assignedTo.name.split(' ')[0]}</span>
-                                            )}
                                         </div>
                                         <div className="flex items-center gap-1 pointer-events-none">
                                             {c.impact && (

@@ -466,6 +466,23 @@ export interface Assignee {
   initials: string;
 }
 
+export type CaseTeamRole = 'primary_attorney' | 'paralegal' | 'legal_assistant' | 'staff';
+
+export const CASE_TEAM_ROLE_LABELS: Record<CaseTeamRole, string> = {
+  primary_attorney: 'Primary Attorney',
+  paralegal: 'Paralegal',
+  legal_assistant: 'Legal Assistant',
+  staff: 'Staff',
+};
+
+export interface CaseTeamMember {
+  id: string;
+  userId: string;
+  name: string;
+  initials: string;
+  role: CaseTeamRole;
+}
+
 export interface CaseTask {
   id: string;
   caseId: string;
@@ -562,6 +579,7 @@ export interface CaseFile {
 
   assignedTeam?: 'Team A' | 'Team B';
   assignedTo?: Assignee;
+  caseTeam?: CaseTeamMember[];
   cmsSyncStatus?: 'PENDING' | 'SYNCED' | 'FAILED';
 
   extendedIntake?: ExtendedIntakeData;
