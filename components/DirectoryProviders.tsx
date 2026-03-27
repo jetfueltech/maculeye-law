@@ -7,6 +7,7 @@ import {
   updateProviderInDirectory,
   deleteProviderFromDirectory,
 } from '../services/medicalProviderService';
+import { MultiContactEditor } from './MultiContactEditor';
 
 const TYPE_LABELS: Record<MedicalProviderType, string> = {
   hospital: 'Hospital', er: 'Emergency Room', urgent_care: 'Urgent Care',
@@ -293,6 +294,7 @@ export const DirectoryProviders: React.FC = () => {
                       <button onClick={() => handleEdit(p)} className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Edit</button>
                       <button onClick={() => handleDelete(p.id)} className="px-3 py-1.5 text-xs font-medium text-rose-600 bg-white border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors">Delete</button>
                     </div>
+                    <MultiContactEditor directoryType="provider" directoryId={p.id} />
                   </div>
                 )}
               </div>

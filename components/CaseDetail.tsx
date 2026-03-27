@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote, CaseTeamMember } from '../types';
+import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote, CaseTeamMember, Adjuster } from '../types';
 import { analyzeIntakeCase } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { ExtendedIntakeForm } from './ExtendedIntakeForm';
@@ -11,6 +11,7 @@ import { DocumentsPanel } from './DocumentsPanel';
 import { MemberPicker } from './MemberPicker';
 import { CaseTeamPanel } from './CaseTeamPanel';
 import { FinancialsTab } from './FinancialsTab';
+import { AdjusterPanel } from './AdjusterPanel';
 
 interface CaseDetailProps {
   caseData: CaseFile;
@@ -643,6 +644,17 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       team={caseData.caseTeam || []}
                       onChange={(newTeam: CaseTeamMember[]) => {
                         onUpdateCase({ ...caseData, caseTeam: newTeam });
+                      }}
+                    />
+                  </div>
+
+                  {/* Insurance Adjusters */}
+                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
+                    <AdjusterPanel
+                      adjusters={caseData.adjusters || []}
+                      insuranceEntries={(caseData.insurance || []).map(ins => ({ type: ins.type, provider: ins.provider }))}
+                      onChange={(newAdj: Adjuster[]) => {
+                        onUpdateCase({ ...caseData, adjusters: newAdj });
                       }}
                     />
                   </div>

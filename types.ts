@@ -286,6 +286,32 @@ export interface Party {
   contact?: string;
 }
 
+export interface Adjuster {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  isPrimary: boolean;
+  insuranceType?: 'Client' | 'Defendant' | 'Other';
+  insuranceProvider?: string;
+  addedDate: string;
+}
+
+export interface DirectoryContactEntry {
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface DirectoryAddressEntry {
+  id: string;
+  label: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
 export interface Insurance {
   type: 'Client' | 'Defendant' | 'Other';
   provider: string;
@@ -562,6 +588,7 @@ export interface CaseFile {
 
   parties?: Party[];
   insurance?: Insurance[];
+  adjusters?: Adjuster[];
 
   treatmentStatus?: string;
   treatmentProviders?: string;

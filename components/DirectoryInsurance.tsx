@@ -7,6 +7,7 @@ import {
   updateInsuranceCompany,
   deleteInsuranceCompany,
 } from '../services/insuranceCompanyService';
+import { MultiContactEditor } from './MultiContactEditor';
 
 const TYPE_LABELS: Record<InsuranceCompanyType, string> = {
   auto: 'Auto', health: 'Health', commercial: 'Commercial',
@@ -289,6 +290,7 @@ export const DirectoryInsurance: React.FC = () => {
                       <button onClick={() => handleEdit(c)} className="px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Edit</button>
                       <button onClick={() => handleDelete(c.id)} className="px-3 py-1.5 text-xs font-medium text-rose-600 bg-white border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors">Delete</button>
                     </div>
+                    <MultiContactEditor directoryType="insurance" directoryId={c.id} />
                   </div>
                 )}
               </div>
