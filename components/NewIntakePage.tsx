@@ -28,7 +28,10 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
   const [scanningIndex, setScanningIndex] = useState(-1);
   const [extractionPhase, setExtractionPhase] = useState(false);
   const [liveExtractedData, setLiveExtractedData] = useState<ExtractedIntakeData>({});
-  const [clientNameOverride, setClientNameOverride] = useState('');
+  const [clientNames, setClientNames] = useState<string[]>(['']);
+
+  const trimmedClientNames = clientNames.map(n => n.trim()).filter(Boolean);
+  const hasClientName = trimmedClientNames.length > 0;
 
   const handleModeSwitch = (newMode: IntakeMode) => {
     setMode(newMode);
@@ -37,7 +40,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
     setIdentifiedDocs([]);
     setExtractedData({});
     setLiveExtractedData({});
-    setClientNameOverride('');
+    setClientNames(['']);
   };
 
   const handleProceedToReview = async () => {
@@ -67,7 +70,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
           'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ documents: documentsPayload, clientName: clientNameOverride.trim(), apiKey: (typeof process !== 'undefined' && process.env?.API_KEY) || '' }),
+        body: JSON.stringify({ documents: documentsPayload, clientNames: trimmedClientNames, apiKey: (typeof process !== 'undefined' && process.env?.API_KEY) || '' }),
       });
 
       if (!response.ok) {
@@ -191,7 +194,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
       const solDate = new Date(accidentDate);
       solDate.setFullYear(solDate.getFullYear() + 2);
 
-      const clientName = clientNameOverride.trim() || extractedData.clientName || 'Unknown Client';
+      const clientName = trimmedClientNames[0] || extractedData.clientName || 'Unknown Client';
       const typeCounts: Record<string, number> = {};
 
       const caseDocuments: DocumentAttachment[] = identifiedDocs.map(doc => {
@@ -236,9 +239,10 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
           model: extractedData.vehicleModel || '',
           damage: extractedData.vehicleDamage || '',
         },
-        parties: extractedData.defendantName
-          ? [{ name: extractedData.defendantName, role: 'Defendant' as const }]
-          : [],
+        parties: [
+          ...trimmedClientNames.slice(1).map(name => ({ name, role: 'Plaintiff' as const })),
+          ...(extractedData.defendantName ? [{ name: extractedData.defendantName, role: 'Defendant' as const }] : []),
+        ],
         insurance: insuranceList,
         treatmentProviders: extractedData.treatmentProviders,
         status: CaseStatus.NEW,
@@ -351,7 +355,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                     onClick={() => {
                       if (isExtracting) return;
                       if (i === 0) setStep(1);
-                      if (i === 1 && pendingDocs.length > 0 && clientNameOverride.trim()) handleProceedToReview();
+                      if (i === 1 && pendingDocs.length > 0 && hasClientName) handleProceedToReview();
                     }}
                   >
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
@@ -378,17 +382,55 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
             <div className="p-8">
               {step === 1 && (
                 <div className="space-y-6">
-                  <div className="max-w-sm">
+                  <div>
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
-                      Client Name <span className="text-red-500">*</span>
+                      Client Name(s) <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      className={inputClass}
-                      placeholder="e.g. Jane Doe"
-                      value={clientNameOverride}
-                      onChange={e => setClientNameOverride(e.target.value)}
-                    />
+                    <p className="text-xs text-slate-400 mb-3">
+                      Enter the client name so the AI can identify them on the police report. Add additional clients for multi-party matters.
+                    </p>
+                    <div className="space-y-2 max-w-md">
+                      {clientNames.map((name, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            {idx === 0 && (
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-blue-500 uppercase tracking-wide pointer-events-none">Primary</span>
+                            )}
+                            <input
+                              type="text"
+                              className={inputClass + (idx === 0 ? ' !pl-[68px]' : '')}
+                              placeholder={idx === 0 ? 'e.g. Jane Doe' : 'Additional client name'}
+                              value={name}
+                              onChange={e => {
+                                const updated = [...clientNames];
+                                updated[idx] = e.target.value;
+                                setClientNames(updated);
+                              }}
+                            />
+                          </div>
+                          {idx > 0 && (
+                            <button
+                              onClick={() => setClientNames(clientNames.filter((_, i) => i !== idx))}
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove client"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setClientNames([...clientNames, ''])}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 mt-1 px-1 py-1 hover:bg-blue-50 rounded transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Another Client
+                      </button>
+                    </div>
                   </div>
                   <DocumentUploadStep
                     documents={pendingDocs}
@@ -426,9 +468,9 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
               {step === 1 ? (
                 <button
                   onClick={handleProceedToReview}
-                  disabled={pendingDocs.length === 0 || !clientNameOverride.trim()}
+                  disabled={pendingDocs.length === 0 || !hasClientName}
                   className={`px-8 py-2.5 rounded-lg font-bold shadow-lg transition-all flex items-center ${
-                    pendingDocs.length === 0 || !clientNameOverride.trim()
+                    pendingDocs.length === 0 || !hasClientName
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
                       : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700'
                   }`}

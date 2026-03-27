@@ -192,7 +192,8 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { documents, clientName, apiKey: clientApiKey }: { documents: DocumentInput[]; clientName?: string; apiKey?: string } = body;
+    const { documents, clientNames, clientName, apiKey: clientApiKey }: { documents: DocumentInput[]; clientNames?: string[]; clientName?: string; apiKey?: string } = body;
+    const resolvedClientNames = (clientNames && clientNames.length > 0) ? clientNames : (clientName ? [clientName] : []);
 
     const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("API_KEY") || clientApiKey;
     if (!apiKey) {
@@ -296,8 +297,10 @@ The filename should follow the pattern: "DocumentType - Detail" (e.g., "Retainer
             });
           }
 
-          const clientNameInstruction = clientName
-            ? `CRITICAL: The client/plaintiff in this case is "${clientName}". When reading police/crash reports that list multiple parties (drivers, passengers, pedestrians), the person matching or closest to "${clientName}" is the CLIENT/PLAINTIFF. All other parties are defendants or witnesses. Assign vehicle info, address, insurance, and other details to the correct party based on this. Do NOT confuse the client with the defendant.`
+          const clientNameInstruction = resolvedClientNames.length > 0
+            ? resolvedClientNames.length === 1
+              ? `CRITICAL: The client/plaintiff in this case is "${resolvedClientNames[0]}". When reading police/crash reports that list multiple parties (drivers, passengers, pedestrians), the person matching or closest to "${resolvedClientNames[0]}" is the CLIENT/PLAINTIFF. All other parties are defendants or witnesses. Assign vehicle info, address, insurance, and other details to the correct party based on this. Do NOT confuse the client with the defendant.`
+              : `CRITICAL: This is a multi-party matter. The clients/plaintiffs in this case are: ${resolvedClientNames.map((n, i) => `${i === 0 ? '(PRIMARY) ' : ''}"${n}"`).join(', ')}. When reading police/crash reports that list multiple parties, the people matching or closest to these names are the CLIENTS/PLAINTIFFS. All other parties are defendants or witnesses. The PRIMARY client's info should populate the main client fields. Assign vehicle info, address, insurance, and other details to the correct party based on this. Do NOT confuse any client with the defendant.`
             : "";
 
           extractionParts.push({

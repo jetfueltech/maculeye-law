@@ -282,7 +282,7 @@ export interface ActivityLog {
 
 export interface Party {
   name: string;
-  role: 'Defendant' | 'Witness' | 'Passenger';
+  role: 'Defendant' | 'Witness' | 'Passenger' | 'Plaintiff';
   contact?: string;
 }
 
