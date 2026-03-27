@@ -185,8 +185,27 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
         }
       }
 
-      if (analyses.some(a => a.actions.length > 0 || a.summary)) {
-        setDeepAnalyses(analyses);
+      if (analyses.length > 0) {
+        const updatedDocs = [...caseData.documents];
+        for (const a of analyses) {
+          if (updatedDocs[a.docIndex]) {
+            updatedDocs[a.docIndex] = {
+              ...updatedDocs[a.docIndex],
+              aiAnalysis: {
+                summary: a.summary,
+                suggestedCategory: a.suggestedCategory,
+                actions: a.actions.map(act => ({ ...act, applied: false })),
+                extractedData: a.extractedData,
+                analyzedAt: new Date().toISOString(),
+              },
+            };
+          }
+        }
+        onUpdateCase({ ...caseData, documents: updatedDocs });
+
+        if (analyses.some(a => a.actions.length > 0 || a.summary)) {
+          setDeepAnalyses(analyses);
+        }
       }
     } catch (err) {
       console.error('Deep analysis failed:', err);
@@ -826,7 +845,17 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                     key={idx}
                     className="hover:bg-blue-50/40 transition-colors cursor-pointer group/row"
                     onClick={() => {
-                      if (doc.generatedFormType) {
+                      if (doc.aiAnalysis) {
+                        const analysis: AIDocAnalysis = {
+                          docIndex: idx,
+                          fileName: doc.fileName,
+                          summary: doc.aiAnalysis.summary,
+                          suggestedCategory: doc.aiAnalysis.suggestedCategory || '',
+                          actions: doc.aiAnalysis.actions,
+                          extractedData: doc.aiAnalysis.extractedData,
+                        };
+                        setDeepAnalyses([analysis]);
+                      } else if (doc.generatedFormType) {
                         setGeneratedDocPreview(doc.generatedFormType as DocumentFormType);
                       } else {
                         setPreviewIndex(idx);
@@ -862,11 +891,21 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                               </button>
-                              <span className="opacity-0 group-hover/row:opacity-100 text-[10px] text-blue-500 font-medium transition-opacity">Preview</span>
+                              {doc.aiAnalysis ? (
+                                <span className="text-[10px] text-blue-500 font-medium flex items-center gap-0.5">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                  AI Analysis
+                                </span>
+                              ) : (
+                                <span className="opacity-0 group-hover/row:opacity-100 text-[10px] text-blue-500 font-medium transition-opacity">Preview</span>
+                              )}
                             </div>
                           )}
                           {doc.description && (
                             <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-xs">{doc.description}</p>
+                          )}
+                          {doc.aiAnalysis?.summary && (
+                            <p className="text-[11px] text-blue-400 mt-0.5 truncate max-w-xs">{doc.aiAnalysis.summary}</p>
                           )}
                         </div>
                       </div>

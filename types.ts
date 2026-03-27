@@ -204,6 +204,26 @@ export const DOCUMENT_CATEGORY_LABELS: Record<DocumentCategory, string> = {
   other: 'Other',
 };
 
+export interface DocumentAIAction {
+  actionType: string;
+  title: string;
+  description: string;
+  priority: string;
+  fieldName?: string;
+  oldValue?: string;
+  newValue?: string;
+  taskType?: string;
+  applied?: boolean;
+}
+
+export interface DocumentAIAnalysis {
+  summary: string;
+  suggestedCategory?: string;
+  actions: DocumentAIAction[];
+  extractedData: Record<string, string>;
+  analyzedAt: string;
+}
+
 export interface DocumentAttachment {
   type: DocumentType;
   fileData: string | null;
@@ -221,6 +241,7 @@ export interface DocumentAttachment {
   documentTypeKey?: string;
   generatedFormType?: string;
   uploadedAt?: string;
+  aiAnalysis?: DocumentAIAnalysis;
 }
 
 export type MedicalProviderType = 'hospital' | 'er' | 'urgent_care' | 'chiropractor' | 'physical_therapy' | 'orthopedic' | 'neurologist' | 'pain_management' | 'primary_care' | 'imaging' | 'surgery_center' | 'other';
