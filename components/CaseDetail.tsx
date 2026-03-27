@@ -638,27 +638,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       ) : (
           <div className="grid grid-cols-12 gap-8 animate-fade-in">
               <div className="col-span-12 lg:col-span-8 space-y-8">
-                  {/* Case Team */}
-                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
-                    <CaseTeamPanel
-                      team={caseData.caseTeam || []}
-                      onChange={(newTeam: CaseTeamMember[]) => {
-                        onUpdateCase({ ...caseData, caseTeam: newTeam });
-                      }}
-                    />
-                  </div>
-
-                  {/* Insurance Adjusters */}
-                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
-                    <AdjusterPanel
-                      adjusters={caseData.adjusters || []}
-                      insuranceEntries={(caseData.insurance || []).map(ins => ({ type: ins.type, provider: ins.provider }))}
-                      onChange={(newAdj: Adjuster[]) => {
-                        onUpdateCase({ ...caseData, adjusters: newAdj });
-                      }}
-                    />
-                  </div>
-
                   {/* Case Information Grid */}
                   <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300">
                       <div 
@@ -1085,8 +1064,29 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   </div>
               </div>
 
-              {/* Right Column: Chat & Tasks */}
+              {/* Right Column: Team, Adjusters, Chat */}
               <div className="col-span-12 lg:col-span-4 space-y-8">
+                  {/* Case Team */}
+                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
+                    <CaseTeamPanel
+                      team={caseData.caseTeam || []}
+                      onChange={(newTeam: CaseTeamMember[]) => {
+                        onUpdateCase({ ...caseData, caseTeam: newTeam });
+                      }}
+                    />
+                  </div>
+
+                  {/* Insurance Adjusters */}
+                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
+                    <AdjusterPanel
+                      adjusters={caseData.adjusters || []}
+                      insuranceEntries={(caseData.insurance || []).map(ins => ({ type: ins.type, provider: ins.provider }))}
+                      onChange={(newAdj: Adjuster[]) => {
+                        onUpdateCase({ ...caseData, adjusters: newAdj });
+                      }}
+                    />
+                  </div>
+
                   {/* Internal Team Chat */}
                   <div className="bg-white rounded-2xl border border-slate-200 flex flex-col h-[600px]">
                       {/* Chat content omitted for brevity */}
