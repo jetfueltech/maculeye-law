@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CaseFile, DocumentAttachment, CaseStatus, DocumentType } from '../../types';
+import { uploadBase64Document } from '../../services/documentStorageService';
 
 interface ManualIntakeFormProps {
   onSubmit: (newCase: CaseFile) => void;
@@ -44,81 +45,96 @@ export const ManualIntakeForm: React.FC<ManualIntakeFormProps> = ({ onSubmit, re
     setDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setLoading(true);
-    setTimeout(() => {
-      const insuranceList: any[] = [];
 
-      if (partyInfo.defUninsured) {
-        insuranceList.push({ type: 'Defendant', provider: 'Uninsured', isUninsured: true });
-      } else if (partyInfo.defInsurance) {
-        insuranceList.push({
-          type: 'Defendant',
-          provider: partyInfo.defInsurance,
-          claimNumber: partyInfo.defClaim,
-          coverageLimits: partyInfo.defLimits
-        });
+    const insuranceList: any[] = [];
+
+    if (partyInfo.defUninsured) {
+      insuranceList.push({ type: 'Defendant', provider: 'Uninsured', isUninsured: true });
+    } else if (partyInfo.defInsurance) {
+      insuranceList.push({
+        type: 'Defendant',
+        provider: partyInfo.defInsurance,
+        claimNumber: partyInfo.defClaim,
+        coverageLimits: partyInfo.defLimits
+      });
+    }
+
+    if (partyInfo.clientInsurance) {
+      insuranceList.push({
+        type: 'Client',
+        provider: partyInfo.clientInsurance,
+        claimNumber: partyInfo.clientClaim,
+        policyNumber: partyInfo.clientPolicy,
+        coverageLimits: partyInfo.clientLimits
+      });
+    }
+
+    if (partyInfo.otherProvider) {
+      insuranceList.push({
+        type: 'Other',
+        provider: partyInfo.otherProvider,
+        coverageLimits: partyInfo.otherLimits,
+        policyNumber: partyInfo.otherInsurance
+      });
+    }
+
+    const accidentDate = incidentInfo.date || new Date().toISOString().split('T')[0];
+    const solDate = new Date(accidentDate);
+    solDate.setFullYear(solDate.getFullYear() + 2);
+
+    const caseId = Math.random().toString(36).substr(2, 9);
+
+    const uploadedDocs: DocumentAttachment[] = [];
+    for (const doc of documents) {
+      const entry: DocumentAttachment = { ...doc };
+      if (doc.fileData) {
+        const result = await uploadBase64Document(caseId, doc.fileData, doc.fileName, doc.mimeType);
+        if (!('error' in result)) {
+          entry.storagePath = result.path;
+          entry.storageUrl = result.url;
+          entry.fileData = null;
+        }
       }
+      uploadedDocs.push(entry);
+    }
 
-      if (partyInfo.clientInsurance) {
-        insuranceList.push({
-          type: 'Client',
-          provider: partyInfo.clientInsurance,
-          claimNumber: partyInfo.clientClaim,
-          policyNumber: partyInfo.clientPolicy,
-          coverageLimits: partyInfo.clientLimits
-        });
-      }
-
-      if (partyInfo.otherProvider) {
-        insuranceList.push({
-          type: 'Other',
-          provider: partyInfo.otherProvider,
-          coverageLimits: partyInfo.otherLimits,
-          policyNumber: partyInfo.otherInsurance
-        });
-      }
-
-      const accidentDate = incidentInfo.date || new Date().toISOString().split('T')[0];
-      const solDate = new Date(accidentDate);
-      solDate.setFullYear(solDate.getFullYear() + 2);
-
-      const newCase: CaseFile = {
+    const newCase: CaseFile = {
+      id: caseId,
+      clientName: clientInfo.name || 'Unknown Client',
+      clientDob: clientInfo.dob,
+      clientAddress: clientInfo.address,
+      clientEmail: clientInfo.email || 'no-email@example.com',
+      clientPhone: clientInfo.phone || '555-0000',
+      accidentDate,
+      location: incidentInfo.location,
+      description: incidentInfo.description || 'No description provided.',
+      statuteOfLimitationsDate: solDate.toISOString().split('T')[0],
+      vehicleInfo: {
+        year: incidentInfo.vehYear,
+        make: incidentInfo.vehMake,
+        model: incidentInfo.vehModel,
+        damage: incidentInfo.vehDamage
+      },
+      parties: partyInfo.defName ? [{ name: partyInfo.defName, role: 'Defendant' }] : [],
+      insurance: insuranceList,
+      treatmentStatus: medicalInfo.status,
+      treatmentProviders: medicalInfo.providers,
+      status: CaseStatus.NEW,
+      createdAt: new Date().toISOString(),
+      referralSource,
+      documents: uploadedDocs,
+      activityLog: [{
         id: Math.random().toString(36).substr(2, 9),
-        clientName: clientInfo.name || 'Unknown Client',
-        clientDob: clientInfo.dob,
-        clientAddress: clientInfo.address,
-        clientEmail: clientInfo.email || 'no-email@example.com',
-        clientPhone: clientInfo.phone || '555-0000',
-        accidentDate,
-        location: incidentInfo.location,
-        description: incidentInfo.description || 'No description provided.',
-        statuteOfLimitationsDate: solDate.toISOString().split('T')[0],
-        vehicleInfo: {
-          year: incidentInfo.vehYear,
-          make: incidentInfo.vehMake,
-          model: incidentInfo.vehModel,
-          damage: incidentInfo.vehDamage
-        },
-        parties: partyInfo.defName ? [{ name: partyInfo.defName, role: 'Defendant' }] : [],
-        insurance: insuranceList,
-        treatmentStatus: medicalInfo.status,
-        treatmentProviders: medicalInfo.providers,
-        status: CaseStatus.NEW,
-        createdAt: new Date().toISOString(),
-        referralSource,
-        documents,
-        activityLog: [{
-          id: Math.random().toString(36).substr(2, 9),
-          type: 'system',
-          message: 'Case created via Manual Intake',
-          timestamp: new Date().toISOString()
-        }]
-      };
+        type: 'system',
+        message: 'Case created via Manual Intake',
+        timestamp: new Date().toISOString()
+      }]
+    };
 
-      onSubmit(newCase);
-      setLoading(false);
-    }, 800);
+    onSubmit(newCase);
+    setLoading(false);
   };
 
   const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 transition-all shadow-sm disabled:bg-slate-100 disabled:text-slate-400";

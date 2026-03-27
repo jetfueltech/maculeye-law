@@ -6,6 +6,7 @@ import { ManualIntakeForm } from './intake/ManualIntakeForm';
 import { IdentifiedDocument, ExtractedIntakeData } from '../services/documentExtractionService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 import { buildExtendedIntake } from '../services/intakeMapper';
+import { uploadBase64Document } from '../services/documentStorageService';
 
 interface NewIntakePageProps {
   onBack: () => void;
@@ -171,7 +172,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
   const handleSubmit = () => {
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const insuranceList: any[] = [];
 
       if (extractedData.defendantInsurance) {
@@ -197,7 +198,10 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
       const clientName = trimmedClientNames[0] || extractedData.clientName || 'Unknown Client';
       const typeCounts: Record<string, number> = {};
 
-      const caseDocuments: DocumentAttachment[] = identifiedDocs.map(doc => {
+      const caseId = Math.random().toString(36).substr(2, 9);
+      const caseDocuments: DocumentAttachment[] = [];
+
+      for (const doc of identifiedDocs) {
         const typeKey = doc.identifiedType;
         typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
 
@@ -210,20 +214,30 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
           originalFileName: doc.file.name,
         });
 
-        return {
+        const docEntry: DocumentAttachment = {
           type: doc.identifiedType,
-          fileData: doc.fileData,
+          fileData: null,
           fileName,
           mimeType: doc.mimeType,
           source: 'Intake Upload',
         };
-      });
+
+        if (doc.fileData) {
+          const uploadResult = await uploadBase64Document(caseId, doc.fileData, fileName, doc.mimeType);
+          if (!('error' in uploadResult)) {
+            docEntry.storagePath = uploadResult.path;
+            docEntry.storageUrl = uploadResult.url;
+          }
+        }
+
+        caseDocuments.push(docEntry);
+      }
 
       const fullAddress = [extractedData.clientAddress, extractedData.clientCity, extractedData.clientState, extractedData.clientZip].filter(Boolean).join(', ');
       const extendedIntake = buildExtendedIntake(extractedData, referralSource);
 
       const newCase: CaseFile = {
-        id: Math.random().toString(36).substr(2, 9),
+        id: caseId,
         clientName,
         clientDob: extractedData.clientDob,
         clientAddress: fullAddress || extractedData.clientAddress,

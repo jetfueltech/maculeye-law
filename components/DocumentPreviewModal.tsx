@@ -19,6 +19,22 @@ const DOC_TYPE_ICON_COLORS: Record<string, string> = {
   other: 'bg-slate-100 text-slate-500',
 };
 
+function detectIsImage(doc: DocumentAttachment): boolean {
+  if (doc.mimeType?.startsWith('image/')) return true;
+  const ext = doc.fileName?.toLowerCase() || '';
+  return /\.(jpg|jpeg|png|gif|webp|svg|bmp|heic)$/i.test(ext);
+}
+
+function detectIsPdf(doc: DocumentAttachment): boolean {
+  if (doc.mimeType?.includes('pdf')) return true;
+  const ext = doc.fileName?.toLowerCase() || '';
+  return /\.pdf$/i.test(ext);
+}
+
+function getPreviewSrc(doc: DocumentAttachment): string | null {
+  return doc.storageUrl || doc.fileData || null;
+}
+
 export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   documents,
   currentIndex,
@@ -46,11 +62,12 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
   if (!doc) return null;
 
-  const previewSrc = doc.storageUrl || doc.fileData;
-  const isImage = doc.mimeType?.startsWith('image/');
-  const isPdf = doc.mimeType?.includes('pdf');
-  const canPreview = previewSrc && (isImage || isPdf);
+  const previewSrc = getPreviewSrc(doc);
+  const isImage = detectIsImage(doc);
+  const isPdf = detectIsPdf(doc);
+  const canPreview = !!previewSrc && (isImage || isPdf);
   const typeColor = DOC_TYPE_ICON_COLORS[doc.type] || DOC_TYPE_ICON_COLORS.other;
+  const downloadUrl = doc.storageUrl || doc.fileData;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
@@ -82,6 +99,12 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   <span className="text-[10px] text-white/50">{doc.source}</span>
                 </>
               )}
+              {doc.description && (
+                <>
+                  <span className="text-white/30">|</span>
+                  <span className="text-[10px] text-white/50 truncate max-w-[200px]">{doc.description}</span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -90,9 +113,22 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           <span className="text-xs text-white/50 mr-2">
             {currentIndex + 1} of {documents.length}
           </span>
-          {doc.storageUrl && (
+          {downloadUrl && (
             <a
-              href={doc.storageUrl}
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              download={doc.fileName}
+              onClick={(e) => e.stopPropagation()}
+              className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              title="Download"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            </a>
+          )}
+          {downloadUrl && (
+            <a
+              href={downloadUrl}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -136,13 +172,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         >
           {canPreview && isImage ? (
             <img
-              src={previewSrc}
+              src={previewSrc!}
               alt={doc.fileName}
               className="max-w-full max-h-[82vh] rounded-xl shadow-2xl object-contain"
             />
           ) : canPreview && isPdf ? (
             <iframe
-              src={previewSrc}
+              src={previewSrc!}
               className="w-full rounded-xl border border-white/10 shadow-2xl bg-white"
               style={{ height: '82vh' }}
               title={doc.fileName}
@@ -152,18 +188,32 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
                 <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
               </div>
-              <p className="text-slate-800 font-semibold text-lg">{doc.fileName}</p>
-              <p className="text-sm text-slate-400 mt-2 mb-6">Preview is not available for this file type</p>
-              {doc.storageUrl && (
-                <a
-                  href={doc.storageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-lg shadow-blue-200"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  Download File
-                </a>
+              <p className="text-slate-800 font-semibold text-lg break-all">{doc.fileName}</p>
+              <p className="text-sm text-slate-400 mt-2 mb-6">
+                {!previewSrc ? 'This document has no preview or download available' : 'Preview is not available for this file type'}
+              </p>
+              {downloadUrl && (
+                <div className="flex items-center justify-center gap-3">
+                  <a
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={doc.fileName}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-lg shadow-blue-200"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Download
+                  </a>
+                  <a
+                    href={downloadUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                    Open in new tab
+                  </a>
+                </div>
               )}
             </div>
           )}
@@ -175,8 +225,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           <div className="flex gap-1.5 items-center max-w-2xl overflow-x-auto py-1 px-2">
             {documents.map((d, i) => {
               const active = i === currentIndex;
-              const thumbIsImage = d.mimeType?.startsWith('image/');
-              const thumbSrc = d.storageUrl || d.fileData;
+              const thumbIsImage = detectIsImage(d);
+              const thumbSrc = getPreviewSrc(d);
 
               return (
                 <button
@@ -192,9 +242,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     <img src={thumbSrc} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className={`w-full h-full flex items-center justify-center ${
-                      d.mimeType?.includes('pdf') ? 'bg-red-100' : 'bg-slate-100'
+                      detectIsPdf(d) ? 'bg-red-100' : 'bg-slate-100'
                     }`}>
-                      <svg className={`w-5 h-5 ${d.mimeType?.includes('pdf') ? 'text-red-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-5 h-5 ${detectIsPdf(d) ? 'text-red-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>

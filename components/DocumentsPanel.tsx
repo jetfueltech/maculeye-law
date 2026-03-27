@@ -68,6 +68,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
   const [tempDocName, setTempDocName] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [editingTypeIndex, setEditingTypeIndex] = useState<number | null>(null);
 
   const addActivity = (c: CaseFile, message: string): CaseFile => {
     const log = {
@@ -331,6 +332,13 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     newDocs[idx] = { ...newDocs[idx], fileName: tempDocName.trim() };
     onUpdateCase({ ...caseData, documents: newDocs });
     setRenamingDocIndex(null);
+  };
+
+  const handleUpdateDocType = (idx: number, newType: DocumentType) => {
+    const newDocs = [...caseData.documents];
+    newDocs[idx] = { ...newDocs[idx], type: newType };
+    onUpdateCase({ ...caseData, documents: newDocs });
+    setEditingTypeIndex(null);
   };
 
   const getDocIcon = (doc: DocumentAttachment) => {
@@ -603,10 +611,28 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide bg-slate-100 text-slate-800">
-                        {DOCUMENT_NAMING_RULES[doc.type] || doc.type}
-                      </span>
+                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      {editingTypeIndex === idx ? (
+                        <select
+                          autoFocus
+                          className="text-xs bg-white border border-blue-300 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
+                          value={doc.type}
+                          onChange={(e) => handleUpdateDocType(idx, e.target.value as DocumentType)}
+                          onBlur={() => setEditingTypeIndex(null)}
+                        >
+                          {DOC_TYPE_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button
+                          onClick={() => setEditingTypeIndex(idx)}
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide bg-slate-100 text-slate-800 hover:bg-blue-50 hover:text-blue-700 transition-colors group/type"
+                        >
+                          {DOCUMENT_NAMING_RULES[doc.type] || doc.type}
+                          <svg className="w-3 h-3 opacity-0 group-hover/type:opacity-100 transition-opacity text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </button>
+                      )}
                       {doc.photoCategory && (
                         <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
                           {PHOTO_CATEGORY_LABELS[doc.photoCategory]}
@@ -639,11 +665,12 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
-                        {doc.storageUrl && (
+                        {(doc.storageUrl || doc.fileData) && (
                           <a
-                            href={doc.storageUrl}
+                            href={doc.storageUrl || doc.fileData || '#'}
                             target="_blank"
                             rel="noopener noreferrer"
+                            download={doc.fileName}
                             className="text-slate-400 hover:text-blue-600 transition-colors"
                             title="Download"
                           >
