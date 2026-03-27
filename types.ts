@@ -12,7 +12,7 @@ export enum CaseStatus {
   INTAKE_COMPLETE = 'INTAKE_COMPLETE'
 }
 
-export type DocumentType = 'retainer' | 'crash_report' | 'medical_record' | 'authorization' | 'insurance_card' | 'photo' | 'email' | 'other';
+export type DocumentType = 'retainer' | 'crash_report' | 'medical_record' | 'authorization' | 'insurance_card' | 'correspondence' | 'photo' | 'email' | 'other';
 
 export type PhotoCategory = 'drivers_license' | 'insurance_card' | 'client_pd' | 'defendant_pd' | 'injury_photo' | 'scene_photo' | 'other';
 
@@ -101,6 +101,7 @@ export const DOCUMENT_NAMING_RULES: Record<string, string> = {
   medical_record: 'Medical Record',
   authorization: 'Authorization for Release',
   insurance_card: 'Insurance Card',
+  correspondence: 'Correspondence',
   photo: 'Photo',
   email: 'Email',
   foia_request: 'FOIA Request',

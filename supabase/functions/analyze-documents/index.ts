@@ -27,7 +27,9 @@ const validTypes = [
   "medical_record",
   "authorization",
   "insurance_card",
+  "correspondence",
   "photo",
+  "email",
   "other",
 ];
 
@@ -55,6 +57,9 @@ function inferTypeFromFileName(fileName: string): IdentifiedResult {
   if (lower.includes("insurance") || lower.includes("policy") || lower.includes("declaration")) {
     return { type: "insurance_card", suggestedName: "Insurance Card", confidence: 60, fileName };
   }
+  if (lower.includes("letter") || lower.includes("correspondence") || lower.includes("acknowledg")) {
+    return { type: "correspondence", suggestedName: "Correspondence", confidence: 60, fileName };
+  }
   return { type: "other", suggestedName: fileName, confidence: 30, fileName };
 }
 
@@ -66,6 +71,55 @@ function getEffectiveMime(mimeType: string): string {
 function getBase64(fileData: string): string {
   return fileData.includes(",") ? fileData.split(",")[1] : fileData;
 }
+
+const deepAnalysisSchema = {
+  type: Type.OBJECT,
+  properties: {
+    documentType: { type: Type.STRING, description: "Document type: retainer, crash_report, medical_record, authorization, insurance_card, correspondence, photo, email, or other" },
+    suggestedName: { type: Type.STRING, description: "Suggested standardized filename" },
+    confidence: { type: Type.NUMBER, description: "Confidence score 0-100" },
+    summary: { type: Type.STRING, description: "Brief 1-2 sentence summary of the document content" },
+    suggestedCategory: { type: Type.STRING, description: "Suggested category: lor_acknowledgment, coverage_determination, liability_determination, policy_limits, correspondence, billing, treatment, investigation, intake, settlement, demand, or other" },
+    actions: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          actionType: { type: Type.STRING, description: "Type: update_adjuster, complete_task, update_claim_number, update_insurance_info, update_coverage_status, update_liability_status, update_policy_limits, update_intake_field, general_note" },
+          title: { type: Type.STRING, description: "Short title of the recommended action" },
+          description: { type: Type.STRING, description: "Detailed description of what was found and what should be done" },
+          priority: { type: Type.STRING, description: "high, medium, or low" },
+          fieldName: { type: Type.STRING, description: "The field name that should be updated, if applicable" },
+          oldValue: { type: Type.STRING, description: "The current/old value mentioned in the document, if applicable" },
+          newValue: { type: Type.STRING, description: "The new value that should be set, if applicable" },
+          taskType: { type: Type.STRING, description: "Task type to complete: lor_defendant, lor_client_ins, coverage_followup, liability_followup, policy_limits, crash_report_received, or empty if not a task completion" },
+        },
+        required: ["actionType", "title", "description", "priority"],
+      },
+      description: "List of recommended actions based on document content",
+    },
+    extractedData: {
+      type: Type.OBJECT,
+      properties: {
+        adjusterName: { type: Type.STRING, description: "Name of the insurance adjuster mentioned" },
+        adjusterPhone: { type: Type.STRING, description: "Phone number of adjuster" },
+        adjusterEmail: { type: Type.STRING, description: "Email of adjuster" },
+        claimNumber: { type: Type.STRING, description: "Claim number referenced" },
+        policyNumber: { type: Type.STRING, description: "Policy number referenced" },
+        insuranceCompany: { type: Type.STRING, description: "Insurance company name" },
+        coverageDecision: { type: Type.STRING, description: "Coverage decision: accepted, denied, pending, or empty" },
+        liabilityDecision: { type: Type.STRING, description: "Liability decision: accepted, denied, disputed, or empty" },
+        policyLimitsAmount: { type: Type.STRING, description: "Policy limits amount if mentioned" },
+        dateOfLetter: { type: Type.STRING, description: "Date of the letter/document in YYYY-MM-DD format" },
+        referenceNumber: { type: Type.STRING, description: "Any reference or file number" },
+        clientName: { type: Type.STRING, description: "Client/plaintiff name referenced" },
+        defendantName: { type: Type.STRING, description: "Defendant/insured name referenced" },
+      },
+      description: "Structured data extracted from the document",
+    },
+  },
+  required: ["documentType", "suggestedName", "confidence", "summary", "actions"],
+};
 
 const extractionSchema = {
   type: Type.OBJECT,
@@ -86,7 +140,6 @@ const extractionSchema = {
     clientDriversLicenseState: { type: Type.STRING, description: "Client DL state" },
     emergencyContactName: { type: Type.STRING, description: "Emergency contact name" },
     emergencyContactPhone: { type: Type.STRING, description: "Emergency contact phone" },
-
     accidentDate: { type: Type.STRING, description: "Date of accident in YYYY-MM-DD format" },
     accidentTime: { type: Type.STRING, description: "Time of accident in HH:MM format" },
     accidentLocation: { type: Type.STRING, description: "Street or intersection of accident" },
@@ -101,7 +154,6 @@ const extractionSchema = {
     plaintiffDirection: { type: Type.STRING, description: "Direction plaintiff was traveling" },
     defendantDirection: { type: Type.STRING, description: "Direction defendant was traveling" },
     mainIntersections: { type: Type.STRING, description: "Main intersections near accident" },
-
     defendantName: { type: Type.STRING, description: "Defendant/at-fault party name" },
     defendantPhone: { type: Type.STRING, description: "Defendant phone" },
     defendantAddressStreet: { type: Type.STRING, description: "Defendant street address" },
@@ -121,16 +173,13 @@ const extractionSchema = {
     defendantAdjusterName: { type: Type.STRING, description: "Defendant insurance adjuster name" },
     defendantAdjusterPhone: { type: Type.STRING, description: "Defendant insurance adjuster phone" },
     defendantCoverageLimits: { type: Type.STRING, description: "Defendant coverage limits" },
-
     clientInsurance: { type: Type.STRING, description: "Client auto insurance company" },
     clientPolicyNumber: { type: Type.STRING, description: "Client auto policy number" },
     clientClaimNumber: { type: Type.STRING, description: "Client auto claim number" },
     clientInsuranceCoverageLimits: { type: Type.STRING, description: "Client coverage limits" },
-
     healthInsuranceCompany: { type: Type.STRING, description: "Client health insurance company" },
     healthInsuranceMemberNumber: { type: Type.STRING, description: "Health insurance member ID" },
     healthInsuranceGroupNumber: { type: Type.STRING, description: "Health insurance group number" },
-
     vehicleYear: { type: Type.STRING, description: "Client vehicle year" },
     vehicleMake: { type: Type.STRING, description: "Client vehicle make" },
     vehicleModel: { type: Type.STRING, description: "Client vehicle model" },
@@ -144,7 +193,6 @@ const extractionSchema = {
     bodyShopName: { type: Type.STRING, description: "Body shop name" },
     bodyShopPhone: { type: Type.STRING, description: "Body shop phone" },
     bodyShopAddress: { type: Type.STRING, description: "Body shop address" },
-
     injuries: { type: Type.STRING, description: "Description of injuries" },
     ambulance: { type: Type.BOOLEAN, description: "Ambulance taken" },
     xraysTaken: { type: Type.BOOLEAN, description: "X-rays taken" },
@@ -154,7 +202,6 @@ const extractionSchema = {
     preExistingConditions: { type: Type.STRING, description: "Pre-existing conditions" },
     treatmentProviders: { type: Type.STRING, description: "Treatment provider names" },
     doctorReferredTo: { type: Type.STRING, description: "Doctor referred to" },
-
     employerName: { type: Type.STRING, description: "Employer name" },
     employerPhone: { type: Type.STRING, description: "Employer phone" },
     employerAddress: { type: Type.STRING, description: "Employer address" },
@@ -163,10 +210,8 @@ const extractionSchema = {
     timeLostAmount: { type: Type.STRING, description: "Amount of time lost" },
     wagesAmount: { type: Type.STRING, description: "Wages amount" },
     wagesPer: { type: Type.STRING, description: "Hour, Week, or Year" },
-
     retainerSigned: { type: Type.BOOLEAN, description: "Whether retainer appears signed" },
     hipaaSigned: { type: Type.BOOLEAN, description: "Whether HIPAA appears signed" },
-
     referralSource: { type: Type.STRING, description: "How client was referred" },
     primaryLanguage: { type: Type.STRING, description: "Client primary language" },
     notes: { type: Type.STRING, description: "Any additional notes from documents" },
@@ -195,6 +240,7 @@ Deno.serve(async (req: Request) => {
     const { documents, clientNames, clientName, mode, apiKey: clientApiKey }: { documents: DocumentInput[]; clientNames?: string[]; clientName?: string; mode?: string; apiKey?: string } = body;
     const resolvedClientNames = (clientNames && clientNames.length > 0) ? clientNames : (clientName ? [clientName] : []);
     const identifyOnly = mode === "identify_only";
+    const deepAnalysis = mode === "deep_analysis";
 
     const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("API_KEY") || clientApiKey;
     if (!apiKey) {
@@ -222,6 +268,93 @@ Deno.serve(async (req: Request) => {
 
         const identified: IdentifiedResult[] = [];
 
+        if (deepAnalysis) {
+          for (let i = 0; i < documents.length; i++) {
+            const doc = documents[i];
+            send("scan_start", { index: i, fileName: doc.fileName, total: documents.length });
+
+            try {
+              const base64Data = getBase64(doc.fileData);
+              const effectiveMime = getEffectiveMime(doc.mimeType);
+
+              const caseContext = resolvedClientNames.length > 0
+                ? `\n\nCase context: The client/plaintiff is "${resolvedClientNames[0]}". Any other party names are likely defendants or their representatives.`
+                : "";
+
+              const response = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: [{
+                  parts: [
+                    { inlineData: { mimeType: effectiveMime, data: base64Data } },
+                    {
+                      text: `You are a legal case management AI assistant. Read ALL pages of this document thoroughly and analyze its contents.${caseContext}
+
+This is a document uploaded to a personal injury case management system. Your job is to:
+
+1. IDENTIFY the document type from: retainer, crash_report, medical_record, authorization, insurance_card, correspondence, photo, email, other
+   - "correspondence" = letters from/to insurance companies, adjusters, attorneys, or any formal correspondence related to the case
+   - A letter from an insurance company IS "correspondence", not "other"
+
+2. SUMMARIZE what the document says in 1-2 sentences
+
+3. EXTRACT any actionable information and create recommended actions. Common scenarios include:
+   - Adjuster changed/assigned: If a letter mentions a NEW adjuster name, phone, or email, recommend updating the adjuster info
+   - LOR acknowledged: If the insurance company acknowledges receipt of a Letter of Representation, recommend completing the LOR task
+   - Coverage decision: If coverage is accepted/denied, recommend updating coverage status
+   - Liability decision: If liability is accepted/denied/disputed, recommend updating liability status
+   - Policy limits disclosed: If policy limits amounts are mentioned, recommend updating
+   - Claim number assigned: If a new claim number is provided, recommend updating
+   - New insurance info: Any new policy numbers, claim numbers, or insurance contact info
+
+4. EXTRACT structured data: adjuster name/phone/email, claim numbers, policy numbers, insurance company, dates, etc.
+
+Be thorough - read every page. Insurance letters often have key information on page 2 or later pages.`
+                    }
+                  ]
+                }],
+                config: {
+                  responseMimeType: "application/json",
+                  responseSchema: deepAnalysisSchema,
+                },
+              });
+
+              const parsed = JSON.parse(response.text || "{}");
+              const docType = validTypes.includes(parsed.documentType) ? parsed.documentType : "other";
+
+              send("doc_identified", {
+                index: i,
+                type: docType,
+                suggestedName: parsed.suggestedName || doc.fileName,
+                confidence: parsed.confidence || 50,
+                fileName: doc.fileName,
+              });
+
+              send("doc_analysis", {
+                index: i,
+                summary: parsed.summary || "",
+                suggestedCategory: parsed.suggestedCategory || "",
+                actions: parsed.actions || [],
+                extractedData: parsed.extractedData || {},
+              });
+            } catch (err) {
+              console.error(`Deep analysis failed for ${doc.fileName}:`, err);
+              const fallback = inferTypeFromFileName(doc.fileName);
+              send("doc_identified", { index: i, ...fallback });
+              send("doc_analysis", {
+                index: i,
+                summary: "Analysis could not be completed for this document.",
+                suggestedCategory: "",
+                actions: [],
+                extractedData: {},
+              });
+            }
+          }
+
+          send("complete", { message: "Deep analysis complete" });
+          controller.close();
+          return;
+        }
+
         for (let i = 0; i < documents.length; i++) {
           const doc = documents[i];
           send("scan_start", { index: i, fileName: doc.fileName, total: documents.length });
@@ -237,19 +370,23 @@ Deno.serve(async (req: Request) => {
                 parts: [
                   { inlineData: { mimeType: effectiveMime, data: base64Data } },
                   {
-                    text: `Analyze this document and identify what type of legal/intake document it is.
+                    text: `Analyze this document and identify what type of legal/intake document it is. Read ALL pages thoroughly.
 
 Available types:
 - retainer: Signed retainer agreement or fee agreement between client and attorney
 - authorization: HIPAA authorization form or medical records release
 - crash_report: Police report, crash report, or accident report
 - insurance_card: Insurance card, declarations page, or policy document
+- correspondence: Letters from/to insurance companies, adjusters, attorneys, acknowledgment letters, coverage letters, denial letters, or any formal correspondence
 - photo: Photos of injuries, vehicle damage, or accident scene
 - medical_record: Medical records, discharge papers, diagnosis
-- other: Anything else
+- email: Email correspondence
+- other: Anything that does not fit any above category
+
+IMPORTANT: A letter from an insurance company about a claim IS "correspondence", NOT "other".
 
 Return the document type and a suggested standardized filename.
-The filename should follow the pattern: "DocumentType - Detail" (e.g., "Retainer - Signed", "Crash Report - Chicago PD", "HIPAA Authorization - Signed")`
+The filename should follow the pattern: "DocumentType - Detail" (e.g., "Retainer - Signed", "Correspondence - LOR Acknowledgment from State Farm", "Correspondence - Adjuster Change Notice")`
                   }
                 ]
               }],
@@ -307,7 +444,7 @@ The filename should follow the pattern: "DocumentType - Detail" (e.g., "Retainer
           const clientNameInstruction = resolvedClientNames.length > 0
             ? resolvedClientNames.length === 1
               ? `CRITICAL: The client/plaintiff in this case is "${resolvedClientNames[0]}". When reading police/crash reports that list multiple parties (drivers, passengers, pedestrians), the person matching or closest to "${resolvedClientNames[0]}" is the CLIENT/PLAINTIFF. All other parties are defendants or witnesses. Assign vehicle info, address, insurance, and other details to the correct party based on this. Do NOT confuse the client with the defendant.`
-              : `CRITICAL: This is a multi-party matter. The clients/plaintiffs in this case are: ${resolvedClientNames.map((n, i) => `${i === 0 ? '(PRIMARY) ' : ''}"${n}"`).join(', ')}. When reading police/crash reports that list multiple parties, the people matching or closest to these names are the CLIENTS/PLAINTIFFS. All other parties are defendants or witnesses. The PRIMARY client's info should populate the main client fields. Assign vehicle info, address, insurance, and other details to the correct party based on this. Do NOT confuse any client with the defendant.`
+              : `CRITICAL: This is a multi-party matter. The clients/plaintiffs in this case are: ${resolvedClientNames.map((n: string, i: number) => `${i === 0 ? '(PRIMARY) ' : ''}"${n}"`).join(', ')}. When reading police/crash reports that list multiple parties, the people matching or closest to these names are the CLIENTS/PLAINTIFFS. All other parties are defendants or witnesses. The PRIMARY client's info should populate the main client fields. Assign vehicle info, address, insurance, and other details to the correct party based on this. Do NOT confuse any client with the defendant.`
             : "";
 
           extractionParts.push({

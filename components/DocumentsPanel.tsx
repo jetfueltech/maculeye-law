@@ -5,6 +5,7 @@ import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 import { analyzeUploadedDocument, applyDocumentActions } from '../services/documentActionService';
+import { DocumentActionPanel, AIDocAnalysis } from './DocumentActionPanel';
 
 interface DocumentsPanelProps {
   caseData: CaseFile;
@@ -31,6 +32,7 @@ const DOC_TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
   { value: 'medical_record', label: 'Medical Record' },
   { value: 'authorization', label: 'Authorization' },
   { value: 'insurance_card', label: 'Insurance Card' },
+  { value: 'correspondence', label: 'Correspondence' },
   { value: 'photo', label: 'Photo' },
   { value: 'email', label: 'Email' },
   { value: 'other', label: 'Other' },
@@ -40,7 +42,7 @@ const CATEGORY_OPTIONS: { value: DocumentCategory; label: string }[] = Object.en
   ([value, label]) => ({ value: value as DocumentCategory, label })
 );
 
-const VALID_DOC_TYPES: DocumentType[] = ['retainer', 'crash_report', 'medical_record', 'authorization', 'insurance_card', 'photo', 'email', 'other'];
+const VALID_DOC_TYPES: DocumentType[] = ['retainer', 'crash_report', 'medical_record', 'authorization', 'insurance_card', 'correspondence', 'photo', 'email', 'other'];
 
 function readFileAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -84,6 +86,8 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<DocumentType | 'all'>('all');
+  const [deepAnalyses, setDeepAnalyses] = useState<AIDocAnalysis[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const addActivity = (c: CaseFile, message: string): CaseFile => {
     const log = {
@@ -93,6 +97,102 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
       timestamp: new Date().toISOString(),
     };
     return { ...c, activityLog: [log, ...(c.activityLog || [])] };
+  };
+
+  const runDeepAnalysis = async (pendingDocs: PendingFile[], docStartIndex: number) => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+
+    setIsAnalyzing(true);
+    const analyses: AIDocAnalysis[] = [];
+
+    try {
+      const payload = pendingDocs.map(pf => ({
+        fileData: pf.fileData,
+        mimeType: pf.file.type || 'application/octet-stream',
+        fileName: pf.file.name,
+      }));
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/analyze-documents`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          documents: payload,
+          mode: 'deep_analysis',
+          clientName: caseData.clientName,
+        }),
+      });
+
+      if (!response.ok) {
+        setIsAnalyzing(false);
+        return;
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) { setIsAnalyzing(false); return; }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      const tempAnalyses: Record<number, Partial<AIDocAnalysis>> = {};
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let eventType = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ') && eventType) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (eventType === 'doc_identified') {
+                const idx = data.index;
+                if (!tempAnalyses[idx]) tempAnalyses[idx] = {};
+                tempAnalyses[idx].fileName = data.suggestedName || data.fileName;
+                tempAnalyses[idx].docIndex = docStartIndex + idx;
+              } else if (eventType === 'doc_analysis') {
+                const idx = data.index;
+                if (!tempAnalyses[idx]) tempAnalyses[idx] = {};
+                tempAnalyses[idx].summary = data.summary || '';
+                tempAnalyses[idx].suggestedCategory = data.suggestedCategory || '';
+                tempAnalyses[idx].actions = data.actions || [];
+                tempAnalyses[idx].extractedData = data.extractedData || {};
+              }
+            } catch {}
+            eventType = '';
+          }
+        }
+      }
+
+      for (let i = 0; i < pendingDocs.length; i++) {
+        if (tempAnalyses[i]) {
+          analyses.push({
+            docIndex: tempAnalyses[i].docIndex ?? (docStartIndex + i),
+            fileName: tempAnalyses[i].fileName || pendingDocs[i].file.name,
+            summary: tempAnalyses[i].summary || '',
+            suggestedCategory: tempAnalyses[i].suggestedCategory || '',
+            actions: tempAnalyses[i].actions || [],
+            extractedData: tempAnalyses[i].extractedData || {},
+          });
+        }
+      }
+
+      if (analyses.some(a => a.actions.length > 0 || a.summary)) {
+        setDeepAnalyses(analyses);
+      }
+    } catch (err) {
+      console.error('Deep analysis failed:', err);
+    }
+
+    setIsAnalyzing(false);
   };
 
   const runAIScan = async (files: PendingFile[], startIndex: number) => {
@@ -297,7 +397,10 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
       if (pending.preview) URL.revokeObjectURL(pending.preview);
     }
 
+    const savedPending = [...pendingFiles];
+
     if (newDocs.length > 0) {
+      const docStartIndex = caseData.documents.length;
       let updated = {
         ...caseData,
         documents: [...caseData.documents, ...newDocs],
@@ -306,7 +409,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
 
       for (let i = 0; i < newDocs.length; i++) {
         const doc = newDocs[i];
-        const suggestedName = pendingFiles[i]?.suggestedName || '';
+        const suggestedName = savedPending[i]?.suggestedName || '';
         const analysis = analyzeUploadedDocument(doc, suggestedName, updated);
 
         if (analysis.suggestedCategory) {
@@ -325,6 +428,11 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
       }
 
       onUpdateCase(updated);
+
+      const nonPhotoPending = savedPending.filter(pf => pf.type !== 'photo');
+      if (nonPhotoPending.length > 0) {
+        runDeepAnalysis(nonPhotoPending, docStartIndex);
+      }
     }
 
     if (errors.length > 0) {
@@ -593,6 +701,35 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
             </button>
           </div>
         </div>
+      )}
+
+      {isAnalyzing && (
+        <div className="bg-white rounded-2xl border border-blue-200 p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
+              <svg className="w-5 h-5 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">AI is analyzing uploaded documents...</p>
+              <p className="text-xs text-slate-500">Reading all pages to extract actionable information</p>
+            </div>
+            <svg className="animate-spin w-5 h-5 text-blue-600 ml-auto" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          </div>
+        </div>
+      )}
+
+      {deepAnalyses.length > 0 && !isAnalyzing && (
+        <DocumentActionPanel
+          analyses={deepAnalyses}
+          caseData={caseData}
+          onUpdateCase={onUpdateCase}
+          onDismiss={() => setDeepAnalyses([])}
+        />
       )}
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
