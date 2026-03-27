@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { CaseFile, CaseStatus } from '../types';
+import { CaseFile, CaseStatus, CaseTask, ActivityLog, TeamNote, ChatMessage } from '../types';
 import { NeedsAttentionPanel } from './NeedsAttentionPanel';
 import { CaseTeamPanel } from './CaseTeamPanel';
 import { useFirm } from '../contexts/FirmContext';
@@ -28,8 +28,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
   const statusMenuRef = useRef<HTMLDivElement>(null);
   const statusButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
-  // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string; caseNumber?: string } | null>(null);
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
@@ -515,72 +515,93 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                             <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{colCases.length}</span>
                         </div>
                         <div className="flex-1 space-y-3 px-2 pb-2">
-                            {colCases.map(c => (
-                                <div 
-                                    key={c.id} 
-                                    draggable
+                            {colCases.map(c => {
+                                const isExpanded = expandedCardId === c.id;
+                                return (
+                                <div
+                                    key={c.id}
+                                    draggable={!isExpanded}
                                     onDragStart={(e) => handleDragStart(e, c.id)}
-                                    onClick={() => onSelectCase(c)}
-                                    className={`bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group active:cursor-grabbing ${draggedCaseId === c.id ? 'opacity-50 border-dashed border-slate-400' : ''}`}
+                                    className={`bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all cursor-pointer group active:cursor-grabbing ${draggedCaseId === c.id ? 'opacity-50 border-dashed border-slate-400' : ''}`}
                                 >
-                                    <div className="flex justify-between items-start mb-1 pointer-events-none">
-                                        <h4 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors truncate mr-2">{c.clientName}</h4>
-                                        <span className="text-[10px] font-medium text-slate-400 flex-shrink-0">{new Date(c.accidentDate).toLocaleDateString(undefined, { month:'numeric', day:'numeric'})}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 mb-2 pointer-events-none">
-                                        <p className="text-xs text-slate-500 line-clamp-1 flex-1 min-w-0">{c.description}</p>
-                                        {c.statuteOfLimitationsDate ? (() => {
-                                            const solDate = new Date(c.statuteOfLimitationsDate);
-                                            const today = new Date();
-                                            const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                                            const isCritical = daysRemaining < 30;
-                                            const isUrgent = daysRemaining < 90;
-                                            return (
-                                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap ${
-                                                    isCritical ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                                                    isUrgent ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                                    'bg-slate-50 text-slate-500 border border-slate-200'
-                                                }`}>
-                                                    {daysRemaining > 0 ? `${daysRemaining}d` : 'EXP'}
+                                    <div className="p-4" onClick={() => onSelectCase(c)}>
+                                        <div className="flex justify-between items-start mb-1 pointer-events-none">
+                                            <h4 className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors truncate mr-2">{c.clientName}</h4>
+                                            <span className="text-[10px] font-medium text-slate-400 flex-shrink-0">{new Date(c.accidentDate).toLocaleDateString(undefined, { month:'numeric', day:'numeric'})}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-2 pointer-events-none">
+                                            <p className="text-xs text-slate-500 line-clamp-1 flex-1 min-w-0">{c.description}</p>
+                                            {c.statuteOfLimitationsDate ? (() => {
+                                                const solDate = new Date(c.statuteOfLimitationsDate);
+                                                const today = new Date();
+                                                const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                                const isCritical = daysRemaining < 30;
+                                                const isUrgent = daysRemaining < 90;
+                                                return (
+                                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap ${
+                                                        isCritical ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                                                        isUrgent ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                                        'bg-slate-50 text-slate-500 border border-slate-200'
+                                                    }`}>
+                                                        {daysRemaining > 0 ? `${daysRemaining}d` : 'EXP'}
+                                                    </span>
+                                                );
+                                            })() : (
+                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 flex-shrink-0">
+                                                    SOL?
                                                 </span>
-                                            );
-                                        })() : (
-                                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-200 flex-shrink-0">
-                                                SOL?
-                                            </span>
-                                        )}
-                                    </div>
+                                            )}
+                                        </div>
 
-                                    {getCaseAlerts(c).length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mb-2 pointer-events-none">
-                                            {getCaseAlerts(c).map((alert, idx) => (
-                                                <span key={idx} className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${alert.color}`}>{alert.label}</span>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 pointer-events-none">
-                                            <CaseTeamPanel
-                                              compact
-                                              team={c.caseTeam || []}
-                                              onChange={() => {}}
-                                            />
-                                        </div>
-                                        <div className="flex items-center gap-1 pointer-events-none">
-                                            {c.impact && (
-                                                <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
-                                                    {c.impact}
-                                                </span>
-                                            )}
-                                            {c.aiAnalysis && (
-                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.aiAnalysis.caseScore >= 8 ? 'bg-green-100 text-green-700' : c.aiAnalysis.caseScore >= 5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                                    AI: {c.aiAnalysis.caseScore}/10
-                                                </span>
-                                            )}
+                                        {getCaseAlerts(c).length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mb-2 pointer-events-none">
+                                                {getCaseAlerts(c).map((alert, idx) => (
+                                                    <span key={idx} className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${alert.color}`}>{alert.label}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2 pointer-events-none">
+                                                <CaseTeamPanel
+                                                  compact
+                                                  team={c.caseTeam || []}
+                                                  onChange={() => {}}
+                                                />
+                                            </div>
+                                            <div className="flex items-center gap-1 pointer-events-none">
+                                                {c.impact && (
+                                                    <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200">
+                                                        {c.impact}
+                                                    </span>
+                                                )}
+                                                {c.aiAnalysis && (
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${c.aiAnalysis.caseScore >= 8 ? 'bg-green-100 text-green-700' : c.aiAnalysis.caseScore >= 5 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
+                                                        AI: {c.aiAnalysis.caseScore}/10
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="px-4 pb-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setExpandedCardId(isExpanded ? null : c.id);
+                                            }}
+                                            className="w-full flex items-center justify-center gap-1 py-1 text-[10px] font-medium text-slate-400 hover:text-blue-600 transition-colors rounded-md hover:bg-slate-50"
+                                        >
+                                            <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                            {isExpanded ? 'Collapse' : 'Details'}
+                                        </button>
+                                    </div>
+                                    {isExpanded && (
+                                        <KanbanCardDetails caseData={c} />
+                                    )}
                                 </div>
-                            ))}
+                                );
+                            })}
                             {colCases.length === 0 && (
                                 <div className="text-center py-8 border-2 border-dashed border-slate-100 rounded-xl">
                                     <p className="text-xs text-slate-400">Drop here</p>
@@ -626,6 +647,168 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
             </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+function formatTimeAgo(timestamp: string): string {
+  const now = new Date();
+  const date = new Date(timestamp);
+  const diffMs = now.getTime() - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+const KanbanCardDetails: React.FC<{ caseData: CaseFile }> = ({ caseData }) => {
+  const [tab, setTab] = useState<'tasks' | 'activity' | 'notes' | 'chats'>('tasks');
+
+  const recentTasks = (caseData.tasks || [])
+    .sort((a, b) => {
+      if (a.status === 'open' && b.status !== 'open') return -1;
+      if (a.status !== 'open' && b.status === 'open') return 1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    })
+    .slice(0, 5);
+
+  const recentActivity = (caseData.activityLog || []).slice(0, 5);
+  const recentNotes = (caseData.teamNotes || []).slice(0, 5);
+  const recentChats = (caseData.chatHistory || []).slice(0, 5);
+
+  const tabs = [
+    { id: 'tasks' as const, label: 'Tasks', count: recentTasks.length },
+    { id: 'activity' as const, label: 'Activity', count: recentActivity.length },
+    { id: 'notes' as const, label: 'Notes', count: recentNotes.length },
+    { id: 'chats' as const, label: 'Chats', count: recentChats.length },
+  ].filter(t => t.count > 0);
+
+  const resolvedTab = tabs.find(t => t.id === tab) ? tab : (tabs[0]?.id || 'tasks');
+  const hasAny = tabs.length > 0;
+
+  return (
+    <div className="border-t border-slate-100 px-3 pb-3" onClick={(e) => e.stopPropagation()}>
+      {!hasAny ? (
+        <p className="text-[10px] text-slate-400 text-center py-3 italic">No recent activity</p>
+      ) : (
+        <>
+          <div className="flex gap-0.5 my-2 bg-slate-50 rounded-lg p-0.5">
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex-1 text-[10px] font-semibold py-1.5 px-1 rounded-md transition-all ${
+                  resolvedTab === t.id ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                {t.label}
+                <span className={`ml-0.5 text-[8px] ${resolvedTab === t.id ? 'text-blue-600' : 'text-slate-300'}`}>{t.count}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-1 max-h-[200px] overflow-y-auto">
+            {resolvedTab === 'tasks' && recentTasks.map(task => (
+              <div key={task.id} className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-slate-50/70 border border-slate-100">
+                <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  task.status === 'completed' ? 'bg-emerald-500' : task.status === 'overdue' ? 'bg-rose-500' : 'border-2 border-slate-300'
+                }`}>
+                  {task.status === 'completed' && (
+                    <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  {task.status === 'overdue' && (
+                    <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 8v4m0 4h.01" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[11px] font-medium leading-tight ${task.status === 'completed' ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
+                    {task.title}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {task.priority === 'high' && (
+                      <span className="text-[8px] font-bold text-rose-600 bg-rose-50 px-1 py-0.5 rounded">HIGH</span>
+                    )}
+                    <span className="text-[9px] text-slate-400">
+                      {task.status === 'completed' && task.completedDate
+                        ? `Done ${formatTimeAgo(task.completedDate)}`
+                        : `Due ${task.dueDate}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {resolvedTab === 'activity' && recentActivity.map(a => (
+              <div key={a.id} className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-slate-50/70 border border-slate-100">
+                <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  a.type === 'system' ? 'bg-blue-100' : a.type === 'note' ? 'bg-amber-100' : 'bg-slate-100'
+                }`}>
+                  {a.type === 'system' ? (
+                    <svg className="w-2 h-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-2 h-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-slate-600 leading-tight">{a.message}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {a.author && <span className="text-[9px] font-medium text-slate-500">{a.author}</span>}
+                    <span className="text-[9px] text-slate-400">{formatTimeAgo(a.timestamp)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {resolvedTab === 'notes' && recentNotes.map(note => (
+              <div key={note.id} className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-amber-50/50 border border-amber-100">
+                <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-[7px] font-bold text-amber-800">{note.authorInitials}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-slate-700 leading-tight">{note.content}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[9px] font-medium text-amber-700">{note.authorName}</span>
+                    <span className="text-[9px] text-slate-400">{formatTimeAgo(note.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {resolvedTab === 'chats' && recentChats.map(chat => (
+              <div key={chat.id} className={`flex items-start gap-2 px-2 py-1.5 rounded-lg border ${
+                chat.isCurrentUser ? 'bg-blue-50/50 border-blue-100' : 'bg-slate-50/70 border-slate-100'
+              }`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  chat.isCurrentUser ? 'bg-blue-200' : 'bg-slate-200'
+                }`}>
+                  <span className={`text-[7px] font-bold ${chat.isCurrentUser ? 'text-blue-800' : 'text-slate-600'}`}>
+                    {chat.senderInitials}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-slate-700 leading-tight">{chat.message}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[9px] font-medium text-slate-500">{chat.sender}</span>
+                    <span className="text-[9px] text-slate-400">{formatTimeAgo(chat.timestamp)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
