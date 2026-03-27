@@ -88,7 +88,7 @@ export const ManualIntakeForm: React.FC<ManualIntakeFormProps> = ({ onSubmit, re
 
     const uploadedDocs: DocumentAttachment[] = [];
     for (const doc of documents) {
-      const entry: DocumentAttachment = { ...doc };
+      const entry: DocumentAttachment = { ...doc, uploadedAt: new Date().toISOString() };
       if (doc.fileData) {
         const result = await uploadBase64Document(caseId, doc.fileData, doc.fileName, doc.mimeType);
         if (!('error' in result)) {

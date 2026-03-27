@@ -220,6 +220,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
           fileName,
           mimeType: doc.mimeType,
           source: 'Intake Upload',
+          uploadedAt: new Date().toISOString(),
         };
 
         if (doc.fileData) {

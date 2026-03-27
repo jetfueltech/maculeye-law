@@ -1,9 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { CaseFile, DocumentAttachment, DocumentType, DOCUMENT_NAMING_RULES, PhotoCategory, PHOTO_CATEGORY_LABELS } from '../types';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
+import { CaseFile, DocumentAttachment, DocumentType, DocumentCategory, DOCUMENT_NAMING_RULES, DOCUMENT_CATEGORY_LABELS, PhotoCategory, PHOTO_CATEGORY_LABELS } from '../types';
 import { uploadDocument, deleteDocument } from '../services/documentStorageService';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
+import { analyzeUploadedDocument, applyDocumentActions } from '../services/documentActionService';
 
 interface DocumentsPanelProps {
   caseData: CaseFile;
@@ -31,10 +32,15 @@ const DOC_TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
   { value: 'authorization', label: 'Authorization' },
   { value: 'insurance_card', label: 'Insurance Card' },
   { value: 'photo', label: 'Photo' },
+  { value: 'email', label: 'Email' },
   { value: 'other', label: 'Other' },
 ];
 
-const VALID_DOC_TYPES: DocumentType[] = ['retainer', 'crash_report', 'medical_record', 'authorization', 'insurance_card', 'photo', 'other'];
+const CATEGORY_OPTIONS: { value: DocumentCategory; label: string }[] = Object.entries(DOCUMENT_CATEGORY_LABELS).map(
+  ([value, label]) => ({ value: value as DocumentCategory, label })
+);
+
+const VALID_DOC_TYPES: DocumentType[] = ['retainer', 'crash_report', 'medical_record', 'authorization', 'insurance_card', 'photo', 'email', 'other'];
 
 function readFileAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -56,19 +62,28 @@ function inferDocType(filename: string): DocumentType {
   return 'other';
 }
 
+function formatDate(isoStr?: string): string {
+  if (!isoStr) return '--';
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return '--';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpdateCase }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [generatedDocPreview, setGeneratedDocPreview] = useState<DocumentFormType | null>(null);
-  const [tagInput, setTagInput] = useState('');
-  const [activeDocIndex, setActiveDocIndex] = useState<number | null>(null);
   const [renamingDocIndex, setRenamingDocIndex] = useState<number | null>(null);
   const [tempDocName, setTempDocName] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [editingTypeIndex, setEditingTypeIndex] = useState<number | null>(null);
+  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<DocumentType | 'all'>('all');
 
   const addActivity = (c: CaseFile, message: string): CaseFile => {
     const log = {
@@ -272,9 +287,9 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
           fileName: properName,
           mimeType: pending.file.type || 'application/octet-stream',
           source: 'Upload',
-          tags: [],
           storagePath: result.path,
           storageUrl: result.url,
+          uploadedAt: new Date().toISOString(),
           ...(pending.type === 'photo' && pending.photoCategory ? { photoCategory: pending.photoCategory } : {}),
           ...(pending.description?.trim() ? { description: pending.description.trim() } : {}),
         });
@@ -288,6 +303,27 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
         documents: [...caseData.documents, ...newDocs],
       };
       updated = addActivity(updated, `Uploaded ${newDocs.length} document(s): ${newDocs.map(d => d.fileName).join(', ')}`);
+
+      for (let i = 0; i < newDocs.length; i++) {
+        const doc = newDocs[i];
+        const suggestedName = pendingFiles[i]?.suggestedName || '';
+        const analysis = analyzeUploadedDocument(doc, suggestedName, updated);
+
+        if (analysis.suggestedCategory) {
+          const docIdx = updated.documents.length - newDocs.length + i;
+          const updatedDocs = [...updated.documents];
+          updatedDocs[docIdx] = { ...updatedDocs[docIdx], category: analysis.suggestedCategory };
+          updated = { ...updated, documents: updatedDocs };
+        }
+
+        if (analysis.completedTasks.length > 0) {
+          updated = applyDocumentActions(updated, analysis);
+          for (const msg of analysis.activityMessages) {
+            updated = addActivity(updated, msg);
+          }
+        }
+      }
+
       onUpdateCase(updated);
     }
 
@@ -311,16 +347,6 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     onUpdateCase(updated);
   };
 
-  const handleAddTag = (docIndex: number) => {
-    if (!tagInput.trim()) return;
-    const newDocs = [...caseData.documents];
-    if (!newDocs[docIndex].tags) newDocs[docIndex].tags = [];
-    newDocs[docIndex].tags!.push(tagInput.trim());
-    onUpdateCase({ ...caseData, documents: newDocs });
-    setTagInput('');
-    setActiveDocIndex(null);
-  };
-
   const handleStartRename = (idx: number, currentName: string) => {
     setRenamingDocIndex(idx);
     setTempDocName(currentName);
@@ -341,6 +367,21 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     setEditingTypeIndex(null);
   };
 
+  const handleUpdateCategory = (idx: number, cat: DocumentCategory) => {
+    const newDocs = [...caseData.documents];
+    newDocs[idx] = { ...newDocs[idx], category: cat };
+    onUpdateCase({ ...caseData, documents: newDocs });
+    setEditingCategoryIndex(null);
+  };
+
+  const handleRemoveCategory = (idx: number) => {
+    const newDocs = [...caseData.documents];
+    const { category: _, ...rest } = newDocs[idx];
+    newDocs[idx] = rest as DocumentAttachment;
+    onUpdateCase({ ...caseData, documents: newDocs });
+    setEditingCategoryIndex(null);
+  };
+
   const getDocIcon = (doc: DocumentAttachment) => {
     if (doc.mimeType?.startsWith('image/')) return 'bg-emerald-50 text-emerald-600';
     if (doc.mimeType?.includes('pdf')) return 'bg-red-50 text-red-500';
@@ -349,6 +390,29 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
   };
 
   const isScanning = pendingFiles.some(pf => pf.scanStatus === 'scanning');
+
+  const filteredDocs = useMemo(() => {
+    return caseData.documents
+      .map((doc, originalIndex) => ({ doc, originalIndex }))
+      .filter(({ doc }) => {
+        if (filterType !== 'all' && doc.type !== filterType) return false;
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const nameMatch = doc.fileName?.toLowerCase().includes(q);
+          const sourceMatch = doc.source?.toLowerCase().includes(q);
+          const descMatch = doc.description?.toLowerCase().includes(q);
+          const catMatch = doc.category ? DOCUMENT_CATEGORY_LABELS[doc.category]?.toLowerCase().includes(q) : false;
+          const typeMatch = (DOCUMENT_NAMING_RULES[doc.type] || doc.type).toLowerCase().includes(q);
+          if (!nameMatch && !sourceMatch && !descMatch && !catMatch && !typeMatch) return false;
+        }
+        return true;
+      });
+  }, [caseData.documents, searchQuery, filterType]);
+
+  const activeDocTypes = useMemo(() => {
+    const types = new Set(caseData.documents.map(d => d.type));
+    return DOC_TYPE_OPTIONS.filter(opt => types.has(opt.value));
+  }, [caseData.documents]);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -532,10 +596,61 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
       )}
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-slate-800 text-sm">
-            {caseData.documents.length} Document{caseData.documents.length !== 1 ? 's' : ''}
-          </h3>
+        <div className="px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-slate-800 text-sm">
+              {caseData.documents.length} Document{caseData.documents.length !== 1 ? 's' : ''}
+            </h3>
+          </div>
+          {caseData.documents.length > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-xs">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search documents..."
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setFilterType('all')}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    filterType === 'all'
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  All
+                </button>
+                {activeDocTypes.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setFilterType(filterType === opt.value ? 'all' : opt.value)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      filterType === opt.value
+                        ? 'bg-slate-800 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {caseData.documents.length === 0 ? (
@@ -548,6 +663,13 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
             <p className="text-sm text-slate-500">No documents uploaded yet</p>
             <p className="text-xs text-slate-400 mt-1">Drag files above or click Browse to get started</p>
           </div>
+        ) : filteredDocs.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-sm text-slate-500">No documents match your search</p>
+            <button onClick={() => { setSearchQuery(''); setFilterType('all'); }} className="text-xs text-blue-600 hover:text-blue-700 mt-2">
+              Clear filters
+            </button>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
@@ -555,13 +677,14 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Document</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Source</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tags</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Uploaded</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
-                {caseData.documents.map((doc, idx) => (
+                {filteredDocs.map(({ doc, originalIndex: idx }) => (
                   <tr
                     key={idx}
                     className="hover:bg-blue-50/40 transition-colors cursor-pointer group/row"
@@ -633,35 +756,51 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                           <svg className="w-3 h-3 opacity-0 group-hover/type:opacity-100 transition-opacity text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                         </button>
                       )}
-                      {doc.photoCategory && (
-                        <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
-                          {PHOTO_CATEGORY_LABELS[doc.photoCategory]}
-                        </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      {editingCategoryIndex === idx ? (
+                        <div className="flex items-center gap-1">
+                          <select
+                            autoFocus
+                            className="text-xs bg-white border border-blue-300 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
+                            value={doc.category || ''}
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleUpdateCategory(idx, e.target.value as DocumentCategory);
+                              } else {
+                                handleRemoveCategory(idx);
+                              }
+                            }}
+                            onBlur={() => setEditingCategoryIndex(null)}
+                          >
+                            <option value="">None</option>
+                            {CATEGORY_OPTIONS.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : doc.category ? (
+                        <button
+                          onClick={() => setEditingCategoryIndex(idx)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 transition-colors group/cat"
+                        >
+                          {DOCUMENT_CATEGORY_LABELS[doc.category]}
+                          <svg className="w-3 h-3 opacity-0 group-hover/cat:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setEditingCategoryIndex(idx)}
+                          className="text-slate-400 hover:text-blue-600 text-xs transition-colors"
+                        >
+                          + Add
+                        </button>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                       {doc.source || 'Manual Upload'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex flex-wrap gap-1 items-center">
-                        {doc.tags?.map((tag, tIdx) => (
-                          <span key={tIdx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                            {tag}
-                          </span>
-                        ))}
-                        {activeDocIndex === idx ? (
-                          <input
-                            autoFocus
-                            className="w-20 text-xs border border-slate-300 rounded px-1.5 py-0.5 outline-none focus:ring-2 focus:ring-blue-500"
-                            value={tagInput}
-                            onChange={(e) => setTagInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleAddTag(idx); }}
-                            onBlur={() => handleAddTag(idx)}
-                          />
-                        ) : (
-                          <button onClick={() => setActiveDocIndex(idx)} className="text-slate-400 hover:text-blue-600 text-xs font-bold">+</button>
-                        )}
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
+                      {formatDate(doc.uploadedAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">

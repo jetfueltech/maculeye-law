@@ -160,6 +160,49 @@ export const EMAIL_CATEGORY_LABELS: Record<EmailCategory, string> = {
   general: 'General',
 };
 
+export type DocumentCategory =
+  | 'client_property_damage'
+  | 'defendant_property_damage'
+  | 'injury_photos'
+  | 'scene_photos'
+  | 'drivers_license'
+  | 'insurance_card'
+  | 'lor_acknowledgment'
+  | 'coverage_determination'
+  | 'liability_determination'
+  | 'policy_limits'
+  | 'settlement'
+  | 'demand'
+  | 'correspondence'
+  | 'billing'
+  | 'intake'
+  | 'investigation'
+  | 'treatment'
+  | 'workflow_generated'
+  | 'other';
+
+export const DOCUMENT_CATEGORY_LABELS: Record<DocumentCategory, string> = {
+  client_property_damage: 'Client Property Damage',
+  defendant_property_damage: 'Defendant Property Damage',
+  injury_photos: 'Injury Photos',
+  scene_photos: 'Scene Photos',
+  drivers_license: "Driver's License",
+  insurance_card: 'Insurance Card',
+  lor_acknowledgment: 'LOR Acknowledgment',
+  coverage_determination: 'Coverage Determination',
+  liability_determination: 'Liability Determination',
+  policy_limits: 'Policy Limits',
+  settlement: 'Settlement',
+  demand: 'Demand',
+  correspondence: 'Correspondence',
+  billing: 'Billing',
+  intake: 'Intake',
+  investigation: 'Investigation',
+  treatment: 'Treatment',
+  workflow_generated: 'Workflow Generated',
+  other: 'Other',
+};
+
 export interface DocumentAttachment {
   type: DocumentType;
   fileData: string | null;
@@ -167,6 +210,7 @@ export interface DocumentAttachment {
   mimeType?: string;
   source?: string;
   tags?: string[];
+  category?: DocumentCategory;
   linkedFacilityId?: string;
   photoCategory?: PhotoCategory;
   description?: string;
@@ -175,6 +219,7 @@ export interface DocumentAttachment {
   billAmount?: number;
   documentTypeKey?: string;
   generatedFormType?: string;
+  uploadedAt?: string;
 }
 
 export type MedicalProviderType = 'hospital' | 'er' | 'urgent_care' | 'chiropractor' | 'physical_therapy' | 'orthopedic' | 'neurologist' | 'pain_management' | 'primary_care' | 'imaging' | 'surgery_center' | 'other';

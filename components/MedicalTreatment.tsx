@@ -280,10 +280,11 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
         fileName: generatedName,
         mimeType,
         source: 'bill_upload',
-        tags: ['medical_bill', data.billType || 'bill'].filter(Boolean),
+        category: 'billing',
         linkedFacilityId: existingProvider?.id,
         billAmount: data.totalCharges,
         documentTypeKey: docTypeKey,
+        uploadedAt: new Date().toISOString(),
       };
 
       if (existingProvider) {

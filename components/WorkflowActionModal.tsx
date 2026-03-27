@@ -261,9 +261,10 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
       fileName: `${docName} — ${caseData.clientName} — ${today()}.pdf`,
       mimeType: 'application/pdf',
       source: 'Generated',
-      tags: [cfg.title, 'workflow-generated'],
+      category: 'workflow_generated',
       linkedFacilityId: provider?.id || erVisit?.id,
       generatedFormType: docFormType,
+      uploadedAt: new Date().toISOString(),
     };
     const updated = {
       ...caseData,

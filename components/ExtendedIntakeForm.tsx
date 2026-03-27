@@ -876,8 +876,9 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
               fileName: `${docName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.pdf`,
               mimeType: 'application/pdf',
               source: 'Generated',
-              tags: [docName],
+              category: 'intake',
               generatedFormType: docFormType,
+              uploadedAt: new Date().toISOString(),
             };
             onUpdateCase({ ...caseData, documents: [...caseData.documents, newDoc] });
           } : undefined}
