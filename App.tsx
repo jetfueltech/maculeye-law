@@ -15,6 +15,7 @@ import { Directory } from './components/Directory';
 import { CaseFile, CaseStatus, Email, DocumentAttachment } from './types';
 import { TasksView } from './components/TasksView';
 import { Workspace } from './components/Workspace';
+import { ActivityFeed } from './components/ActivityFeed';
 import { classifyAttachmentType } from './services/geminiService';
 import { applyWorkflowToCase } from './services/workflowEngine';
 import { getCasesByFirm, upsertCase, generateCaseNumber, deleteCase } from './services/caseService';
@@ -309,6 +310,16 @@ function AppContent() {
 
           {!casesLoading && currentView === 'analytics' && !selectedCase && (
             <Analytics cases={cases} />
+          )}
+
+          {!casesLoading && currentView === 'activity' && !selectedCase && (
+            <ActivityFeed
+              cases={cases}
+              onSelectCase={(c) => {
+                setSelectedCase(c);
+                setCurrentView('dashboard');
+              }}
+            />
           )}
 
            {currentView === 'directory' && !selectedCase && (
