@@ -192,8 +192,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { documents, clientNames, clientName, apiKey: clientApiKey }: { documents: DocumentInput[]; clientNames?: string[]; clientName?: string; apiKey?: string } = body;
+    const { documents, clientNames, clientName, mode, apiKey: clientApiKey }: { documents: DocumentInput[]; clientNames?: string[]; clientName?: string; mode?: string; apiKey?: string } = body;
     const resolvedClientNames = (clientNames && clientNames.length > 0) ? clientNames : (clientName ? [clientName] : []);
+    const identifyOnly = mode === "identify_only";
 
     const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("API_KEY") || clientApiKey;
     if (!apiKey) {
@@ -281,6 +282,12 @@ The filename should follow the pattern: "DocumentType - Detail" (e.g., "Retainer
 
           identified.push(result);
           send("doc_identified", { index: i, ...result });
+        }
+
+        if (identifyOnly) {
+          send("complete", { message: "Identification complete" });
+          controller.close();
+          return;
         }
 
         send("extraction_start", { message: "Cross-referencing all documents to extract detailed client data..." });

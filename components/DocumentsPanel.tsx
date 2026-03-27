@@ -1,19 +1,27 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { CaseFile, DocumentAttachment, DocumentType, DOCUMENT_NAMING_RULES, PhotoCategory, PHOTO_CATEGORY_LABELS } from '../types';
 import { uploadDocument, deleteDocument } from '../services/documentStorageService';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
+import { generateDocumentNameWithExt } from '../services/documentNamingService';
 
 interface DocumentsPanelProps {
   caseData: CaseFile;
   onUpdateCase: (updatedCase: CaseFile) => void;
 }
 
+type ScanStatus = 'pending' | 'scanning' | 'done' | 'error';
+
 interface PendingFile {
   file: File;
+  fileData: string;
   preview: string;
   type: DocumentType;
   photoCategory?: PhotoCategory;
+  description?: string;
+  scanStatus: ScanStatus;
+  suggestedName?: string;
+  aiConfidence?: number;
 }
 
 const DOC_TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
@@ -25,6 +33,28 @@ const DOC_TYPE_OPTIONS: { value: DocumentType; label: string }[] = [
   { value: 'photo', label: 'Photo' },
   { value: 'other', label: 'Other' },
 ];
+
+const VALID_DOC_TYPES: DocumentType[] = ['retainer', 'crash_report', 'medical_record', 'authorization', 'insurance_card', 'photo', 'other'];
+
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function inferDocType(filename: string): DocumentType {
+  const lower = filename.toLowerCase();
+  if (lower.includes('retainer')) return 'retainer';
+  if (lower.includes('crash') || lower.includes('police')) return 'crash_report';
+  if (lower.includes('medical') || lower.includes('record')) return 'medical_record';
+  if (lower.includes('auth') || lower.includes('hipaa')) return 'authorization';
+  if (lower.includes('insurance')) return 'insurance_card';
+  if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic)$/)) return 'photo';
+  return 'other';
+}
 
 export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpdateCase }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,27 +79,112 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     return { ...c, activityLog: [log, ...(c.activityLog || [])] };
   };
 
-  const handleFilesSelected = (files: FileList | File[]) => {
-    const newPending: PendingFile[] = [];
-    Array.from(files).forEach((file) => {
-      const isImage = file.type.startsWith('image/');
-      const preview = isImage ? URL.createObjectURL(file) : '';
-      const inferredType = inferDocType(file.name);
-      newPending.push({ file, preview, type: inferredType });
-    });
-    setPendingFiles((prev) => [...prev, ...newPending]);
-    setUploadError(null);
+  const runAIScan = async (files: PendingFile[], startIndex: number) => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !supabaseKey) return;
+
+    const documentsPayload = files.map(pf => ({
+      fileData: pf.fileData,
+      mimeType: pf.file.type || 'application/octet-stream',
+      fileName: pf.file.name,
+    }));
+
+    setPendingFiles(prev => prev.map((pf, i) =>
+      i >= startIndex && i < startIndex + files.length ? { ...pf, scanStatus: 'scanning' as ScanStatus } : pf
+    ));
+
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/analyze-documents`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ documents: documentsPayload, mode: 'identify_only' }),
+      });
+
+      if (!response.ok) {
+        setPendingFiles(prev => prev.map((pf, i) =>
+          i >= startIndex && i < startIndex + files.length ? { ...pf, scanStatus: 'error' as ScanStatus } : pf
+        ));
+        return;
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) return;
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let eventType = '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ') && eventType) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (eventType === 'doc_identified') {
+                const globalIdx = startIndex + data.index;
+                const aiType = VALID_DOC_TYPES.includes(data.type) ? data.type as DocumentType : undefined;
+                setPendingFiles(prev => prev.map((pf, i) => {
+                  if (i !== globalIdx) return pf;
+                  return {
+                    ...pf,
+                    type: aiType || pf.type,
+                    suggestedName: data.suggestedName || pf.suggestedName,
+                    aiConfidence: data.confidence,
+                    scanStatus: 'done' as ScanStatus,
+                  };
+                }));
+              }
+            } catch {}
+            eventType = '';
+          }
+        }
+      }
+
+      setPendingFiles(prev => prev.map((pf, i) =>
+        i >= startIndex && i < startIndex + files.length && pf.scanStatus === 'scanning'
+          ? { ...pf, scanStatus: 'done' as ScanStatus }
+          : pf
+      ));
+    } catch {
+      setPendingFiles(prev => prev.map((pf, i) =>
+        i >= startIndex && i < startIndex + files.length ? { ...pf, scanStatus: 'error' as ScanStatus } : pf
+      ));
+    }
   };
 
-  const inferDocType = (filename: string): DocumentType => {
-    const lower = filename.toLowerCase();
-    if (lower.includes('retainer')) return 'retainer';
-    if (lower.includes('crash') || lower.includes('police')) return 'crash_report';
-    if (lower.includes('medical') || lower.includes('record')) return 'medical_record';
-    if (lower.includes('auth') || lower.includes('hipaa')) return 'authorization';
-    if (lower.includes('insurance')) return 'insurance_card';
-    if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic)$/)) return 'photo';
-    return 'other';
+  const handleFilesSelected = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    const newPending: PendingFile[] = [];
+
+    for (const file of fileArray) {
+      const isImage = file.type.startsWith('image/');
+      const preview = isImage ? URL.createObjectURL(file) : '';
+      const fileData = await readFileAsDataURL(file);
+      newPending.push({
+        file,
+        fileData,
+        preview,
+        type: inferDocType(file.name),
+        scanStatus: 'pending',
+      });
+    }
+
+    const startIndex = pendingFiles.length;
+    setPendingFiles(prev => [...prev, ...newPending]);
+    setUploadError(null);
+
+    setTimeout(() => runAIScan(newPending, startIndex), 50);
   };
 
   const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,10 +213,10 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFilesSelected(e.dataTransfer.files);
     }
-  }, []);
+  }, [pendingFiles.length]);
 
   const removePendingFile = (idx: number) => {
-    setPendingFiles((prev) => {
+    setPendingFiles(prev => {
       const removed = prev[idx];
       if (removed.preview) URL.revokeObjectURL(removed.preview);
       return prev.filter((_, i) => i !== idx);
@@ -109,12 +224,21 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
   };
 
   const updatePendingType = (idx: number, type: DocumentType) => {
-    setPendingFiles((prev) => prev.map((f, i) => (i === idx ? { ...f, type } : f)));
+    setPendingFiles(prev => prev.map((f, i) => (i === idx ? { ...f, type } : f)));
   };
 
   const updatePendingPhotoCategory = (idx: number, cat: PhotoCategory) => {
-    setPendingFiles((prev) => prev.map((f, i) => (i === idx ? { ...f, photoCategory: cat } : f)));
+    setPendingFiles(prev => prev.map((f, i) => (i === idx ? { ...f, photoCategory: cat } : f)));
   };
+
+  const updatePendingDescription = (idx: number, description: string) => {
+    setPendingFiles(prev => prev.map((f, i) => (i === idx ? { ...f, description } : f)));
+  };
+
+  const existingTypeCounts: Record<string, number> = {};
+  caseData.documents.forEach(doc => {
+    existingTypeCounts[doc.type] = (existingTypeCounts[doc.type] || 0) + 1;
+  });
 
   const handleConfirmUpload = async () => {
     if (pendingFiles.length === 0) return;
@@ -123,22 +247,35 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
 
     const newDocs: DocumentAttachment[] = [];
     const errors: string[] = [];
+    const batchTypeCounts: Record<string, number> = { ...existingTypeCounts };
 
     for (const pending of pendingFiles) {
       const result = await uploadDocument(caseData.id, pending.file);
       if ('error' in result) {
         errors.push(`${pending.file.name}: ${result.error}`);
       } else {
+        batchTypeCounts[pending.type] = (batchTypeCounts[pending.type] || 0) + 1;
+
+        const properName = generateDocumentNameWithExt({
+          clientName: caseData.clientName,
+          dol: caseData.accidentDate || '',
+          docType: pending.type,
+          source: pending.suggestedName?.replace(/^.*?-\s*/, '').trim() || undefined,
+          version: batchTypeCounts[pending.type],
+          originalFileName: pending.file.name,
+        });
+
         newDocs.push({
           type: pending.type,
           fileData: null,
-          fileName: pending.file.name,
+          fileName: properName,
           mimeType: pending.file.type || 'application/octet-stream',
-          source: 'Manual Upload',
+          source: 'Upload',
           tags: [],
           storagePath: result.path,
           storageUrl: result.url,
           ...(pending.type === 'photo' && pending.photoCategory ? { photoCategory: pending.photoCategory } : {}),
+          ...(pending.description?.trim() ? { description: pending.description.trim() } : {}),
         });
       }
       if (pending.preview) URL.revokeObjectURL(pending.preview);
@@ -149,7 +286,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
         ...caseData,
         documents: [...caseData.documents, ...newDocs],
       };
-      updated = addActivity(updated, `Uploaded ${newDocs.length} document(s): ${newDocs.map((d) => d.fileName).join(', ')}`);
+      updated = addActivity(updated, `Uploaded ${newDocs.length} document(s): ${newDocs.map(d => d.fileName).join(', ')}`);
       onUpdateCase(updated);
     }
 
@@ -203,6 +340,8 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     return 'bg-slate-50 text-slate-500';
   };
 
+  const isScanning = pendingFiles.some(pf => pf.scanStatus === 'scanning');
+
   return (
     <div className="animate-fade-in space-y-6">
       <div
@@ -242,54 +381,101 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
 
       {pendingFiles.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h4 className="font-bold text-slate-800 mb-4 text-sm">
-            {pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} ready to upload
-          </h4>
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-slate-800 text-sm">
+              {pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} ready to upload
+            </h4>
+            {isScanning && (
+              <div className="flex items-center gap-2 text-xs text-blue-600 font-medium">
+                <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                AI scanning documents...
+              </div>
+            )}
+          </div>
           <div className="space-y-3 mb-6">
             {pendingFiles.map((pf, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                {pf.preview ? (
-                  <img src={pf.preview} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
+              <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center gap-4">
+                  {pf.preview ? (
+                    <img src={pf.preview} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-800 truncate">{pf.file.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-slate-400">{(pf.file.size / 1024).toFixed(0)} KB</p>
+                      {pf.scanStatus === 'scanning' && (
+                        <span className="flex items-center gap-1 text-[10px] text-blue-500 font-medium">
+                          <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Scanning...
+                        </span>
+                      )}
+                      {pf.scanStatus === 'done' && (
+                        <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                          AI identified
+                          {pf.aiConfidence != null && ` (${pf.aiConfidence}%)`}
+                        </span>
+                      )}
+                      {pf.scanStatus === 'error' && (
+                        <span className="text-[10px] text-amber-600 font-medium">Manual classification</span>
+                      )}
+                    </div>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{pf.file.name}</p>
-                  <p className="text-xs text-slate-400">{(pf.file.size / 1024).toFixed(0)} KB</p>
-                </div>
-                <select
-                  className="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
-                  value={pf.type}
-                  onChange={(e) => updatePendingType(idx, e.target.value as DocumentType)}
-                >
-                  {DOC_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                {pf.type === 'photo' && (
                   <select
                     className="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
-                    value={pf.photoCategory || ''}
-                    onChange={(e) => updatePendingPhotoCategory(idx, e.target.value as PhotoCategory)}
+                    value={pf.type}
+                    onChange={(e) => updatePendingType(idx, e.target.value as DocumentType)}
                   >
-                    <option value="">Category...</option>
-                    {Object.entries(PHOTO_CATEGORY_LABELS).map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
+                    {DOC_TYPE_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
+                  {pf.type === 'photo' && (
+                    <select
+                      className="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
+                      value={pf.photoCategory || ''}
+                      onChange={(e) => updatePendingPhotoCategory(idx, e.target.value as PhotoCategory)}
+                    >
+                      <option value="">Category...</option>
+                      {Object.entries(PHOTO_CATEGORY_LABELS).map(([val, label]) => (
+                        <option key={val} value={val}>{label}</option>
+                      ))}
+                    </select>
+                  )}
+                  <button
+                    onClick={() => removePendingFile(idx)}
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                {pf.type === 'photo' && (
+                  <div className="mt-2 pl-16">
+                    <input
+                      type="text"
+                      className="w-full text-xs bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
+                      placeholder="Describe this image (e.g., Front bumper damage, Left knee bruising, Intersection looking north)"
+                      value={pf.description || ''}
+                      onChange={(e) => updatePendingDescription(idx, e.target.value)}
+                    />
+                  </div>
                 )}
-                <button
-                  onClick={() => removePendingFile(idx)}
-                  className="text-slate-400 hover:text-rose-500 transition-colors p-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
             ))}
           </div>
@@ -303,9 +489,9 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
           <div className="flex items-center gap-3">
             <button
               onClick={handleConfirmUpload}
-              disabled={uploading}
+              disabled={uploading || isScanning}
               className={`px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all flex items-center ${
-                uploading
+                uploading || isScanning
                   ? 'bg-blue-300 text-white cursor-wait'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
               }`}
@@ -318,13 +504,15 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                   </svg>
                   Uploading...
                 </>
+              ) : isScanning ? (
+                'Waiting for scan...'
               ) : (
                 `Upload ${pendingFiles.length} File${pendingFiles.length > 1 ? 's' : ''}`
               )}
             </button>
             <button
               onClick={() => {
-                pendingFiles.forEach((pf) => { if (pf.preview) URL.revokeObjectURL(pf.preview); });
+                pendingFiles.forEach(pf => { if (pf.preview) URL.revokeObjectURL(pf.preview); });
                 setPendingFiles([]);
               }}
               className="px-4 py-2.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
@@ -377,7 +565,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                       }
                     }}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className={`flex-shrink-0 h-8 w-8 rounded flex items-center justify-center mr-3 ${getDocIcon(doc)}`}>
                           {doc.mimeType?.startsWith('image/') ? (
@@ -386,28 +574,33 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                           )}
                         </div>
-                        {renamingDocIndex === idx ? (
-                          <input
-                            autoFocus
-                            className="w-40 text-sm border border-blue-300 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
-                            value={tempDocName}
-                            onChange={(e) => setTempDocName(e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            onBlur={() => handleSaveRename(idx)}
-                            onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRename(idx); }}
-                          />
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-slate-900 group-hover/row:text-blue-700 transition-colors">{doc.fileName}</span>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleStartRename(idx, doc.fileName); }}
-                              className="opacity-0 group-hover/row:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity p-1"
-                            >
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                            <span className="opacity-0 group-hover/row:opacity-100 text-[10px] text-blue-500 font-medium transition-opacity">Preview</span>
-                          </div>
-                        )}
+                        <div className="min-w-0">
+                          {renamingDocIndex === idx ? (
+                            <input
+                              autoFocus
+                              className="w-40 text-sm border border-blue-300 rounded px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500"
+                              value={tempDocName}
+                              onChange={(e) => setTempDocName(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              onBlur={() => handleSaveRename(idx)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveRename(idx); }}
+                            />
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-slate-900 group-hover/row:text-blue-700 transition-colors">{doc.fileName}</span>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleStartRename(idx, doc.fileName); }}
+                                className="opacity-0 group-hover/row:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity p-1"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                              </button>
+                              <span className="opacity-0 group-hover/row:opacity-100 text-[10px] text-blue-500 font-medium transition-opacity">Preview</span>
+                            </div>
+                          )}
+                          {doc.description && (
+                            <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-xs">{doc.description}</p>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

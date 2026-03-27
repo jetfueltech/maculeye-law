@@ -169,6 +169,7 @@ export interface DocumentAttachment {
   tags?: string[];
   linkedFacilityId?: string;
   photoCategory?: PhotoCategory;
+  description?: string;
   storagePath?: string;
   storageUrl?: string;
   billAmount?: number;
