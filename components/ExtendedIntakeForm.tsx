@@ -75,97 +75,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
     }
   }, [saveStatus]);
 
-  const handleSimulateCompletion = () => {
-      setFormData(prev => ({
-          ...prev,
-          intake_admin: {
-              ...prev.intake_admin,
-              interview: { date: new Date().toISOString().split('T')[0], time: '14:00', location: 'Office' },
-              referral_source: 'Internet'
-          },
-          accident: {
-              ...prev.accident,
-              crash_report_number: 'CR-' + Math.floor(Math.random() * 100000),
-              agency: 'City Police Dept',
-              time_of_accident: '08:45',
-              weather_conditions: 'Clear',
-              city: 'Chicago',
-              state: 'IL',
-              zip: '60601',
-              plaintiff_role: 'Driver',
-              traffic_controls: ['Traffic light'],
-              speed_limit: 35,
-              accident_facts: prev.accident?.accident_facts || 'Client was proceeding Northbound on Main St when Defendant failed to yield at red light, striking Client vehicle on driver side.',
-              main_intersections: 'Main St & 4th Ave',
-              plaintiff_direction: 'North',
-              defendant_direction: 'West'
-          },
-          client: {
-              ...prev.client,
-              ssn: '***-**-6789',
-              marital_status: 'Married',
-              drivers_license: { number: 'D12345678', state_issued: 'IL' },
-              emergency_contact: { name: 'Jane Doe', phone: '555-999-8888' },
-              address: { ...prev.client?.address, city: 'Chicago', state: 'IL', zip: '60614', street: '123 Pine St' }
-          },
-          employment: {
-              time_lost_from_work: true,
-              how_much_time_lost: '2 weeks',
-              position: 'Accountant',
-              employer: { 
-                  name: 'FinCorp LLC', 
-                  phone: '555-111-2222',
-                  address: { street: '100 Financial District', city: 'Chicago', state: 'IL', zip: '60606' }
-              },
-              wages: { amount: 85000, per: 'Year' },
-              hours_per_week: 40
-          },
-          medical: {
-              ambulance: true,
-              xrays_taken: true,
-              hospital: { name: 'Mercy Hospital', address: 'Chicago, IL', phone: '555-555-0000' },
-              injuries_detail: 'Cervical strain/sprain, left shoulder contusion, lower back pain radiating to left leg.',
-              pre_existing_conditions: 'None reported',
-              providers: [{ name: 'Dr. Smith (Ortho)', address: 'Chicago Ortho Group', phone: '555-555-1111' }]
-          },
-          vehicle_property_damage: {
-              license_plate: 'ABC-1234',
-              damaged_vehicle: { year: 2020, make: 'Honda', model: 'Accord', color: 'Silver' },
-              vehicle_drivable: false,
-              airbags_deployed: true,
-              seatbelt_worn: true,
-              property_damage_amount_or_estimate: 12500,
-              pictures_taken: true,
-              pictures_taken_by_whom: 'Client',
-              body_shop: { name: 'Joe\'s Auto Body', phone: '555-444-3333', address: '555 Auto Way' }
-          },
-          defendant: {
-              name: 'Robert Atfault',
-              phone: '555-666-7777',
-              address: { street: '99 Bad Driver Ln', city: 'Chicago', state: 'IL', zip: '60601' },
-              vehicle: { year: 2018, make: 'Ford', model: 'F-150', color: 'Black' },
-              insurance: {
-                  company: 'State Farm',
-                  type: 'Personal',
-                  policy_number: 'SF-123456789',
-                  claim_number: '12-3456-78',
-                  claims_adjuster: { name: 'Jim Jake', phone: '800-555-5555', ext: '123' },
-                  coverage_limits: '100/300/100'
-              }
-          },
-          health_insurance: {
-              company: 'Blue Cross Blue Shield',
-              insured_name: 'Same',
-              member_number: 'XYZ123456789',
-              group_number: 'G12345'
-          },
-          first_party_insurance: {
-              company: 'Geico',
-              claim_number: 'G-987654321',
-              coverage_limits: '50/100/50'
-          }
-      }));
-  };
 
   const handleChange = (section: keyof ExtendedIntakeData, field: string, value: any, subField?: string, subSubField?: string) => {
     setFormData(prev => {
@@ -430,13 +339,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                >
                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                  Generate Forms
-               </button>
-               <button 
-                 onClick={handleSimulateCompletion}
-                 className="px-3 py-2 text-xs font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 rounded border border-purple-200 flex items-center whitespace-nowrap transition-colors"
-               >
-                 <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                 Simulate Completion
                </button>
            </div>
        </div>
