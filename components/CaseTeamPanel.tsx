@@ -105,13 +105,8 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
     );
   }
 
-  const grouped = ROLES.reduce<Record<CaseTeamRole, CaseTeamMember[]>>((acc, role) => {
-    acc[role] = team.filter(m => m.role === role);
-    return acc;
-  }, { primary_attorney: [], paralegal: [], legal_assistant: [], staff: [] });
-
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-bold text-slate-700">Case Team</h3>
         <div className="relative" ref={addRef}>
@@ -170,63 +165,52 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
       </div>
 
       {team.length === 0 ? (
-        <div className="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl">
-          <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-          <p className="text-xs text-slate-400">No team members assigned</p>
-          <p className="text-[10px] text-slate-300 mt-1">Click "Add Member" to build the case team</p>
+        <div className="flex items-center gap-2 py-1">
+          <span className="w-6 h-6 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          </span>
+          <span className="text-xs text-slate-400">No team members</span>
         </div>
       ) : (
-        <div className="space-y-2">
-          {ROLES.map(role => {
-            const members = grouped[role];
-            if (members.length === 0) return null;
-            return (
-              <div key={role}>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
-                  {CASE_TEAM_ROLE_LABELS[role]}
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          {team.map(m => (
+            <div key={m.id} className="flex items-center gap-1.5 group py-0.5">
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${colorForId(m.userId)}`}>
+                {m.initials}
+              </span>
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-xs font-medium text-slate-800 truncate">{m.name}</span>
+                <div className="relative">
+                  <button
+                    onClick={() => setEditingMemberId(editingMemberId === m.id ? null : m.id)}
+                    className="text-[10px] text-slate-400 hover:text-slate-600 whitespace-nowrap"
+                  >
+                    ({CASE_TEAM_ROLE_LABELS[m.role]})
+                  </button>
+                  {editingMemberId === m.id && (
+                    <div className="absolute left-0 top-5 z-50 bg-white border border-slate-200 shadow-lg rounded-lg w-40 py-1 animate-fade-in">
+                      {ROLES.map(r => (
+                        <button
+                          key={r}
+                          onClick={() => handleRoleChange(m.id, r)}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 ${m.role === r ? 'text-blue-600 bg-blue-50 font-semibold' : 'text-slate-700'}`}
+                        >
+                          {CASE_TEAM_ROLE_LABELS[r]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                {members.map(m => (
-                  <div key={m.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 group transition-colors">
-                    <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${colorForId(m.userId)}`}>
-                      {m.initials}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium text-slate-800 truncate">{m.name}</div>
-                    </div>
-                    <div className="relative">
-                      <button
-                        onClick={() => setEditingMemberId(editingMemberId === m.id ? null : m.id)}
-                        className="text-[10px] text-slate-400 hover:text-slate-600 px-1.5 py-0.5 rounded hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        {CASE_TEAM_ROLE_LABELS[m.role]}
-                        <svg className="w-2.5 h-2.5 inline ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                      </button>
-                      {editingMemberId === m.id && (
-                        <div className="absolute right-0 top-6 z-50 bg-white border border-slate-200 shadow-lg rounded-lg w-40 py-1 animate-fade-in">
-                          {ROLES.map(r => (
-                            <button
-                              key={r}
-                              onClick={() => handleRoleChange(m.id, r)}
-                              className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 ${m.role === r ? 'text-blue-600 bg-blue-50 font-semibold' : 'text-slate-700'}`}
-                            >
-                              {CASE_TEAM_ROLE_LABELS[r]}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleRemove(m.id)}
-                      className="p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                      title="Remove from team"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  </div>
-                ))}
               </div>
-            );
-          })}
+              <button
+                onClick={() => handleRemove(m.id)}
+                className="p-0.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                title="Remove"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>

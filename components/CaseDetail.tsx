@@ -638,7 +638,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           <div className="grid grid-cols-12 gap-8 animate-fade-in">
               <div className="col-span-12 lg:col-span-8 space-y-8">
                   {/* Case Team */}
-                  <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
                     <CaseTeamPanel
                       team={caseData.caseTeam || []}
                       onChange={(newTeam: CaseTeamMember[]) => {
