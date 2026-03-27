@@ -67,7 +67,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
           'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ documents: documentsPayload, apiKey: (typeof process !== 'undefined' && process.env?.API_KEY) || '' }),
+        body: JSON.stringify({ documents: documentsPayload, clientName: clientNameOverride.trim(), apiKey: (typeof process !== 'undefined' && process.env?.API_KEY) || '' }),
       });
 
       if (!response.ok) {
@@ -351,7 +351,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                     onClick={() => {
                       if (isExtracting) return;
                       if (i === 0) setStep(1);
-                      if (i === 1 && pendingDocs.length > 0) handleProceedToReview();
+                      if (i === 1 && pendingDocs.length > 0 && clientNameOverride.trim()) handleProceedToReview();
                     }}
                   >
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
@@ -380,7 +380,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                 <div className="space-y-6">
                   <div className="max-w-sm">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
-                      Client Name <span className="text-slate-400 font-normal normal-case">(optional — override extracted name)</span>
+                      Client Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -426,9 +426,9 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
               {step === 1 ? (
                 <button
                   onClick={handleProceedToReview}
-                  disabled={pendingDocs.length === 0}
+                  disabled={pendingDocs.length === 0 || !clientNameOverride.trim()}
                   className={`px-8 py-2.5 rounded-lg font-bold shadow-lg transition-all flex items-center ${
-                    pendingDocs.length === 0
+                    pendingDocs.length === 0 || !clientNameOverride.trim()
                       ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
                       : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700'
                   }`}

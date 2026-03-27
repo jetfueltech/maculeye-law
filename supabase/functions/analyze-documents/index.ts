@@ -192,7 +192,7 @@ Deno.serve(async (req: Request) => {
 
   try {
     const body = await req.json();
-    const { documents, apiKey: clientApiKey }: { documents: DocumentInput[]; apiKey?: string } = body;
+    const { documents, clientName, apiKey: clientApiKey }: { documents: DocumentInput[]; clientName?: string; apiKey?: string } = body;
 
     const apiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("API_KEY") || clientApiKey;
     if (!apiKey) {
@@ -296,8 +296,14 @@ The filename should follow the pattern: "DocumentType - Detail" (e.g., "Retainer
             });
           }
 
+          const clientNameInstruction = clientName
+            ? `CRITICAL: The client/plaintiff in this case is "${clientName}". When reading police/crash reports that list multiple parties (drivers, passengers, pedestrians), the person matching or closest to "${clientName}" is the CLIENT/PLAINTIFF. All other parties are defendants or witnesses. Assign vehicle info, address, insurance, and other details to the correct party based on this. Do NOT confuse the client with the defendant.`
+            : "";
+
           extractionParts.push({
             text: `You are a legal intake specialist. Review ALL the uploaded documents carefully and extract as much client intake information as possible.
+
+${clientNameInstruction}
 
 These documents typically include:
 - Retainer agreement (contains client name, signature, date)
