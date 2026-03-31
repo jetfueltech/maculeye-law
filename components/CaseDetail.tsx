@@ -72,6 +72,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
   // Chat State
   const [chatMessage, setChatMessage] = useState('');
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [chatMenuId, setChatMenuId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
   const chatTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -110,6 +113,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   useEffect(() => {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [caseData.chatHistory]);
+
+  useEffect(() => {
+    if (!chatMenuId) return;
+    const handler = () => setChatMenuId(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [chatMenuId]);
 
   const formatTime = (seconds: number) => {
       const mins = Math.floor(seconds / 60);
@@ -150,6 +160,33 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       onUpdateCase({ ...caseData, chatHistory: updatedChat });
       setChatMessage('');
       if (chatTextareaRef.current) chatTextareaRef.current.style.height = 'auto';
+  };
+
+  const handleDeleteChat = (msgId: string) => {
+      const updatedChat = (caseData.chatHistory || []).filter(m => m.id !== msgId);
+      onUpdateCase({ ...caseData, chatHistory: updatedChat });
+      setChatMenuId(null);
+  };
+
+  const handleStartEditChat = (msg: ChatMessage) => {
+      setEditingMsgId(msg.id);
+      setEditingText(msg.message);
+      setChatMenuId(null);
+  };
+
+  const handleSaveEditChat = (msgId: string) => {
+      if (!editingText.trim()) return;
+      const updatedChat = (caseData.chatHistory || []).map(m =>
+        m.id === msgId ? { ...m, message: editingText, edited: true } : m
+      );
+      onUpdateCase({ ...caseData, chatHistory: updatedChat });
+      setEditingMsgId(null);
+      setEditingText('');
+  };
+
+  const handleCancelEditChat = () => {
+      setEditingMsgId(null);
+      setEditingText('');
   };
 
   const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1103,22 +1140,75 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       </div>
                       <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
                           {caseData.chatHistory?.map((msg) => (
-                              <div key={msg.id} className={`flex ${msg.isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                              <div key={msg.id} className={`group flex ${msg.isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                                   {!msg.isCurrentUser && (
                                       <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 border border-blue-200">
                                           {msg.senderInitials}
                                       </div>
                                   )}
-                                  <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.isCurrentUser ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm'}`}>
-                                      {!msg.isCurrentUser && <p className="text-[10px] font-bold text-slate-400 mb-1">{msg.sender}</p>}
-                                      {msg.message}
-                                      {msg.attachments && msg.attachments.map((att, i) => (
-                                          <div key={i} className="mt-2 bg-black/10 rounded p-2 flex items-center">
-                                              <svg className="w-4 h-4 mr-1 opacity-70" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-                                              <span className="text-xs truncate">{att.name}</span>
+                                  <div className="relative">
+                                      {msg.isCurrentUser && (
+                                          <div className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                              <button
+                                                onClick={() => setChatMenuId(chatMenuId === msg.id ? null : msg.id)}
+                                                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+                                              >
+                                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                                              </button>
+                                              {chatMenuId === msg.id && (
+                                                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 w-28">
+                                                      <button
+                                                        onClick={() => handleStartEditChat(msg)}
+                                                        className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                                      >
+                                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                          Edit
+                                                      </button>
+                                                      <button
+                                                        onClick={() => handleDeleteChat(msg.id)}
+                                                        className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                      >
+                                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                          Delete
+                                                      </button>
+                                                  </div>
+                                              )}
                                           </div>
-                                      ))}
-                                      <p className={`text-[10px] mt-1 text-right ${msg.isCurrentUser ? 'text-blue-100' : 'text-slate-400'}`}>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                      )}
+                                      <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.isCurrentUser ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm'}`}>
+                                          {!msg.isCurrentUser && <p className="text-[10px] font-bold text-slate-400 mb-1">{msg.sender}</p>}
+                                          {editingMsgId === msg.id ? (
+                                              <div className="space-y-2">
+                                                  <textarea
+                                                    value={editingText}
+                                                    onChange={(e) => setEditingText(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEditChat(msg.id); }
+                                                      if (e.key === 'Escape') handleCancelEditChat();
+                                                    }}
+                                                    className="w-full bg-white/20 rounded-lg p-2 text-sm text-white placeholder-white/50 outline-none resize-none border border-white/30"
+                                                    rows={2}
+                                                    autoFocus
+                                                  />
+                                                  <div className="flex justify-end gap-1.5">
+                                                      <button onClick={handleCancelEditChat} className="px-2 py-0.5 text-[10px] font-medium bg-white/20 hover:bg-white/30 rounded transition-colors">Cancel</button>
+                                                      <button onClick={() => handleSaveEditChat(msg.id)} className="px-2 py-0.5 text-[10px] font-medium bg-white/30 hover:bg-white/40 rounded transition-colors">Save</button>
+                                                  </div>
+                                              </div>
+                                          ) : (
+                                              <>{msg.message}</>
+                                          )}
+                                          {msg.attachments && msg.attachments.map((att, i) => (
+                                              <div key={i} className="mt-2 bg-black/10 rounded p-2 flex items-center">
+                                                  <svg className="w-4 h-4 mr-1 opacity-70" fill="currentColor" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
+                                                  <span className="text-xs truncate">{att.name}</span>
+                                              </div>
+                                          ))}
+                                          <p className={`text-[10px] mt-1 text-right ${msg.isCurrentUser ? 'text-blue-100' : 'text-slate-400'}`}>
+                                              {msg.edited && <span className="mr-1 italic">(edited)</span>}
+                                              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          </p>
+                                      </div>
                                   </div>
                               </div>
                           ))}

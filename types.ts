@@ -328,6 +328,7 @@ export interface ChatMessage {
   timestamp: string;
   attachments?: ChatAttachment[];
   channel?: 'intake' | 'medical';
+  edited?: boolean;
 }
 
 export interface AIAnalysis {
