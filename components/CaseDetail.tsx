@@ -74,6 +74,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const [chatMessage, setChatMessage] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
+  const chatTextareaRef = useRef<HTMLTextAreaElement>(null);
   
   
   // Email Expansion State
@@ -148,6 +149,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       const updatedChat = [...(caseData.chatHistory || []), newMsg];
       onUpdateCase({ ...caseData, chatHistory: updatedChat });
       setChatMessage('');
+      if (chatTextareaRef.current) chatTextareaRef.current.style.height = 'auto';
   };
 
   const handleChatFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1123,16 +1125,26 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                           <div ref={chatEndRef} />
                       </div>
                       <div className="p-3 border-t border-slate-100 bg-white rounded-b-2xl">
-                          <div className="relative">
-                              <input 
-                                  type="text" 
-                                  placeholder="Type a message..." 
-                                  className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          <div className="relative flex items-end gap-2">
+                              <textarea
+                                  ref={chatTextareaRef}
+                                  placeholder="Type a message..."
+                                  className="flex-1 pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden"
+                                  rows={1}
                                   value={chatMessage}
-                                  onChange={(e) => setChatMessage(e.target.value)}
-                                  onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+                                  onChange={(e) => {
+                                    setChatMessage(e.target.value);
+                                    e.target.style.height = 'auto';
+                                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleSendChat();
+                                    }
+                                  }}
                               />
-                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                              <div className="flex items-center gap-1 flex-shrink-0 pb-1.5">
                                   <button onClick={() => chatFileInputRef.current?.click()} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
                                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                                   </button>
