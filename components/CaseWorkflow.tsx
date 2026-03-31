@@ -13,7 +13,7 @@ import { WorkflowActionModal, WorkflowActionType } from './WorkflowActionModal';
 import { WorkflowKanban } from './WorkflowKanban';
 import { WorkflowStageCard } from './WorkflowStageCard';
 import { ContactActionModal } from './ContactActionModal';
-import { PreservationOfEvidenceModal } from './PreservationOfEvidenceModal';
+import { PreservationOfEvidencePanel } from './PreservationOfEvidencePanel';
 
 interface CaseWorkflowProps {
   caseData: CaseFile;
@@ -444,12 +444,21 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
         />
       )}
 
-      <PreservationOfEvidenceModal
-        isOpen={showPreservation}
-        onClose={() => setShowPreservation(false)}
-        caseData={caseData}
-        onUpdateCase={onUpdateCase}
-      />
+      {showPreservation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h3 className="font-bold text-lg text-slate-800">Preservation of Evidence</h3>
+              <button onClick={() => setShowPreservation(false)} className="text-slate-400 hover:text-slate-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-0">
+              <PreservationOfEvidencePanel caseData={caseData} onUpdateCase={onUpdateCase} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {contactModal && (
         <ContactActionModal
