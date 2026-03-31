@@ -109,50 +109,56 @@ export const AdjusterPanel: React.FC<AdjusterPanelProps> = ({ adjusters, insuran
       {adjusters.length > 0 && (
         <div className="space-y-1.5">
           {adjusters.map(adj => (
-            <div key={adj.id} className="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-slate-50 group transition-colors border border-transparent hover:border-slate-100">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-800">{adj.name}</span>
+            <div key={adj.id} className="px-3 py-2.5 rounded-lg hover:bg-slate-50 group transition-colors border border-transparent hover:border-slate-100">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-sm font-semibold text-slate-800 truncate">{adj.name}</span>
                   {adj.isPrimary && (
-                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-200">PRIMARY</span>
-                  )}
-                  {adj.insuranceProvider && (
-                    <span className="text-[10px] text-slate-400">{adj.insuranceType ? `${adj.insuranceType} - ` : ''}{adj.insuranceProvider}</span>
+                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-200 flex-shrink-0">PRIMARY</span>
                   )}
                 </div>
-                <div className="flex items-center gap-3 mt-0.5">
-                  {adj.email && (
-                    <a href={`mailto:${adj.email}`} className="text-xs text-blue-600 hover:underline truncate">{adj.email}</a>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  {!adj.isPrimary && (
+                    <button
+                      onClick={() => handleSetPrimary(adj.id)}
+                      className="text-[10px] text-slate-400 hover:text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-50 transition-colors whitespace-nowrap"
+                      title="Set as primary"
+                    >
+                      Set Primary
+                    </button>
                   )}
-                  {adj.phone && (
-                    <a href={`tel:${adj.phone}`} className="text-xs text-slate-500 hover:text-blue-600">{adj.phone}</a>
-                  )}
+                  <button
+                    onClick={() => handleEdit(adj)}
+                    className="p-1 text-slate-300 hover:text-slate-600 transition-colors"
+                    title="Edit"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                  <button
+                    onClick={() => handleRemove(adj.id)}
+                    className="p-1 text-slate-300 hover:text-red-500 transition-colors"
+                    title="Remove"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                {!adj.isPrimary && (
-                  <button
-                    onClick={() => handleSetPrimary(adj.id)}
-                    className="text-[10px] text-slate-400 hover:text-blue-600 px-1.5 py-0.5 rounded hover:bg-blue-50 transition-colors whitespace-nowrap"
-                    title="Set as primary"
-                  >
-                    Set Primary
-                  </button>
+              {adj.insuranceProvider && (
+                <p className="text-[11px] text-slate-400 mb-1">{adj.insuranceType ? `${adj.insuranceType} - ` : ''}{adj.insuranceProvider}</p>
+              )}
+              <div className="flex items-center gap-4">
+                {adj.phone && (
+                  <a href={`tel:${adj.phone}`} className="flex items-center gap-1 text-xs text-slate-500 hover:text-blue-600 transition-colors whitespace-nowrap">
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                    {adj.phone}
+                  </a>
                 )}
-                <button
-                  onClick={() => handleEdit(adj)}
-                  className="p-1 text-slate-300 hover:text-slate-600 transition-colors"
-                  title="Edit"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                </button>
-                <button
-                  onClick={() => handleRemove(adj.id)}
-                  className="p-1 text-slate-300 hover:text-red-500 transition-colors"
-                  title="Remove"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
+                {adj.email && (
+                  <a href={`mailto:${adj.email}`} className="flex items-center gap-1 text-xs text-blue-600 hover:underline truncate">
+                    <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    <span className="truncate">{adj.email}</span>
+                  </a>
+                )}
               </div>
             </div>
           ))}
