@@ -13,12 +13,23 @@ export type DocumentFormType =
   | 'hipaa_auth'
   | 'er_bill_request'
   | 'er_records_request'
-  | 'distribution_sheet';
+  | 'distribution_sheet'
+  | 'preservation_of_evidence'
+  | 'medical_bill_request';
+
+export interface EvidenceRecipient {
+  businessName: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+}
 
 export interface DocumentContext {
   provider?: MedicalProvider;
   erVisit?: ERVisit;
   insuranceType?: 'Defendant' | 'Client';
+  evidenceRecipient?: EvidenceRecipient;
 }
 
 interface DocumentGeneratorProps {
@@ -839,6 +850,303 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     </div>
   );
 
+  const evidenceRecipient = context?.evidenceRecipient;
+
+  const renderPreservationOfEvidence = () => {
+    const recipientName = evidenceRecipient?.businessName || '[BUSINESS NAME]';
+    const recipientAddr = evidenceRecipient?.address || '[ADDRESS]';
+    const recipientCityStateZip = evidenceRecipient
+      ? `${evidenceRecipient.city}, ${evidenceRecipient.state} ${evidenceRecipient.zip}`
+      : '[CITY, STATE ZIP]';
+    const accidentLocation = caseData.location || intake.accident?.accident_location || '[ACCIDENT LOCATION]';
+    const accidentTime = intake.accident?.time_of_accident || '[TIME]';
+    const accidentDateFormatted = dol
+      ? new Date(dol).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      : '[DATE]';
+    const clientGender = intake.client?.gender;
+    const honorific = clientGender === 'Female' ? 'Ms.' : clientGender === 'Male' ? 'Mr.' : 'Mr./Ms.';
+    const lastName = clientName.split(' ').pop() || clientName;
+
+    return (
+      <div className={paperClass}>
+        <div className={letterheadClass}>
+          <h1 className={lhTitle}>SAP LAW</h1>
+          <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
+          <p className="text-sm font-sans">Phone: {attorneyPhone} Fax: {attorneyFax}</p>
+        </div>
+
+        <div className="flex justify-between items-start mb-8">
+          <div className="text-sm">{today}</div>
+          <div className="text-right font-bold text-base uppercase">Preservation of Evidence</div>
+        </div>
+
+        <div className="mb-6">
+          <p className="font-bold">{recipientName}</p>
+          <p>{recipientAddr}</p>
+          <p>{recipientCityStateZip}</p>
+        </div>
+
+        <div className="grid grid-cols-[40px_1fr] gap-y-1 mb-6">
+          <div className="font-bold">RE:</div>
+          <div>
+            <span>Our Client(s): <span className="bg-yellow-100 px-1 font-bold">{clientName}</span></span>
+            <br />
+            <span>Date of Loss: <span className="bg-yellow-100 px-1">{dol}</span></span>
+          </div>
+        </div>
+
+        <p className="mb-6">To Whom It May Concern,</p>
+
+        <p className="mb-6 text-justify leading-7">
+          Please be advised that we represent {honorific} {lastName} in{' '}
+          {clientGender === 'Female' ? 'her' : clientGender === 'Male' ? 'his' : 'his/her'}{' '}
+          personal injury claim as a result of an auto accident that occurred on{' '}
+          <span className="font-bold">{accidentDateFormatted}</span> at or about{' '}
+          <span className="font-bold">{accidentTime}</span>, at or near intersection of{' '}
+          <span className="font-bold">{accidentLocation}</span>. See attached copy of the
+          corresponding Crash Report. Kindly accept this correspondence as a{' '}
+          <span className="font-bold">formal demand for preservation of evidence</span>.
+        </p>
+
+        <p className="mb-6 text-justify leading-7">
+          We have been informed that your security/surveillance camera(s) may have secured video footage
+          of the aforementioned collision.{' '}
+          <span className="font-bold underline">
+            Demand is hereby made for the preservation of all evidence of the alleged incident, scene,
+            and physical objects; including but not limited to photographs and/or videos.
+          </span>
+        </p>
+
+        <p className="mb-6 text-justify leading-7">
+          Please contact me to make arrangements for our office to secure a copy of the evidence in your
+          possession.
+        </p>
+
+        <p className="mb-8">Your cooperation will be appreciated.</p>
+
+        <div className="mt-8">
+          <p>Sincerely,</p>
+          <div className="h-16 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+          <p className="font-bold">Rosa M. Hernandez, Esq.</p>
+          <p className="font-bold">{attorneyFirm}</p>
+          <a href="#" className="text-blue-600 underline">rosa@SAPLaw.com</a>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMedicalBillRequest = () => {
+    const provAddr = provider
+      ? [provider.address, provider.city ? `${provider.city}, ${provider.state || 'IL'} ${provider.zip || ''}` : ''].filter(Boolean)
+      : [];
+    const clientDob = caseData.clientDob || intake.client?.date_of_birth || '[DOB]';
+    const clientAddress = caseData.clientAddress || [intake.client?.address?.street, intake.client?.address?.city, intake.client?.address?.state, intake.client?.address?.zip].filter(Boolean).join(', ') || '[ADDRESS]';
+    const clientCity = intake.client?.address?.city || 'Chicago';
+    const clientState = intake.client?.address?.state || 'IL';
+    const clientZip = intake.client?.address?.zip || '[ZIP]';
+    const clientPhone = caseData.clientPhone || intake.client?.phones?.cell || '';
+
+    return (
+      <>
+        <div className={paperClass}>
+          <div className="border-t-4 border-black mb-4"></div>
+          <div className={letterheadClass}>
+            <h1 className={lhTitle}>SAP LAW</h1>
+          </div>
+
+          <div className="text-center font-bold mb-2">
+            <p className="underline text-sm">RUSH</p>
+            <p className="-mt-1">-MEDICAL RECORDS & ITEMIZED</p>
+          </div>
+          <div className="text-center font-bold mb-8 text-lg">BILLS REQUEST</div>
+
+          <div className="mb-6">
+            <p className="font-bold underline bg-yellow-100 inline-block px-1">{providerName}</p>
+            {provAddr.map((line, i) => (
+              <p key={i} className="font-bold">{line}</p>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-[120px_1fr] gap-y-2 mb-8 ml-16">
+            <span className="font-bold underline bg-yellow-100 px-1">Date of Birth:</span>
+            <span className="bg-yellow-100 px-1">{clientDob}</span>
+            <span className="font-bold underline bg-yellow-100 px-1">Date of Loss:</span>
+            <span className="bg-yellow-100 px-1">{dol}</span>
+            <span className="font-bold">RE: &nbsp;&nbsp;Our Client(s):</span>
+            <span className="bg-yellow-100 px-1 font-bold">{clientName}</span>
+          </div>
+
+          <p className="mb-4">Dear Record & Bill Custodian:</p>
+
+          <p className="mb-4 text-justify leading-7">
+            Please be advised that we represent the above-named patient in a personal injury claim. Our
+            office is requesting copies of <strong>ALL MEDICAL RECORDS AND ITEMIZED BILLS</strong> you
+            have for this patient <strong>for <span className="bg-yellow-100">{dol}</span> to present</strong>.
+            Enclosed please find an authorization form signed by our client. If you have any questions
+            or need additional information, please call our office. Your cooperation will be appreciated.
+          </p>
+
+          <div className="mt-12 text-center">
+            <p>Very truly yours,</p>
+            <div className="h-16 w-48 mx-auto my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'center' }}></div>
+            <p className="mt-4">.............................................</p>
+            <p className="font-bold">Alexandria Delaola-Rodriguez</p>
+            <p>Paralegal</p>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="font-bold italic">
+              <span className="underline">Preferred Method of Delivery (email):</span> alexandria@saplaw.com
+            </p>
+            <p className="font-bold italic">Thank you!</p>
+          </div>
+
+          <div className="mt-6 text-sm">
+            <p>Encl.</p>
+            <p className="ml-4">- <em>Executed Medical Authorization</em></p>
+          </div>
+
+          <div className="absolute bottom-8 left-0 right-0 text-center font-bold text-sm">
+            <p>{attorneyAddress.replace('Suite 810', 'Suite 810,')}{' '}{attorneyCity}</p>
+            <p>Phone: {attorneyPhone} Fax: {attorneyFax}</p>
+          </div>
+        </div>
+
+        <div className={paperClass}>
+          <h2 className="text-center font-bold text-lg mb-6">Authorization for Release of Protected Health Information</h2>
+
+          <table className="w-full border-2 border-black text-sm mb-4">
+            <tbody>
+              <tr>
+                <td className="border border-black p-2 w-1/3">
+                  <div className="text-xs font-bold">Patient Name:</div>
+                  <div className="bg-yellow-100 px-1">{clientName}</div>
+                </td>
+                <td className="border border-black p-2 w-1/3">
+                  <div className="text-xs font-bold">Birth Date:</div>
+                  <div className="bg-yellow-100 px-1">{clientDob}</div>
+                </td>
+                <td className="border border-black p-2 w-1/3">
+                  <div className="text-xs font-bold">Social Security No:</div>
+                  <div>{intake.client?.ssn || ''}</div>
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-black p-2">
+                  <div className="text-xs font-bold">Home Telephone Number:</div>
+                  <div>{clientPhone}</div>
+                </td>
+                <td className="border border-black p-2" colSpan={2}>
+                  <div className="text-xs font-bold">Patient's Address:</div>
+                  <div className="bg-yellow-100 px-1">{clientAddress}</div>
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-black p-2">
+                  <div className="text-xs font-bold">Provider's Name/Address:</div>
+                  <div className="text-xs bg-yellow-100 px-1">{providerName}</div>
+                  {provAddr.map((line, i) => (
+                    <div key={i} className="text-xs">{line}</div>
+                  ))}
+                </td>
+                <td className="border border-black p-2">
+                  <div className="text-xs font-bold">City:</div>
+                  <div className="bg-yellow-100 px-1">{clientCity}</div>
+                </td>
+                <td className="border border-black p-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-xs font-bold">State:</div>
+                      <div className="bg-yellow-100 px-1">{clientState}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">Zip code:</div>
+                      <div className="bg-yellow-100 px-1">{clientZip}</div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p className="text-xs font-bold mb-4">This consent will automatically expire two years from the date signed.</p>
+
+          <div className="mb-4">
+            <p className="text-base">
+              <strong className="text-lg">THE UNDERSIGNED</strong> hereby authorizes and requests that the above named provider to provide records
+            </p>
+            <p className="mt-1">To: <strong>{attorneyFirm}</strong></p>
+            <p className="ml-6">{attorneyAddress},</p>
+            <p className="ml-6">Suite 810</p>
+            <p className="ml-6">{attorneyCity}</p>
+          </div>
+
+          <h3 className="text-center font-bold text-sm border-t border-b border-black py-2 mb-4">Description of information to be used or disclosed</h3>
+
+          <table className="w-full border border-black text-xs mb-4">
+            <thead>
+              <tr>
+                <th className="border border-black p-1 text-left font-bold">Description:</th>
+                <th className="border border-black p-1 font-bold">Date:</th>
+                <th className="border border-black p-1 text-left font-bold">Description:</th>
+                <th className="border border-black p-1 font-bold">Date:</th>
+                <th className="border border-black p-1 text-left font-bold">Description:</th>
+                <th className="border border-black p-1 font-bold">Date:</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-black p-1">_All PHI in medical record<br />_Admission form<br />_Dictation report<br />_Physician orders<br />_Intake/outtake<br />_Clinical test<br />_medication sheets</td>
+                <td className="border border-black p-1"></td>
+                <td className="border border-black p-1">_Operative information<br />_Cath lab<br />_Special test/therapy<br />_Rhythm strips<br />_Nursing information<br />_Transfer forms<br />_ER information</td>
+                <td className="border border-black p-1"></td>
+                <td className="border border-black p-1">_Labor/delivery sum<br />_OB nursing assess<br />_Postpartum flow sheet<br />_Itemized bill<br /><span className="font-bold">X</span>Entire record and all bills</td>
+                <td className="border border-black p-1 font-bold bg-yellow-100">{dol} to present</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p className="text-xs font-bold mb-4">
+            I acknowledge, and hereby consent to such, that the released information may contain alcohol, drug abuse,
+            psychiatric, HIV testing, HIV results or AIDS information. __________ (Initial)
+          </p>
+
+          <div className="text-[10px] space-y-1 mb-4 leading-relaxed">
+            <p>I understand:</p>
+            <p>I may refuse to sign this authorization and that it is strictly voluntary.</p>
+            <p>My treatment, payment, enrollment or eligibility for benefits may not be conditioned on signing this authorization.</p>
+            <p>I may revoke this authorization at any time in writing, to the healthcare provider listed above, but if I do, it will not have any effect on any actions taken prior to receiving the revocation.</p>
+            <p>If the requestor or receiver is not a health plan or health care provider, the released information may no longer be protected by federal privacy regulations and may be redisclosed.</p>
+            <p>I understand that I may see and obtain a copy of the information described on this form, for a reasonable fee, if I ask for it.</p>
+            <p>The purpose of this request for information is for litigation purposes.</p>
+          </div>
+
+          <p className="text-xs font-bold mb-4">I have read the above and authorize the disclosure of the protected health information as stated.</p>
+
+          <table className="w-full border border-black text-sm">
+            <tbody>
+              <tr>
+                <td className="border border-black p-3">
+                  <div className="text-xs font-bold">Signature of Patient/Plan Member/Guardian:</div>
+                  <div className="h-8 font-script italic text-lg bg-yellow-50">{clientName}</div>
+                  <div className="text-[9px] bg-yellow-100 inline-block px-1">{clientName} {today}</div>
+                  <div className="text-xs font-bold mt-1">Print Name of Patient/Plan Member/Guardian:</div>
+                  <div className="bg-yellow-100 px-1">{clientName}</div>
+                </td>
+                <td className="border border-black p-3 w-1/3">
+                  <div className="text-xs font-bold">Date:</div>
+                  <div className="bg-yellow-100 px-1">{today}</div>
+                  <div className="text-xs font-bold mt-4">Relationship to Patient:</div>
+                  <div className="bg-yellow-100 px-1">Self</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </>
+    );
+  };
+
   const FORM_TITLES: Record<DocumentFormType, string> = {
     rep_lien: 'Letter of Representation & Lien',
     foia: 'FOIA / Crash Report Request',
@@ -850,6 +1158,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     er_bill_request: `ER Bill Request — ${providerName}`,
     er_records_request: `ER Records Request — ${providerName}`,
     distribution_sheet: 'Distribution Sheet',
+    preservation_of_evidence: `Preservation of Evidence${evidenceRecipient ? ` — ${evidenceRecipient.businessName}` : ''}`,
+    medical_bill_request: `Medical Records & Bills Request — ${providerName}`,
   };
 
   return (
@@ -903,6 +1213,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 {formType === 'hipaa_auth' && renderHIPAAAuth()}
                 {formType === 'er_bill_request' && renderBillRequest()}
                 {formType === 'er_records_request' && renderRecordsRequest()}
+                {formType === 'preservation_of_evidence' && renderPreservationOfEvidence()}
+                {formType === 'medical_bill_request' && renderMedicalBillRequest()}
                 {formType === 'distribution_sheet' && (
                   <DistributionSheetRenderer
                     caseData={caseData}

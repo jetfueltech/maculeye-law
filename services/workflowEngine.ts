@@ -36,7 +36,9 @@ export type WorkflowItemAction =
   | 'bill_request'
   | 'records_request'
   | 'er_bill_request'
-  | 'er_records_request';
+  | 'er_records_request'
+  | 'medical_bill_request'
+  | 'preservation_of_evidence';
 
 export interface WorkflowCheckItem {
   id: string;
@@ -191,9 +193,11 @@ export function getWorkflowProgress(c: CaseFile): WorkflowStageProgress[] {
     { id: 'upload_intake_form', label: 'Upload completed intake form to Smart Advocate', done: isTaskCompleted(c, 'upload_intake_form'), taskType: 'upload_intake_form' },
   ];
 
+  const hasPreservationDoc = c.documents.some(d => d.generatedFormType === 'preservation_of_evidence');
   const investigationItems: WorkflowCheckItem[] = [
     { id: 'crash_request', label: 'Crash/police report requested', done: isTaskCompleted(c, 'crash_report_request') || !!c.crashReportRequestedDate, taskType: 'crash_report_request', action: 'crash_report' },
     { id: 'crash_received', label: 'Crash/police report received', done: isTaskCompleted(c, 'crash_report_received') || hasCrashReportDoc(c), taskType: 'crash_report_received' },
+    { id: 'preservation_evidence', label: 'Preservation of evidence letters sent', done: hasPreservationDoc, action: 'preservation_of_evidence' },
   ];
 
   const insuranceItems: WorkflowCheckItem[] = [

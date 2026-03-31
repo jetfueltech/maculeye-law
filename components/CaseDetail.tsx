@@ -14,6 +14,7 @@ import { CaseTeamPanel } from './CaseTeamPanel';
 import { FinancialsTab } from './FinancialsTab';
 import { AdjusterPanel } from './AdjusterPanel';
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
+import { PreservationOfEvidenceModal } from './PreservationOfEvidenceModal';
 import { uploadDocument } from '../services/documentStorageService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 
@@ -86,6 +87,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedForm, setSelectedForm] = useState<DocumentFormType | null>(null);
   const [showDocGenerator, setShowDocGenerator] = useState(false);
+  const [showPreservationModal, setShowPreservationModal] = useState(false);
   const overviewFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOverviewDocDragOver = useCallback((e: React.DragEvent) => {
@@ -1642,6 +1644,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                 {([
                   { key: 'rep_lien' as DocumentFormType, title: 'Letter of Representation + Lien', desc: 'Includes notification to insurance carrier and attorney lien notice.' },
                   { key: 'foia' as DocumentFormType, title: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
+                  { key: 'preservation_of_evidence' as DocumentFormType, title: 'Preservation of Evidence', desc: 'Formal demand to preserve surveillance footage near the accident location.' },
                   { key: 'intake_summary' as DocumentFormType, title: 'Client Intake Summary', desc: 'Detailed form including Accident, Client, Medical, and Insurance info.' },
                   { key: 'boss_intake_form' as DocumentFormType, title: 'Boss Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },
                 ]).map(opt => (
@@ -1663,11 +1666,20 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
               <div className="flex justify-end pt-2 border-t border-slate-100">
                 <button onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg mr-2">Cancel</button>
                 <button
-                  onClick={() => { if (selectedForm) { setShowDocGenerator(true); setIsFormModalOpen(false); } }}
+                  onClick={() => {
+                    if (!selectedForm) return;
+                    if (selectedForm === 'preservation_of_evidence') {
+                      setShowPreservationModal(true);
+                      setIsFormModalOpen(false);
+                    } else {
+                      setShowDocGenerator(true);
+                      setIsFormModalOpen(false);
+                    }
+                  }}
                   disabled={!selectedForm}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold shadow-md hover:bg-blue-700 transition-all flex items-center disabled:opacity-50"
                 >
-                  Preview & Print
+                  {selectedForm === 'preservation_of_evidence' ? 'Configure & Send' : 'Preview & Print'}
                 </button>
               </div>
             </div>
@@ -1693,6 +1705,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           };
           onUpdateCase({ ...caseData, documents: [...caseData.documents, newDoc] });
         }}
+      />
+
+      <PreservationOfEvidenceModal
+        isOpen={showPreservationModal}
+        onClose={() => setShowPreservationModal(false)}
+        caseData={caseData}
+        onUpdateCase={onUpdateCase}
       />
     </div>
   );

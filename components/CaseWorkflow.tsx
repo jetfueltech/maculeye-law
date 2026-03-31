@@ -13,6 +13,7 @@ import { WorkflowActionModal, WorkflowActionType } from './WorkflowActionModal';
 import { WorkflowKanban } from './WorkflowKanban';
 import { WorkflowStageCard } from './WorkflowStageCard';
 import { ContactActionModal } from './ContactActionModal';
+import { PreservationOfEvidenceModal } from './PreservationOfEvidenceModal';
 
 interface CaseWorkflowProps {
   caseData: CaseFile;
@@ -64,6 +65,8 @@ const ACTION_LABELS: Record<WorkflowItemAction, string> = {
   records_request: 'Request Records',
   er_bill_request: 'Request ER Bill',
   er_records_request: 'Request Records',
+  medical_bill_request: 'Request Records & Bills',
+  preservation_of_evidence: 'Send POE Letter',
 };
 
 type ViewMode = 'checklist' | 'kanban';
@@ -75,6 +78,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const [completingItem, setCompletingItem] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<ActiveAction | null>(null);
+  const [showPreservation, setShowPreservation] = useState(false);
   const [contactModal, setContactModal] = useState<ContactModalState | null>(null);
   const [callTimer, setCallTimer] = useState(0);
   const [isCallActive, setIsCallActive] = useState(false);
@@ -171,6 +175,10 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
   };
 
   const openAction = (action: WorkflowItemAction, providerId?: string, erVisitId?: string) => {
+    if (action === 'preservation_of_evidence') {
+      setShowPreservation(true);
+      return;
+    }
     const provider = providerId ? (caseData.medicalProviders || []).find(p => p.id === providerId) : undefined;
     const erVisit = erVisitId ? (caseData.erVisits || []).find(v => v.id === erVisitId) : undefined;
     setActiveAction({ type: action as WorkflowActionType, provider, erVisit });
@@ -435,6 +443,13 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
           }}
         />
       )}
+
+      <PreservationOfEvidenceModal
+        isOpen={showPreservation}
+        onClose={() => setShowPreservation(false)}
+        caseData={caseData}
+        onUpdateCase={onUpdateCase}
+      />
 
       {contactModal && (
         <ContactActionModal

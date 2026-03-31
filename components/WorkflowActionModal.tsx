@@ -11,7 +11,8 @@ export type WorkflowActionType =
   | 'bill_request'
   | 'records_request'
   | 'er_bill_request'
-  | 'er_records_request';
+  | 'er_records_request'
+  | 'medical_bill_request';
 
 interface WorkflowActionModalProps {
   isOpen: boolean;
@@ -96,6 +97,14 @@ const ACTION_CONFIG: Record<WorkflowActionType, ActionConfig> = {
     sentLabel: "ER Records Request Sent",
     confirmLabel: "Mark as Sent",
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
+  },
+  medical_bill_request: {
+    title: "Medical Records & Bills Request",
+    description: "Generate a RUSH medical records & itemized bills request letter with HIPAA authorization attached.",
+    docType: 'medical_bill_request',
+    sentLabel: "Medical Records & Bills Request Sent",
+    confirmLabel: "Mark as Sent",
+    icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z',
   },
 };
 
@@ -239,6 +248,17 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
           updated = addActivity(updated, `ER records request sent to ${erVisit.facilityName}${notes ? ` — ${notes}` : ''}`, authorName);
         }
         break;
+
+      case 'medical_bill_request':
+        if (provider) {
+          updated.medicalProviders = (updated.medicalProviders || []).map(p =>
+            p.id === provider.id
+              ? { ...p, billRequestDate: todayStr, billRequestStatus: 'requested' as const, recordsRequestDate: todayStr, recordsRequestStatus: 'requested' as const }
+              : p
+          );
+          updated = addActivity(updated, `Medical records & bills request sent to ${provider.name}${notes ? ` — ${notes}` : ''}`, authorName);
+        }
+        break;
     }
 
     onUpdateCase(updated);
@@ -259,6 +279,8 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
       er_records_request: 'medical_record',
       intake_summary: 'other',
       boss_intake_form: 'other',
+      medical_bill_request: 'medical_record',
+      preservation_of_evidence: 'other',
     };
     const newDoc: DocumentAttachment = {
       type: DOC_TYPE_MAP[docFormType] || 'other',

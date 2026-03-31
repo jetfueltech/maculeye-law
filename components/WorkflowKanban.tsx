@@ -7,6 +7,7 @@ import {
   WorkflowItemAction,
 } from '../services/workflowEngine';
 import { WorkflowActionModal, WorkflowActionType } from './WorkflowActionModal';
+import { PreservationOfEvidenceModal } from './PreservationOfEvidenceModal';
 
 interface WorkflowKanbanProps {
   caseData: CaseFile;
@@ -133,6 +134,7 @@ export const WorkflowKanban: React.FC<WorkflowKanbanProps> = ({ caseData, onUpda
   const [activeAction, setActiveAction] = useState<ActiveAction | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
+  const [showPreservation, setShowPreservation] = useState(false);
 
   const stages = getWorkflowProgress(caseData);
 
@@ -173,6 +175,10 @@ export const WorkflowKanban: React.FC<WorkflowKanbanProps> = ({ caseData, onUpda
   };
 
   const openAction = (action: WorkflowItemAction, providerId?: string, erVisitId?: string) => {
+    if (action === 'preservation_of_evidence') {
+      setShowPreservation(true);
+      return;
+    }
     const provider = providerId ? (caseData.medicalProviders || []).find(p => p.id === providerId) : undefined;
     const erVisit = erVisitId ? (caseData.erVisits || []).find(v => v.id === erVisitId) : undefined;
     setActiveAction({ type: action as WorkflowActionType, provider, erVisit });
@@ -314,6 +320,13 @@ export const WorkflowKanban: React.FC<WorkflowKanbanProps> = ({ caseData, onUpda
           }}
         />
       )}
+
+      <PreservationOfEvidenceModal
+        isOpen={showPreservation}
+        onClose={() => setShowPreservation(false)}
+        caseData={caseData}
+        onUpdateCase={onUpdateCase}
+      />
     </div>
   );
 };
