@@ -32,7 +32,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
 
   const [activeTab, setActiveTab] = useState<ModalTab>('compose');
   const [recipient, setRecipient] = useState<EvidenceRecipient>({
-    businessName: '',
+    recipientName: '',
     contactName: '',
     address: '',
     city: '',
@@ -85,10 +85,10 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
       const data = await response.json();
       setSearchResults(data.results || []);
       if ((data.results || []).length === 0) {
-        setSearchError('No businesses found near that location. Try a different search term.');
+        setSearchError('No results found near that location. Try a different search term.');
       }
     } catch {
-      setSearchError('Business search is currently unavailable. Please enter the recipient information manually.');
+      setSearchError('Search is currently unavailable. Please enter the recipient information manually.');
     } finally {
       setSearching(false);
     }
@@ -96,7 +96,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
 
   const selectBusiness = (biz: BusinessResult) => {
     setRecipient({
-      businessName: biz.name,
+      recipientName: biz.name,
       contactName: '',
       address: biz.address,
       city: biz.city,
@@ -106,7 +106,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
     setActiveTab('compose');
   };
 
-  const isValid = recipient.businessName.trim() && recipient.address.trim();
+  const isValid = recipient.recipientName.trim() && recipient.address.trim();
 
   const applyUpdate = () => {
     setConfirming(true);
@@ -115,7 +115,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
 
     const newRecipient: PreservationRecipient = {
       id: Math.random().toString(36).substr(2, 9),
-      businessName: recipient.businessName,
+      recipientName: recipient.recipientName,
       contactName: recipient.contactName || undefined,
       address: recipient.address,
       city: recipient.city,
@@ -129,7 +129,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
     const log: ActivityLog = {
       id: Math.random().toString(36).substr(2, 9),
       type: 'user',
-      message: `Preservation of Evidence letter sent to ${recipient.businessName}${recipient.contactName ? ` (Attn: ${recipient.contactName})` : ''}${notes ? ` — ${notes}` : ''}`,
+      message: `Preservation of Evidence letter sent to ${recipient.recipientName}${recipient.contactName ? ` (Attn: ${recipient.contactName})` : ''}${notes ? ` — ${notes}` : ''}`,
       timestamp: nowISO,
       author: authorName,
     };
@@ -144,7 +144,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
 
     setTimeout(() => {
       setConfirming(false);
-      setRecipient({ businessName: '', contactName: '', address: '', city: '', state: '', zip: '' });
+      setRecipient({ recipientName: '', contactName: '', address: '', city: '', state: '', zip: '' });
       setNotes('');
     }, 600);
   };
@@ -153,7 +153,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
     const newDoc: DocumentAttachment = {
       type: 'other',
       fileData: null,
-      fileName: `${docName} — ${recipient.businessName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.pdf`,
+      fileName: `${docName} — ${recipient.recipientName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.pdf`,
       mimeType: 'application/pdf',
       source: 'Generated',
       category: 'workflow_generated',
@@ -177,7 +177,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
     },
     {
       key: 'search',
-      label: 'Search Businesses',
+      label: 'Search Nearby',
       icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
     },
     {
@@ -202,7 +202,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
               <div>
                 <h3 className="font-bold text-slate-900 text-lg leading-tight">Preservation of Evidence</h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Formal demand to preserve surveillance footage and evidence near the accident.
+                  Formal demand to preserve surveillance footage, records, and evidence related to the accident.
                 </p>
               </div>
             </div>
@@ -261,13 +261,13 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
               <>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Business Name *</label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Recipient Name *</label>
                     <input
                       type="text"
                       className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="e.g., Shell Gas Station"
-                      value={recipient.businessName}
-                      onChange={e => setRecipient({ ...recipient, businessName: e.target.value })}
+                      placeholder="e.g., Shell Gas Station, 123 Main St Residence, Chicago PD"
+                      value={recipient.recipientName}
+                      onChange={e => setRecipient({ ...recipient, recipientName: e.target.value })}
                     />
                   </div>
                   <div>
@@ -382,7 +382,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
                   <input
                     type="text"
                     className="flex-1 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Search businesses near accident (e.g., gas station, restaurant, store)..."
+                    placeholder="Search near accident location (e.g., gas station, residence, police dept)..."
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleSearch()}
@@ -419,7 +419,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
                   <div className="space-y-2 max-h-[350px] overflow-y-auto">
                     {searchResults.map((biz, i) => {
                       const alreadySent = sentRecipients.some(
-                        r => r.businessName === biz.name && r.address === biz.address
+                        r => r.recipientName === biz.name && r.address === biz.address
                       );
                       return (
                         <button
@@ -506,7 +506,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-bold text-slate-800">{r.businessName}</p>
+                            <p className="text-sm font-bold text-slate-800">{r.recipientName}</p>
                             <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
                               Sent {r.sentDate}
                             </span>

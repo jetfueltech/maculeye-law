@@ -638,7 +638,7 @@ export interface SpecialsItem {
 
 export interface PreservationRecipient {
   id: string;
-  businessName: string;
+  recipientName: string;
   contactName?: string;
   address: string;
   city: string;

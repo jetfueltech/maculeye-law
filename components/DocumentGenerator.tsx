@@ -18,7 +18,7 @@ export type DocumentFormType =
   | 'medical_bill_request';
 
 export interface EvidenceRecipient {
-  businessName: string;
+  recipientName: string;
   contactName?: string;
   address: string;
   city: string;
@@ -854,7 +854,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   const evidenceRecipient = context?.evidenceRecipient;
 
   const renderPreservationOfEvidence = () => {
-    const recipientBusiness = evidenceRecipient?.businessName || '[BUSINESS NAME]';
+    const recipientBusiness = evidenceRecipient?.recipientName || '[RECIPIENT NAME]';
     const recipientContact = evidenceRecipient?.contactName || '';
     const recipientAddr = evidenceRecipient?.address || '[ADDRESS]';
     const recipientCityStateZip = evidenceRecipient
@@ -1195,7 +1195,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     er_bill_request: `ER Bill Request — ${providerName}`,
     er_records_request: `ER Records Request — ${providerName}`,
     distribution_sheet: 'Distribution Sheet',
-    preservation_of_evidence: `Preservation of Evidence${evidenceRecipient ? ` — ${evidenceRecipient.businessName}` : ''}`,
+    preservation_of_evidence: `Preservation of Evidence${evidenceRecipient ? ` — ${evidenceRecipient.recipientName}` : ''}`,
     medical_bill_request: `Medical Records & Bills Request — ${providerName}`,
   };
 
