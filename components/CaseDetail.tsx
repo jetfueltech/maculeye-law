@@ -938,73 +938,79 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       )}
                   </div>
 
-                  {/* Team Notes Section */}
+                  {/* Documents Preview */}
                   <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                       <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-slate-800 flex items-center">
-                              <svg className="w-5 h-5 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                              Team Notes
+                              <svg className="w-5 h-5 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                              Documents
                           </h3>
-                          <span className="text-xs font-medium text-slate-400">{(caseData.teamNotes || []).length} {(caseData.teamNotes || []).length === 1 ? 'note' : 'notes'}</span>
-                      </div>
-                      <div className="max-h-[400px] overflow-y-auto">
-                          {(caseData.teamNotes || []).length > 0 ? (
-                              <div className="divide-y divide-slate-100">
-                                  {(caseData.teamNotes || []).map((note) => (
-                                      <div key={note.id} className="px-8 py-4 hover:bg-slate-50/50 transition-colors">
-                                          <div className="flex items-start gap-3">
-                                              <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">
-                                                  {note.authorInitials}
-                                              </div>
-                                              <div className="flex-1 min-w-0">
-                                                  <div className="flex items-center gap-2 mb-1">
-                                                      <span className="text-sm font-semibold text-slate-800">{note.authorName}</span>
-                                                      <span className="text-[11px] text-slate-400">
-                                                          {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(note.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                                                      </span>
-                                                  </div>
-                                                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{note.content}</p>
-                                              </div>
-                                          </div>
-                                      </div>
-                                  ))}
-                                  <div ref={notesEndRef} />
-                              </div>
-                          ) : (
-                              <div className="px-8 py-10 text-center text-slate-400 text-sm">
-                                  No notes yet. Add a note below.
-                              </div>
-                          )}
-                      </div>
-                      <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
-                          <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-1">
-                                  {profile?.avatar_initials || '??'}
-                              </div>
-                              <div className="flex-1">
-                                  <textarea
-                                      className="w-full p-3 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder-slate-400 transition-shadow"
-                                      rows={2}
-                                      placeholder="Add a note..."
-                                      value={newNote}
-                                      onChange={e => setNewNote(e.target.value)}
-                                      onKeyDown={e => {
-                                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
-                                      }}
-                                  />
-                                  <div className="flex items-center justify-between mt-2">
-                                      <span className="text-[11px] text-slate-400">Cmd+Enter to submit</span>
-                                      <button
-                                          onClick={handleAddNote}
-                                          disabled={!newNote.trim()}
-                                          className="px-4 py-1.5 bg-slate-800 text-white text-xs font-semibold rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                                      >
-                                          Add Note
-                                      </button>
-                                  </div>
-                              </div>
+                          <div className="flex items-center gap-3">
+                              <span className="text-xs font-medium text-slate-400">{(caseData.documents || []).length} {(caseData.documents || []).length === 1 ? 'file' : 'files'}</span>
+                              <button onClick={() => setActiveTab('documents')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">View All</button>
                           </div>
                       </div>
+                      {(caseData.documents || []).length > 0 ? (
+                          <div className="divide-y divide-slate-100">
+                              {(caseData.documents || []).slice(0, 8).map((doc, idx) => {
+                                  const typeIcons: Record<string, { bg: string; text: string; label: string }> = {
+                                      retainer: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'RET' },
+                                      crash_report: { bg: 'bg-red-50', text: 'text-red-600', label: 'CR' },
+                                      medical_record: { bg: 'bg-blue-50', text: 'text-blue-600', label: 'MED' },
+                                      authorization: { bg: 'bg-amber-50', text: 'text-amber-600', label: 'AUTH' },
+                                      insurance_card: { bg: 'bg-cyan-50', text: 'text-cyan-600', label: 'INS' },
+                                      correspondence: { bg: 'bg-slate-50', text: 'text-slate-600', label: 'COR' },
+                                      photo: { bg: 'bg-rose-50', text: 'text-rose-600', label: 'PHO' },
+                                      email: { bg: 'bg-sky-50', text: 'text-sky-600', label: 'EML' },
+                                      other: { bg: 'bg-slate-50', text: 'text-slate-500', label: 'OTH' },
+                                  };
+                                  const style = typeIcons[doc.type] || typeIcons.other;
+                                  return (
+                                      <div
+                                          key={doc.id || idx}
+                                          className="px-8 py-3.5 flex items-center gap-4 hover:bg-slate-50 transition-colors cursor-pointer group"
+                                          onClick={() => setActiveTab('documents')}
+                                      >
+                                          <div className={`w-9 h-9 rounded-lg ${style.bg} ${style.text} flex items-center justify-center text-[10px] font-bold flex-shrink-0`}>
+                                              {style.label}
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-slate-800 truncate group-hover:text-slate-900">{doc.fileName}</p>
+                                              <div className="flex items-center gap-2 mt-0.5">
+                                                  <span className="text-[10px] text-slate-400 capitalize">{doc.type.replace(/_/g, ' ')}</span>
+                                                  {doc.category && (
+                                                      <>
+                                                          <span className="text-[10px] text-slate-300">|</span>
+                                                          <span className="text-[10px] text-slate-400 capitalize">{doc.category}</span>
+                                                      </>
+                                                  )}
+                                                  {doc.uploadedAt && (
+                                                      <>
+                                                          <span className="text-[10px] text-slate-300">|</span>
+                                                          <span className="text-[10px] text-slate-400">{new Date(doc.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                                      </>
+                                                  )}
+                                              </div>
+                                          </div>
+                                          <svg className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                      </div>
+                                  );
+                              })}
+                              {(caseData.documents || []).length > 8 && (
+                                  <div className="px-8 py-3 text-center">
+                                      <button onClick={() => setActiveTab('documents')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                                          +{(caseData.documents || []).length - 8} more documents
+                                      </button>
+                                  </div>
+                              )}
+                          </div>
+                      ) : (
+                          <div className="px-8 py-10 text-center">
+                              <svg className="w-10 h-10 mx-auto mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                              <p className="text-sm text-slate-400 mb-3">No documents uploaded yet</p>
+                              <button onClick={() => setActiveTab('documents')} className="text-xs font-medium text-blue-600 hover:text-blue-700">Go to Documents</button>
+                          </div>
+                      )}
                   </div>
 
                   {/* Communication Card (Unified with Threads) */}
@@ -1247,156 +1253,73 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       </div>
                   </div>
 
-                  {/* Tasks / Next Steps */}
-                  <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                      <h3 className="font-bold text-slate-800 mb-4 flex items-center justify-between">
-                          <span className="flex items-center">
-                              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-                              Next Steps
-                              {(caseData.tasks || []).filter(t => t.status !== 'completed').length > 0 && (
-                                <span className="ml-2 text-[10px] font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded-full">
-                                  {(caseData.tasks || []).filter(t => t.status !== 'completed').length}
-                                </span>
-                              )}
-                          </span>
-                          <button onClick={() => setActiveTab('tasks')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                              View All
-                          </button>
-                      </h3>
-                      <div className="space-y-2">
-                          {(() => {
-                            const taskTabMap: Record<string, typeof activeTab> = {
-                              coverage_followup: 'coverage',
-                              liability_followup: 'coverage',
-                              policy_limits: 'coverage',
-                              verify_insurance: 'coverage',
-                              er_records: 'medical',
-                              er_bills: 'medical',
-                              medical_records: 'medical',
-                              treatment_followup: 'medical',
-                              bill_request: 'medical',
-                              records_request: 'medical',
-                              send_hipaa_to_medical: 'medical',
-                              send_demographics: 'medical',
-                              check_er_ambulance: 'medical',
-                              mass_order_records: 'medical',
-                              receive_records_bills: 'medical',
-                              medical_summary: 'medical',
-                              retainer: 'documents',
-                              crash_report_request: 'documents',
-                              crash_report_received: 'documents',
-                              hipaa: 'documents',
-                              upload_case_files: 'documents',
-                              upload_intake_form: 'documents',
-                              lor_defendant: 'documents',
-                              lor_client_ins: 'documents',
-                              demand_prep: 'financials',
-                              demand_review: 'financials',
-                              specials_compile: 'financials',
-                              complete_intake_form: 'extended',
-                              contact_client: 'overview',
-                              client_communication: 'overview',
-                              create_cms_case: 'overview',
-                              general: 'tasks',
-                            };
-                            const taskActionLabels: Record<string, string> = {
-                              coverage_followup: 'Update coverage status',
-                              liability_followup: 'Update liability status',
-                              policy_limits: 'Update policy limits',
-                              verify_insurance: 'Verify insurance details',
-                              er_records: 'Update ER records status',
-                              er_bills: 'Update ER bill status',
-                              medical_records: 'Update medical records',
-                              treatment_followup: 'Check treatment status',
-                              bill_request: 'Upload or track bills',
-                              records_request: 'Request records from provider',
-                              send_hipaa_to_medical: 'Send HIPAA authorization',
-                              send_demographics: 'Send demographics',
-                              check_er_ambulance: 'Check ER/ambulance',
-                              mass_order_records: 'Order records',
-                              receive_records_bills: 'Confirm receipt',
-                              medical_summary: 'Create medical summary',
-                              retainer: 'Upload signed retainer',
-                              crash_report_request: 'Upload crash report',
-                              crash_report_received: 'Upload crash report',
-                              hipaa: 'Upload HIPAA forms',
-                              upload_case_files: 'Upload case files',
-                              upload_intake_form: 'Upload intake form',
-                              lor_defendant: 'Upload LOR',
-                              lor_client_ins: 'Upload LOR',
-                              demand_prep: 'Prepare demand',
-                              demand_review: 'Review demand',
-                              specials_compile: 'Compile specials',
-                              complete_intake_form: 'Complete intake form',
-                              contact_client: 'Contact client',
-                              client_communication: 'Contact client',
-                            };
-                            const openTasks = (caseData.tasks || [])
-                              .filter(t => t.status !== 'completed')
-                              .sort((a, b) => {
-                                const priorityOrder = { high: 0, medium: 1, low: 2 };
-                                if (priorityOrder[a.priority] !== priorityOrder[b.priority]) return priorityOrder[a.priority] - priorityOrder[b.priority];
-                                return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-                              })
-                              .slice(0, 5);
-                            if (openTasks.length === 0) return (
-                              <div className="text-center py-6 text-slate-400">
-                                <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <p className="text-xs">No open tasks</p>
-                              </div>
-                            );
-                            return openTasks.map(task => {
-                              const daysUntil = Math.floor((new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-                              const isOverdue = daysUntil < 0;
-                              const targetTab = taskTabMap[task.type] || 'tasks';
-                              const actionLabel = taskActionLabels[task.type];
-                              return (
-                                <div key={task.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-blue-50/50 hover:border-blue-200 transition-all group">
-                                    <input
-                                      type="checkbox"
-                                      className="w-4 h-4 mt-1 text-blue-600 rounded border-slate-300 focus:ring-blue-500 flex-shrink-0 cursor-pointer"
-                                      checked={false}
-                                      onChange={() => {
-                                        const updated = {
-                                          ...caseData,
-                                          tasks: (caseData.tasks || []).map(t => t.id === task.id ? { ...t, status: 'completed' as const, completedDate: new Date().toISOString() } : t),
-                                        };
-                                        onUpdateCase(updated);
-                                      }}
-                                    />
-                                    <div
-                                      className="flex-1 min-w-0 cursor-pointer"
-                                      onClick={() => setActiveTab(targetTab)}
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium truncate">{task.title}</span>
-                                            {task.priority === 'high' && (
-                                              <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.53 13H4.47L12 6zm-1 5v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className={`text-[10px] font-medium ${isOverdue ? 'text-red-600' : daysUntil <= 2 ? 'text-amber-600' : 'text-slate-400'}`}>
-                                              {isOverdue ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? 'Due today' : `${daysUntil}d left`}
-                                            </span>
-                                            {task.assignedTo && (
-                                              <span className="text-[10px] text-slate-400 truncate">{task.assignedTo.name}</span>
-                                            )}
-                                        </div>
-                                        {actionLabel && (
-                                          <div className="flex items-center gap-1 mt-1.5">
-                                            <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                                            <span className="text-[10px] font-medium text-blue-600 group-hover:text-blue-700">{actionLabel}</span>
-                                          </div>
-                                        )}
-                                    </div>
-                                </div>
-                              );
-                            });
-                          })()}
+                  {/* Team Notes */}
+                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                      <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                          <h3 className="font-bold text-slate-800 text-sm flex items-center">
+                              <svg className="w-4 h-4 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                              Team Notes
+                          </h3>
+                          <span className="text-[10px] font-medium text-slate-400">{(caseData.teamNotes || []).length} {(caseData.teamNotes || []).length === 1 ? 'note' : 'notes'}</span>
                       </div>
-                      <button onClick={() => setActiveTab('tasks')} className="w-full mt-4 text-xs font-bold text-slate-500 hover:text-blue-600 py-2 border border-dashed border-slate-300 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all">
-                          + Add Task
-                      </button>
+                      <div className="max-h-[300px] overflow-y-auto">
+                          {(caseData.teamNotes || []).length > 0 ? (
+                              <div className="divide-y divide-slate-100">
+                                  {(caseData.teamNotes || []).map((note) => (
+                                      <div key={note.id} className="px-5 py-3 hover:bg-slate-50/50 transition-colors">
+                                          <div className="flex items-start gap-2.5">
+                                              <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">
+                                                  {note.authorInitials}
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                  <div className="flex items-center gap-2 mb-0.5">
+                                                      <span className="text-xs font-semibold text-slate-800">{note.authorName}</span>
+                                                      <span className="text-[10px] text-slate-400">
+                                                          {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                      </span>
+                                                  </div>
+                                                  <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  ))}
+                                  <div ref={notesEndRef} />
+                              </div>
+                          ) : (
+                              <div className="px-5 py-8 text-center text-slate-400 text-xs">
+                                  No notes yet. Add a note below.
+                              </div>
+                          )}
+                      </div>
+                      <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                          <div className="flex items-start gap-2.5">
+                              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-1">
+                                  {profile?.avatar_initials || '??'}
+                              </div>
+                              <div className="flex-1">
+                                  <textarea
+                                      className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder-slate-400 transition-shadow"
+                                      rows={2}
+                                      placeholder="Add a note..."
+                                      value={newNote}
+                                      onChange={e => setNewNote(e.target.value)}
+                                      onKeyDown={e => {
+                                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAddNote();
+                                      }}
+                                  />
+                                  <div className="flex items-center justify-between mt-1.5">
+                                      <span className="text-[10px] text-slate-400">Cmd+Enter to submit</span>
+                                      <button
+                                          onClick={handleAddNote}
+                                          disabled={!newNote.trim()}
+                                          className="px-3 py-1 bg-slate-800 text-white text-[10px] font-semibold rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      >
+                                          Add Note
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
                   </div>
               </div>
           </div>
