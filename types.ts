@@ -636,6 +636,19 @@ export interface SpecialsItem {
   documentIndex?: number;
 }
 
+export interface PreservationRecipient {
+  id: string;
+  businessName: string;
+  contactName?: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  sentDate: string;
+  sentBy: string;
+  notes?: string;
+}
+
 export interface CaseFile {
   id: string;
   firm_id?: string;
@@ -698,6 +711,8 @@ export interface CaseFile {
   lorDefendantSentDate?: string;
   lorClientInsSentDate?: string;
   crashReportRequestedDate?: string;
+
+  preservationRecipients?: PreservationRecipient[];
 
   financials?: CaseFinancials;
 }

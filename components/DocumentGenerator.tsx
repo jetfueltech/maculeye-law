@@ -19,6 +19,7 @@ export type DocumentFormType =
 
 export interface EvidenceRecipient {
   businessName: string;
+  contactName?: string;
   address: string;
   city: string;
   state: string;
@@ -853,7 +854,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   const evidenceRecipient = context?.evidenceRecipient;
 
   const renderPreservationOfEvidence = () => {
-    const recipientName = evidenceRecipient?.businessName || '[BUSINESS NAME]';
+    const recipientBusiness = evidenceRecipient?.businessName || '[BUSINESS NAME]';
+    const recipientContact = evidenceRecipient?.contactName || '';
     const recipientAddr = evidenceRecipient?.address || '[ADDRESS]';
     const recipientCityStateZip = evidenceRecipient
       ? `${evidenceRecipient.city}, ${evidenceRecipient.state} ${evidenceRecipient.zip}`
@@ -867,71 +869,106 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     const honorific = clientGender === 'Female' ? 'Ms.' : clientGender === 'Male' ? 'Mr.' : 'Mr./Ms.';
     const lastName = clientName.split(' ').pop() || clientName;
 
+    const policeReport = caseData.documents.find(d => d.type === 'crash_report' || d.category === 'investigation');
+    const policeReportUrl = policeReport?.storageUrl || policeReport?.fileData || null;
+
     return (
-      <div className={paperClass}>
-        <div className={letterheadClass}>
-          <h1 className={lhTitle}>SAP LAW</h1>
-          <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
-          <p className="text-sm font-sans">Phone: {attorneyPhone} Fax: {attorneyFax}</p>
-        </div>
+      <>
+        <div className={paperClass}>
+          <div className={letterheadClass}>
+            <h1 className={lhTitle}>SAP LAW</h1>
+            <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
+            <p className="text-sm font-sans">Phone: {attorneyPhone} Fax: {attorneyFax}</p>
+          </div>
 
-        <div className="flex justify-between items-start mb-8">
-          <div className="text-sm">{today}</div>
-          <div className="text-right font-bold text-base uppercase">Preservation of Evidence</div>
-        </div>
+          <div className="flex justify-between items-start mb-8">
+            <div className="text-sm">{today}</div>
+            <div className="text-right font-bold text-base uppercase">Preservation of Evidence</div>
+          </div>
 
-        <div className="mb-6">
-          <p className="font-bold">{recipientName}</p>
-          <p>{recipientAddr}</p>
-          <p>{recipientCityStateZip}</p>
-        </div>
+          <div className="mb-6">
+            {recipientContact && <p className="font-bold">{recipientContact}</p>}
+            <p className="font-bold">{recipientBusiness}</p>
+            <p>{recipientAddr}</p>
+            <p>{recipientCityStateZip}</p>
+          </div>
 
-        <div className="grid grid-cols-[40px_1fr] gap-y-1 mb-6">
-          <div className="font-bold">RE:</div>
-          <div>
-            <span>Our Client(s): <span className="bg-yellow-100 px-1 font-bold">{clientName}</span></span>
-            <br />
-            <span>Date of Loss: <span className="bg-yellow-100 px-1">{dol}</span></span>
+          <div className="grid grid-cols-[40px_1fr] gap-y-1 mb-6">
+            <div className="font-bold">RE:</div>
+            <div>
+              <span>Our Client(s): <span className="bg-yellow-100 px-1 font-bold">{clientName}</span></span>
+              <br />
+              <span>Date of Loss: <span className="bg-yellow-100 px-1">{dol}</span></span>
+            </div>
+          </div>
+
+          <p className="mb-6">To Whom It May Concern,</p>
+
+          <p className="mb-6 text-justify leading-7">
+            Please be advised that we represent {honorific} {lastName} in{' '}
+            {clientGender === 'Female' ? 'her' : clientGender === 'Male' ? 'his' : 'his/her'}{' '}
+            personal injury claim as a result of an auto accident that occurred on{' '}
+            <span className="font-bold">{accidentDateFormatted}</span> at or about{' '}
+            <span className="font-bold">{accidentTime}</span>, at or near intersection of{' '}
+            <span className="font-bold">{accidentLocation}</span>. See attached copy of the
+            corresponding Crash Report. Kindly accept this correspondence as a{' '}
+            <span className="font-bold">formal demand for preservation of evidence</span>.
+          </p>
+
+          <p className="mb-6 text-justify leading-7">
+            We have been informed that your security/surveillance camera(s) may have secured video footage
+            of the aforementioned collision.{' '}
+            <span className="font-bold underline">
+              Demand is hereby made for the preservation of all evidence of the alleged incident, scene,
+              and physical objects; including but not limited to photographs and/or videos.
+            </span>
+          </p>
+
+          <p className="mb-6 text-justify leading-7">
+            Please contact me to make arrangements for our office to secure a copy of the evidence in your
+            possession.
+          </p>
+
+          <p className="mb-8">Your cooperation will be appreciated.</p>
+
+          <div className="mt-8">
+            <p>Sincerely,</p>
+            <div className="h-16 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+            <p className="font-bold">Rosa M. Hernandez, Esq.</p>
+            <p className="font-bold">{attorneyFirm}</p>
+            <a href="#" className="text-blue-600 underline">rosa@SAPLaw.com</a>
           </div>
         </div>
 
-        <p className="mb-6">To Whom It May Concern,</p>
-
-        <p className="mb-6 text-justify leading-7">
-          Please be advised that we represent {honorific} {lastName} in{' '}
-          {clientGender === 'Female' ? 'her' : clientGender === 'Male' ? 'his' : 'his/her'}{' '}
-          personal injury claim as a result of an auto accident that occurred on{' '}
-          <span className="font-bold">{accidentDateFormatted}</span> at or about{' '}
-          <span className="font-bold">{accidentTime}</span>, at or near intersection of{' '}
-          <span className="font-bold">{accidentLocation}</span>. See attached copy of the
-          corresponding Crash Report. Kindly accept this correspondence as a{' '}
-          <span className="font-bold">formal demand for preservation of evidence</span>.
-        </p>
-
-        <p className="mb-6 text-justify leading-7">
-          We have been informed that your security/surveillance camera(s) may have secured video footage
-          of the aforementioned collision.{' '}
-          <span className="font-bold underline">
-            Demand is hereby made for the preservation of all evidence of the alleged incident, scene,
-            and physical objects; including but not limited to photographs and/or videos.
-          </span>
-        </p>
-
-        <p className="mb-6 text-justify leading-7">
-          Please contact me to make arrangements for our office to secure a copy of the evidence in your
-          possession.
-        </p>
-
-        <p className="mb-8">Your cooperation will be appreciated.</p>
-
-        <div className="mt-8">
-          <p>Sincerely,</p>
-          <div className="h-16 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
-          <p className="font-bold">Rosa M. Hernandez, Esq.</p>
-          <p className="font-bold">{attorneyFirm}</p>
-          <a href="#" className="text-blue-600 underline">rosa@SAPLaw.com</a>
-        </div>
-      </div>
+        {policeReportUrl ? (
+          <div className={paperClass}>
+            <div className="text-center mb-4">
+              <h3 className="text-lg font-bold text-slate-700 uppercase tracking-wide">Attachment: Police / Crash Report</h3>
+              <p className="text-xs text-slate-500 mt-1">Crash Report #{crashReportNo}</p>
+            </div>
+            <div className="border border-slate-300 rounded-lg overflow-hidden bg-white min-h-[800px]">
+              {policeReport?.mimeType?.startsWith('image/') || policeReportUrl.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
+                <img src={policeReportUrl} alt="Police Report" className="w-full h-auto" />
+              ) : (
+                <iframe
+                  src={policeReportUrl}
+                  className="w-full h-[900px]"
+                  title="Police Report"
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className={paperClass + " flex flex-col items-center justify-center border-4 border-dashed border-gray-300 bg-gray-50"}>
+            <div className="text-center opacity-50">
+              <svg className="w-24 h-24 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              <h3 className="text-2xl font-bold text-gray-500 uppercase">Attachment: Crash Report</h3>
+              <p className="text-lg text-gray-400">{crashReportNo}</p>
+              <p className="mt-4 text-sm text-gray-400">(Police report will be attached from case documents when available)</p>
+            </div>
+          </div>
+        )}
+      </>
     );
   };
 

@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { CaseFile, DocumentAttachment, ActivityLog } from '../types';
+import React, { useState } from 'react';
+import { CaseFile, DocumentAttachment, ActivityLog, PreservationRecipient } from '../types';
 import { DocumentGenerator, DocumentFormType, EvidenceRecipient } from './DocumentGenerator';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -19,6 +19,8 @@ interface BusinessResult {
   types: string[];
 }
 
+type ModalTab = 'compose' | 'search' | 'sent';
+
 export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalProps> = ({
   isOpen,
   onClose,
@@ -28,9 +30,10 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
   const { profile } = useAuth();
   const authorName = profile?.full_name || profile?.email || 'Unknown User';
 
-  const [activeTab, setActiveTab] = useState<'manual' | 'search'>('manual');
+  const [activeTab, setActiveTab] = useState<ModalTab>('compose');
   const [recipient, setRecipient] = useState<EvidenceRecipient>({
     businessName: '',
+    contactName: '',
     address: '',
     city: '',
     state: '',
@@ -48,12 +51,12 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
 
   if (!isOpen) return null;
 
+  const sentRecipients = caseData.preservationRecipients || [];
   const accidentLocation = caseData.location || caseData.extendedIntake?.accident?.accident_location || '';
 
   const handleSearch = async () => {
     const query = searchQuery.trim() || 'businesses';
-    const location = accidentLocation;
-    if (!location) {
+    if (!accidentLocation) {
       setSearchError('No accident location set on this case. Enter the location in the case details first, or search manually.');
       return;
     }
@@ -73,13 +76,11 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
             'Authorization': `Bearer ${supabaseKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query, location }),
+          body: JSON.stringify({ query, location: accidentLocation }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
+      if (!response.ok) throw new Error('Search failed');
 
       const data = await response.json();
       setSearchResults(data.results || []);
@@ -96,12 +97,13 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
   const selectBusiness = (biz: BusinessResult) => {
     setRecipient({
       businessName: biz.name,
+      contactName: '',
       address: biz.address,
       city: biz.city,
       state: biz.state,
       zip: biz.zip,
     });
-    setActiveTab('manual');
+    setActiveTab('compose');
   };
 
   const isValid = recipient.businessName.trim() && recipient.address.trim();
@@ -109,21 +111,41 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
   const applyUpdate = () => {
     setConfirming(true);
     const nowISO = new Date().toISOString();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    const newRecipient: PreservationRecipient = {
+      id: Math.random().toString(36).substr(2, 9),
+      businessName: recipient.businessName,
+      contactName: recipient.contactName || undefined,
+      address: recipient.address,
+      city: recipient.city,
+      state: recipient.state,
+      zip: recipient.zip,
+      sentDate: todayStr,
+      sentBy: authorName,
+      notes: notes || undefined,
+    };
+
     const log: ActivityLog = {
       id: Math.random().toString(36).substr(2, 9),
       type: 'user',
-      message: `Preservation of Evidence letter sent to ${recipient.businessName}${notes ? ` — ${notes}` : ''}`,
+      message: `Preservation of Evidence letter sent to ${recipient.businessName}${recipient.contactName ? ` (Attn: ${recipient.contactName})` : ''}${notes ? ` — ${notes}` : ''}`,
       timestamp: nowISO,
       author: authorName,
     };
-    const updated = {
+
+    const updated: CaseFile = {
       ...caseData,
+      preservationRecipients: [...sentRecipients, newRecipient],
       activityLog: [log, ...(caseData.activityLog || [])],
     };
+
     onUpdateCase(updated);
+
     setTimeout(() => {
       setConfirming(false);
-      onClose();
+      setRecipient({ businessName: '', contactName: '', address: '', city: '', state: '', zip: '' });
+      setNotes('');
     }, 600);
   };
 
@@ -147,6 +169,25 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
     setTimeout(() => setSavedDoc(false), 2000);
   };
 
+  const tabItems: { key: ModalTab; label: string; icon: string; badge?: number }[] = [
+    {
+      key: 'compose',
+      label: 'New Request',
+      icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+    },
+    {
+      key: 'search',
+      label: 'Search Businesses',
+      icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+    },
+    {
+      key: 'sent',
+      label: 'Sent',
+      icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+      badge: sentRecipients.length || undefined,
+    },
+  ];
+
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
@@ -161,7 +202,7 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
               <div>
                 <h3 className="font-bold text-slate-900 text-lg leading-tight">Preservation of Evidence</h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  Send a formal demand to preserve surveillance footage and other evidence near the accident location.
+                  Formal demand to preserve surveillance footage and evidence near the accident.
                 </p>
               </div>
             </div>
@@ -170,104 +211,169 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
             </button>
           </div>
 
+          <div className="bg-slate-50 border-b border-slate-200 px-6">
+            <div className="flex gap-1 pt-2">
+              {tabItems.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border-b-2 -mb-px ${
+                    activeTab === tab.key
+                      ? 'bg-white text-slate-800 border-blue-600'
+                      : 'text-slate-500 hover:text-slate-700 border-transparent hover:bg-white/50'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} />
+                  </svg>
+                  {tab.label}
+                  {tab.badge !== undefined && (
+                    <span className="ml-1 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full w-5 h-5 flex items-center justify-center">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Client</span>
-                <span className="font-semibold text-slate-800">{caseData.clientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Date of Loss</span>
-                <span className="font-semibold text-slate-800">{caseData.accidentDate}</span>
-              </div>
-              {accidentLocation && (
+            {activeTab !== 'sent' && (
+              <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Accident Location</span>
-                  <span className="font-semibold text-slate-800">{accidentLocation}</span>
+                  <span className="text-slate-500">Client</span>
+                  <span className="font-semibold text-slate-800">{caseData.clientName}</span>
                 </div>
-              )}
-            </div>
-
-            <div className="flex gap-1 bg-slate-100 rounded-lg p-1">
-              <button
-                onClick={() => setActiveTab('manual')}
-                className={`flex-1 text-sm font-semibold py-2.5 px-3 rounded-md transition-all flex items-center justify-center gap-2 ${
-                  activeTab === 'manual' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Enter Recipient
-              </button>
-              <button
-                onClick={() => setActiveTab('search')}
-                className={`flex-1 text-sm font-semibold py-2.5 px-3 rounded-md transition-all flex items-center justify-center gap-2 ${
-                  activeTab === 'search' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                Search Businesses
-              </button>
-            </div>
-
-            {activeTab === 'manual' && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Business Name *</label>
-                  <input
-                    type="text"
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., Shell Gas Station"
-                    value={recipient.businessName}
-                    onChange={e => setRecipient({ ...recipient, businessName: e.target.value })}
-                  />
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Date of Loss</span>
+                  <span className="font-semibold text-slate-800">{caseData.accidentDate}</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">Street Address *</label>
-                  <input
-                    type="text"
-                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., 2604 N Cicero Ave"
-                    value={recipient.address}
-                    onChange={e => setRecipient({ ...recipient, address: e.target.value })}
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">City</label>
-                    <input
-                      type="text"
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Chicago"
-                      value={recipient.city}
-                      onChange={e => setRecipient({ ...recipient, city: e.target.value })}
-                    />
+                {accidentLocation && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Accident Location</span>
+                    <span className="font-semibold text-slate-800">{accidentLocation}</span>
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">State</label>
-                    <input
-                      type="text"
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="IL"
-                      value={recipient.state}
-                      onChange={e => setRecipient({ ...recipient, state: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">ZIP</label>
-                    <input
-                      type="text"
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="60618"
-                      value={recipient.zip}
-                      onChange={e => setRecipient({ ...recipient, zip: e.target.value })}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
+            )}
+
+            {activeTab === 'compose' && (
+              <>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Business Name *</label>
+                    <input
+                      type="text"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Shell Gas Station"
+                      value={recipient.businessName}
+                      onChange={e => setRecipient({ ...recipient, businessName: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Contact Name</label>
+                    <input
+                      type="text"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., John Smith, Manager"
+                      value={recipient.contactName || ''}
+                      onChange={e => setRecipient({ ...recipient, contactName: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Street Address *</label>
+                    <input
+                      type="text"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., 2604 N Cicero Ave"
+                      value={recipient.address}
+                      onChange={e => setRecipient({ ...recipient, address: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">City</label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Chicago"
+                        value={recipient.city}
+                        onChange={e => setRecipient({ ...recipient, city: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">State</label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="IL"
+                        value={recipient.state}
+                        onChange={e => setRecipient({ ...recipient, state: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-1">ZIP</label>
+                      <input
+                        type="text"
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="60618"
+                        value={recipient.zip}
+                        onChange={e => setRecipient({ ...recipient, zip: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (optional)</label>
+                  <textarea
+                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows={2}
+                    placeholder="Add any notes about this preservation request..."
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    onClick={() => setShowDoc(true)}
+                    disabled={!isValid}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    Preview & Print
+                  </button>
+                  <button
+                    onClick={applyUpdate}
+                    disabled={confirming || !isValid}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl transition-all ${
+                      confirming
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed'
+                    }`}
+                  >
+                    {confirming ? (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        Mark as Sent
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {savedDoc && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 font-medium bg-emerald-50 rounded-lg py-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    Document saved to case files
+                  </div>
+                )}
+              </>
             )}
 
             {activeTab === 'search' && (
@@ -310,88 +416,116 @@ export const PreservationOfEvidenceModal: React.FC<PreservationOfEvidenceModalPr
                 )}
 
                 {searchResults.length > 0 && (
-                  <div className="space-y-2 max-h-[250px] overflow-y-auto">
-                    {searchResults.map((biz, i) => (
-                      <button
-                        key={i}
-                        onClick={() => selectBusiness(biz)}
-                        className="w-full text-left flex items-start gap-3 p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors">
-                          <svg className="w-4 h-4 text-slate-500 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 group-hover:text-blue-700 transition-colors">{biz.name}</p>
-                          <p className="text-xs text-slate-500">{biz.address}, {biz.city}, {biz.state} {biz.zip}</p>
-                          {biz.types.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {biz.types.slice(0, 3).map((t, j) => (
-                                <span key={j} className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
-                                  {t.replace(/_/g, ' ')}
-                                </span>
-                              ))}
+                  <div className="space-y-2 max-h-[350px] overflow-y-auto">
+                    {searchResults.map((biz, i) => {
+                      const alreadySent = sentRecipients.some(
+                        r => r.businessName === biz.name && r.address === biz.address
+                      );
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => selectBusiness(biz)}
+                          className={`w-full text-left flex items-start gap-3 p-3 rounded-lg border transition-all group ${
+                            alreadySent
+                              ? 'border-emerald-200 bg-emerald-50/50'
+                              : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/50'
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+                            alreadySent ? 'bg-emerald-100' : 'bg-slate-100 group-hover:bg-blue-100'
+                          }`}>
+                            {alreadySent ? (
+                              <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4 text-slate-500 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className={`text-sm font-semibold transition-colors ${
+                                alreadySent ? 'text-emerald-700' : 'text-slate-800 group-hover:text-blue-700'
+                              }`}>{biz.name}</p>
+                              {alreadySent && (
+                                <span className="text-[9px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">SENT</span>
+                              )}
                             </div>
+                            <p className="text-xs text-slate-500">{biz.address}, {biz.city}, {biz.state} {biz.zip}</p>
+                            {biz.types.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {biz.types.slice(0, 3).map((t, j) => (
+                                  <span key={j} className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">
+                                    {t.replace(/_/g, ' ')}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          {!alreadySent && (
+                            <svg className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
                           )}
-                        </div>
-                        <svg className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0 mt-1 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                      </button>
-                    ))}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (optional)</label>
-              <textarea
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={2}
-                placeholder="Add any notes about this preservation request..."
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={() => setShowDoc(true)}
-                disabled={!isValid}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                Preview & Print
-              </button>
-              <button
-                onClick={applyUpdate}
-                disabled={confirming || !isValid}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold rounded-xl transition-all ${
-                  confirming
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-40 disabled:cursor-not-allowed'
-                }`}
-              >
-                {confirming ? (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                    Done
-                  </>
+            {activeTab === 'sent' && (
+              <div className="space-y-3">
+                {sentRecipients.length === 0 ? (
+                  <div className="text-center py-12">
+                    <svg className="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-sm text-slate-500 font-medium">No preservation letters sent yet</p>
+                    <p className="text-xs text-slate-400 mt-1">Use the "New Request" tab to compose and send letters</p>
+                  </div>
                 ) : (
                   <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                    Mark as Sent
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-sm font-semibold text-slate-700">
+                        {sentRecipients.length} letter{sentRecipients.length !== 1 ? 's' : ''} sent
+                      </p>
+                    </div>
+                    {sentRecipients.map((r) => (
+                      <div
+                        key={r.id}
+                        className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 bg-white"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-bold text-slate-800">{r.businessName}</p>
+                            <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                              Sent {r.sentDate}
+                            </span>
+                          </div>
+                          {r.contactName && (
+                            <p className="text-xs text-slate-600 mt-0.5">Attn: {r.contactName}</p>
+                          )}
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {r.address}, {r.city}, {r.state} {r.zip}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1.5 text-[10px] text-slate-400">
+                            <span>By: {r.sentBy}</span>
+                            {r.notes && <span>Note: {r.notes}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </>
                 )}
-              </button>
-            </div>
-
-            {savedDoc && (
-              <div className="flex items-center justify-center gap-2 text-sm text-emerald-600 font-medium bg-emerald-50 rounded-lg py-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                Document saved to case files
               </div>
             )}
           </div>
