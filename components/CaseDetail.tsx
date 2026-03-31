@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote, CaseTeamMember, Adjuster } from '../types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote, CaseTeamMember, Adjuster, DocumentAttachment } from '../types';
 import { analyzeIntakeCase } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { ExtendedIntakeForm } from './ExtendedIntakeForm';
@@ -12,6 +12,31 @@ import { MemberPicker } from './MemberPicker';
 import { CaseTeamPanel } from './CaseTeamPanel';
 import { FinancialsTab } from './FinancialsTab';
 import { AdjusterPanel } from './AdjusterPanel';
+import { uploadDocument } from '../services/documentStorageService';
+import { generateDocumentNameWithExt } from '../services/documentNamingService';
+
+const DOC_TYPE_ICONS: Record<string, { bg: string; text: string; icon: string; label: string }> = {
+  retainer: { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', label: 'Retainer' },
+  crash_report: { bg: 'bg-red-50', text: 'text-red-600', icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', label: 'Crash Report' },
+  medical_record: { bg: 'bg-blue-50', text: 'text-blue-600', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', label: 'Medical' },
+  authorization: { bg: 'bg-amber-50', text: 'text-amber-600', icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z', label: 'Authorization' },
+  insurance_card: { bg: 'bg-cyan-50', text: 'text-cyan-600', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', label: 'Insurance' },
+  correspondence: { bg: 'bg-slate-100', text: 'text-slate-600', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', label: 'Letter' },
+  photo: { bg: 'bg-rose-50', text: 'text-rose-600', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', label: 'Photo' },
+  email: { bg: 'bg-sky-50', text: 'text-sky-600', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', label: 'Email' },
+  other: { bg: 'bg-slate-50', text: 'text-slate-500', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', label: 'File' },
+};
+
+function inferDocTypeFromName(filename: string): DocumentAttachment['type'] {
+  const lower = filename.toLowerCase();
+  if (lower.includes('retainer')) return 'retainer';
+  if (lower.includes('crash') || lower.includes('police')) return 'crash_report';
+  if (lower.includes('medical') || lower.includes('record')) return 'medical_record';
+  if (lower.includes('auth') || lower.includes('hipaa')) return 'authorization';
+  if (lower.includes('insurance')) return 'insurance_card';
+  if (lower.match(/\.(jpg|jpeg|png|gif|webp|heic)$/)) return 'photo';
+  return 'other';
+}
 
 interface CaseDetailProps {
   caseData: CaseFile;
@@ -49,6 +74,83 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const [cmsLoading, setCmsLoading] = useState(false);
   const [newNote, setNewNote] = useState('');
   const notesEndRef = useRef<HTMLDivElement>(null);
+
+  const [docDragOver, setDocDragOver] = useState(false);
+  const [docUploading, setDocUploading] = useState(false);
+  const overviewFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleOverviewDocDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDocDragOver(true);
+  }, []);
+
+  const handleOverviewDocDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDocDragOver(false);
+  }, []);
+
+  const handleOverviewDocUpload = useCallback(async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+    setDocUploading(true);
+    const authorName = profile?.full_name || profile?.email || 'Unknown User';
+    const existingCounts: Record<string, number> = {};
+    (caseData.documents || []).forEach(d => {
+      existingCounts[d.type] = (existingCounts[d.type] || 0) + 1;
+    });
+
+    const newDocs: DocumentAttachment[] = [];
+    for (const file of fileArray) {
+      const docType = inferDocTypeFromName(file.name);
+      const result = await uploadDocument(caseData.id, file);
+      if (!('error' in result)) {
+        existingCounts[docType] = (existingCounts[docType] || 0) + 1;
+        const properName = generateDocumentNameWithExt({
+          clientName: caseData.clientName,
+          dol: caseData.accidentDate || '',
+          docType,
+          version: existingCounts[docType],
+          originalFileName: file.name,
+        });
+        newDocs.push({
+          type: docType,
+          fileData: null,
+          fileName: properName,
+          mimeType: file.type || 'application/octet-stream',
+          source: 'Upload',
+          storagePath: result.path,
+          storageUrl: result.url,
+          uploadedAt: new Date().toISOString(),
+        });
+      }
+    }
+    if (newDocs.length > 0) {
+      const log = {
+        id: Math.random().toString(36).substr(2, 9),
+        type: 'system' as const,
+        message: `Uploaded ${newDocs.length} document(s): ${newDocs.map(d => d.fileName).join(', ')}`,
+        timestamp: new Date().toISOString(),
+        author: authorName,
+      };
+      onUpdateCase({
+        ...caseData,
+        documents: [...(caseData.documents || []), ...newDocs],
+        activityLog: [log, ...(caseData.activityLog || [])],
+      });
+    }
+    setDocUploading(false);
+  }, [caseData, profile, onUpdateCase]);
+
+  const handleOverviewDocDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDocDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleOverviewDocUpload(e.dataTransfer.files);
+    }
+  }, [handleOverviewDocUpload]);
 
   const handleAddNote = () => {
     const trimmed = newNote.trim();
@@ -944,73 +1046,115 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                           <h3 className="text-lg font-bold text-slate-800 flex items-center">
                               <svg className="w-5 h-5 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                               Documents
+                              <span className="ml-2 text-xs font-medium text-slate-400">{(caseData.documents || []).length}</span>
                           </h3>
-                          <div className="flex items-center gap-3">
-                              <span className="text-xs font-medium text-slate-400">{(caseData.documents || []).length} {(caseData.documents || []).length === 1 ? 'file' : 'files'}</span>
-                              <button onClick={() => setActiveTab('documents')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">View All</button>
+                          <div className="flex items-center gap-2">
+                              <input
+                                type="file"
+                                ref={overviewFileInputRef}
+                                className="hidden"
+                                multiple
+                                onChange={(e) => {
+                                  if (e.target.files && e.target.files.length > 0) handleOverviewDocUpload(e.target.files);
+                                  if (overviewFileInputRef.current) overviewFileInputRef.current.value = '';
+                                }}
+                              />
+                              <button
+                                onClick={() => overviewFileInputRef.current?.click()}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                Upload
+                              </button>
+                              <button onClick={() => setActiveTab('documents')} className="text-xs text-slate-500 hover:text-slate-700 font-medium transition-colors">
+                                  View All
+                              </button>
                           </div>
                       </div>
-                      {(caseData.documents || []).length > 0 ? (
-                          <div className="divide-y divide-slate-100">
-                              {(caseData.documents || []).slice(0, 8).map((doc, idx) => {
-                                  const typeIcons: Record<string, { bg: string; text: string; label: string }> = {
-                                      retainer: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'RET' },
-                                      crash_report: { bg: 'bg-red-50', text: 'text-red-600', label: 'CR' },
-                                      medical_record: { bg: 'bg-blue-50', text: 'text-blue-600', label: 'MED' },
-                                      authorization: { bg: 'bg-amber-50', text: 'text-amber-600', label: 'AUTH' },
-                                      insurance_card: { bg: 'bg-cyan-50', text: 'text-cyan-600', label: 'INS' },
-                                      correspondence: { bg: 'bg-slate-50', text: 'text-slate-600', label: 'COR' },
-                                      photo: { bg: 'bg-rose-50', text: 'text-rose-600', label: 'PHO' },
-                                      email: { bg: 'bg-sky-50', text: 'text-sky-600', label: 'EML' },
-                                      other: { bg: 'bg-slate-50', text: 'text-slate-500', label: 'OTH' },
-                                  };
-                                  const style = typeIcons[doc.type] || typeIcons.other;
-                                  return (
-                                      <div
-                                          key={doc.id || idx}
-                                          className="px-8 py-3.5 flex items-center gap-4 hover:bg-slate-50 transition-colors cursor-pointer group"
-                                          onClick={() => setActiveTab('documents')}
-                                      >
-                                          <div className={`w-9 h-9 rounded-lg ${style.bg} ${style.text} flex items-center justify-center text-[10px] font-bold flex-shrink-0`}>
-                                              {style.label}
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                              <p className="text-sm font-medium text-slate-800 truncate group-hover:text-slate-900">{doc.fileName}</p>
-                                              <div className="flex items-center gap-2 mt-0.5">
-                                                  <span className="text-[10px] text-slate-400 capitalize">{doc.type.replace(/_/g, ' ')}</span>
-                                                  {doc.category && (
-                                                      <>
-                                                          <span className="text-[10px] text-slate-300">|</span>
-                                                          <span className="text-[10px] text-slate-400 capitalize">{doc.category}</span>
-                                                      </>
-                                                  )}
-                                                  {doc.uploadedAt && (
-                                                      <>
-                                                          <span className="text-[10px] text-slate-300">|</span>
-                                                          <span className="text-[10px] text-slate-400">{new Date(doc.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                                                      </>
-                                                  )}
-                                              </div>
-                                          </div>
-                                          <svg className="w-4 h-4 text-slate-300 group-hover:text-blue-500 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+
+                      <div
+                        className="p-6"
+                        onDragOver={handleOverviewDocDragOver}
+                        onDragLeave={handleOverviewDocDragLeave}
+                        onDrop={handleOverviewDocDrop}
+                      >
+                        {docUploading && (
+                          <div className="mb-4 flex items-center gap-2 px-4 py-2.5 bg-blue-50 border border-blue-100 rounded-xl">
+                            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs font-medium text-blue-700">Uploading documents...</span>
+                          </div>
+                        )}
+
+                        {(caseData.documents || []).length > 0 ? (
+                          <>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                              {[...(caseData.documents || [])].reverse().slice(0, 8).map((doc, idx) => {
+                                const style = DOC_TYPE_ICONS[doc.type] || DOC_TYPE_ICONS.other;
+                                const isImage = doc.mimeType?.startsWith('image/');
+                                return (
+                                  <div
+                                    key={idx}
+                                    onClick={() => setActiveTab('documents')}
+                                    className="group relative bg-slate-50 border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-blue-300 hover:shadow-md hover:shadow-blue-50 transition-all duration-200 flex flex-col items-center text-center min-h-[120px]"
+                                  >
+                                    {isImage && doc.storageUrl ? (
+                                      <div className="w-10 h-10 rounded-lg overflow-hidden mb-2.5 flex-shrink-0 border border-slate-200">
+                                        <img src={doc.storageUrl} alt="" className="w-full h-full object-cover" />
                                       </div>
-                                  );
-                              })}
-                              {(caseData.documents || []).length > 8 && (
-                                  <div className="px-8 py-3 text-center">
-                                      <button onClick={() => setActiveTab('documents')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                                          +{(caseData.documents || []).length - 8} more documents
-                                      </button>
+                                    ) : (
+                                      <div className={`w-10 h-10 rounded-lg ${style.bg} ${style.text} flex items-center justify-center mb-2.5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110`}>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={style.icon} /></svg>
+                                      </div>
+                                    )}
+                                    <p className="text-[11px] font-medium text-slate-700 leading-tight line-clamp-2 group-hover:text-slate-900 transition-colors mb-1">{doc.fileName}</p>
+                                    <span className="text-[10px] text-slate-400 mt-auto">{style.label}</span>
+                                    {doc.uploadedAt && (
+                                      <span className="text-[9px] text-slate-300 mt-0.5">{new Date(doc.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                    )}
                                   </div>
-                              )}
+                                );
+                              })}
+                            </div>
+
+                            {(caseData.documents || []).length > 8 && (
+                              <button onClick={() => setActiveTab('documents')} className="w-full mt-3 text-xs font-medium text-blue-600 hover:text-blue-700 py-2 text-center">
+                                View all {(caseData.documents || []).length} documents
+                              </button>
+                            )}
+
+                            <div
+                              className={`mt-4 border-2 border-dashed rounded-xl py-5 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${
+                                docDragOver
+                                  ? 'border-blue-400 bg-blue-50'
+                                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                              }`}
+                              onClick={() => overviewFileInputRef.current?.click()}
+                            >
+                              <svg className={`w-6 h-6 mb-1.5 transition-colors ${docDragOver ? 'text-blue-500' : 'text-slate-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                              <p className={`text-xs font-medium transition-colors ${docDragOver ? 'text-blue-600' : 'text-slate-400'}`}>
+                                {docDragOver ? 'Drop files here' : 'Drag & drop files here'}
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            className={`border-2 border-dashed rounded-xl py-12 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${
+                              docDragOver
+                                ? 'border-blue-400 bg-blue-50'
+                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
+                            onClick={() => overviewFileInputRef.current?.click()}
+                          >
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${docDragOver ? 'bg-blue-100 text-blue-500' : 'bg-slate-100 text-slate-300'}`}>
+                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                            </div>
+                            <p className={`text-sm font-medium mb-1 transition-colors ${docDragOver ? 'text-blue-600' : 'text-slate-500'}`}>
+                              {docDragOver ? 'Drop files here' : 'Drop files to upload'}
+                            </p>
+                            <p className="text-xs text-slate-400">or click to browse</p>
                           </div>
-                      ) : (
-                          <div className="px-8 py-10 text-center">
-                              <svg className="w-10 h-10 mx-auto mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                              <p className="text-sm text-slate-400 mb-3">No documents uploaded yet</p>
-                              <button onClick={() => setActiveTab('documents')} className="text-xs font-medium text-blue-600 hover:text-blue-700">Go to Documents</button>
-                          </div>
-                      )}
+                        )}
+                      </div>
                   </div>
 
                   {/* Communication Card (Unified with Threads) */}
