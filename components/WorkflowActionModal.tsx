@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CaseFile, MedicalProvider, ERVisit, ActivityLog, DocumentAttachment } from '../types';
 import { DocumentGenerator, DocumentFormType, DocumentContext } from './DocumentGenerator';
+import { useAuth } from '../contexts/AuthContext';
 
 export type WorkflowActionType =
   | 'lor_defendant'
@@ -98,12 +99,13 @@ const ACTION_CONFIG: Record<WorkflowActionType, ActionConfig> = {
   },
 };
 
-function addActivity(c: CaseFile, message: string): CaseFile {
+function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
   const log: ActivityLog = {
     id: Math.random().toString(36).substr(2, 9),
     type: 'user',
     message,
     timestamp: new Date().toISOString(),
+    author: author || 'System',
   };
   return { ...c, activityLog: [log, ...(c.activityLog || [])] };
 }
@@ -121,10 +123,13 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
   erVisit,
   onUpdateCase,
 }) => {
+  const { profile } = useAuth();
   const [showDoc, setShowDoc] = useState(false);
   const [notes, setNotes] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [savedDoc, setSavedDoc] = useState(false);
+
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
 
   if (!isOpen) return null;
 
@@ -152,7 +157,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             ? { ...t, status: 'completed' as const, completedDate: nowISO }
             : t
         );
-        updated = addActivity(updated, `LOR sent to ${defIns?.provider || "defendant's insurance"}${notes ? ` — ${notes}` : ''}`);
+        updated = addActivity(updated, `LOR sent to ${defIns?.provider || "defendant's insurance"}${notes ? ` — ${notes}` : ''}`, authorName);
         break;
 
       case 'lor_client_ins':
@@ -162,7 +167,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             ? { ...t, status: 'completed' as const, completedDate: nowISO }
             : t
         );
-        updated = addActivity(updated, `LOR sent to ${clientIns?.provider || "client's insurance"}${notes ? ` — ${notes}` : ''}`);
+        updated = addActivity(updated, `LOR sent to ${clientIns?.provider || "client's insurance"}${notes ? ` — ${notes}` : ''}`, authorName);
         break;
 
       case 'crash_report':
@@ -172,7 +177,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             ? { ...t, status: 'completed' as const, completedDate: nowISO }
             : t
         );
-        updated = addActivity(updated, `Crash/police report requested via FOIA${notes ? ` — ${notes}` : ''}`);
+        updated = addActivity(updated, `Crash/police report requested via FOIA${notes ? ` — ${notes}` : ''}`, authorName);
         break;
 
       case 'hipaa':
@@ -181,7 +186,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             ? { ...t, status: 'completed' as const, completedDate: nowISO }
             : t
         );
-        updated = addActivity(updated, `HIPAA authorization obtained${notes ? ` — ${notes}` : ''}`);
+        updated = addActivity(updated, `HIPAA authorization obtained${notes ? ` — ${notes}` : ''}`, authorName);
         break;
 
       case 'bill_request':
@@ -191,7 +196,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
               ? { ...p, billRequestDate: todayStr, billRequestStatus: 'requested' as const }
               : p
           );
-          updated = addActivity(updated, `Bill request sent to ${provider.name}${notes ? ` — ${notes}` : ''}`);
+          updated = addActivity(updated, `Bill request sent to ${provider.name}${notes ? ` — ${notes}` : ''}`, authorName);
         }
         break;
 
@@ -202,7 +207,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
               ? { ...p, recordsRequestDate: todayStr, recordsRequestStatus: 'requested' as const }
               : p
           );
-          updated = addActivity(updated, `Records request sent to ${provider.name}${notes ? ` — ${notes}` : ''}`);
+          updated = addActivity(updated, `Records request sent to ${provider.name}${notes ? ` — ${notes}` : ''}`, authorName);
         }
         break;
 
@@ -220,7 +225,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
                 }
               : v
           );
-          updated = addActivity(updated, `ER bill request sent to ${erVisit.facilityName}${notes ? ` — ${notes}` : ''}`);
+          updated = addActivity(updated, `ER bill request sent to ${erVisit.facilityName}${notes ? ` — ${notes}` : ''}`, authorName);
         }
         break;
 
@@ -231,7 +236,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
               ? { ...v, recordStatus: 'requested' as const, recordRequestDate: todayStr }
               : v
           );
-          updated = addActivity(updated, `ER records request sent to ${erVisit.facilityName}${notes ? ` — ${notes}` : ''}`);
+          updated = addActivity(updated, `ER records request sent to ${erVisit.facilityName}${notes ? ` — ${notes}` : ''}`, authorName);
         }
         break;
     }

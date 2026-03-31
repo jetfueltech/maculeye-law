@@ -6,6 +6,7 @@ import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 import { analyzeUploadedDocument, applyDocumentActions } from '../services/documentActionService';
 import { DocumentActionPanel, AIDocAnalysis } from './DocumentActionPanel';
+import { useAuth } from '../contexts/AuthContext';
 
 interface DocumentsPanelProps {
   caseData: CaseFile;
@@ -72,6 +73,8 @@ function formatDate(isoStr?: string): string {
 }
 
 export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpdateCase }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -89,12 +92,13 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
   const [deepAnalyses, setDeepAnalyses] = useState<AIDocAnalysis[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const addActivity = (c: CaseFile, message: string): CaseFile => {
+  const addActivity = (c: CaseFile, message: string, author?: string): CaseFile => {
     const log = {
       id: Math.random().toString(36).substr(2, 9),
-      type: 'system' as const,
+      type: (author ? 'user' : 'system') as const,
       message,
       timestamp: new Date().toISOString(),
+      author: author || 'System',
     };
     return { ...c, activityLog: [log, ...(c.activityLog || [])] };
   };
@@ -424,7 +428,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
         ...caseData,
         documents: [...caseData.documents, ...newDocs],
       };
-      updated = addActivity(updated, `Uploaded ${newDocs.length} document(s): ${newDocs.map(d => d.fileName).join(', ')}`);
+      updated = addActivity(updated, `Uploaded ${newDocs.length} document(s): ${newDocs.map(d => d.fileName).join(', ')}`, authorName);
 
       for (let i = 0; i < newDocs.length; i++) {
         const doc = newDocs[i];
@@ -470,7 +474,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     }
     const updatedDocs = caseData.documents.filter((_, i) => i !== index);
     let updated = { ...caseData, documents: updatedDocs };
-    updated = addActivity(updated, `Document deleted: ${doc.fileName}`);
+    updated = addActivity(updated, `Document deleted: ${doc.fileName}`, authorName);
     onUpdateCase(updated);
   };
 

@@ -83,7 +83,8 @@ const MOCK_EMAILS: Email[] = [
 
 function AppContent() {
   const { activeFirm } = useFirm();
-  const { session, loading: authLoading } = useAuth();
+  const { session, profile, loading: authLoading } = useAuth();
+  const currentUserName = profile?.full_name || profile?.email || 'Unknown User';
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState<CaseFile | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -137,9 +138,10 @@ function AppContent() {
       const newName = caseToSave.assignedTo?.name || 'Unassigned';
       const log = {
         id: Math.random().toString(36).substr(2, 9),
-        type: 'system' as const,
+        type: 'user' as const,
         message: `Case reassigned from ${prevName} to ${newName}.`,
         timestamp: new Date().toISOString(),
+        author: currentUserName,
       };
       caseToSave.activityLog = [log, ...(caseToSave.activityLog || [])];
     }
@@ -209,9 +211,10 @@ function AppContent() {
           if (c.id === caseId) {
             const newLog = {
               id: Math.random().toString(36).substr(2, 9),
-              type: 'system' as const,
+              type: 'user' as const,
               message: `Linked email "${email.subject}" from ${email.from}. Added ${classifiedDocs.length} attachment(s).`,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
+              author: currentUserName,
             };
             const currentEmails = c.linkedEmails || [];
             const alreadyLinked = currentEmails.some(e => e.id === email.id);

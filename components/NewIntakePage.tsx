@@ -7,6 +7,7 @@ import { IdentifiedDocument, ExtractedIntakeData } from '../services/documentExt
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 import { buildExtendedIntake } from '../services/intakeMapper';
 import { uploadBase64Document } from '../services/documentStorageService';
+import { useAuth } from '../contexts/AuthContext';
 
 interface NewIntakePageProps {
   onBack: () => void;
@@ -16,6 +17,8 @@ interface NewIntakePageProps {
 type IntakeMode = 'extraction' | 'manual';
 
 export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [mode, setMode] = useState<IntakeMode>('extraction');
   const [step, setStep] = useState<1 | 2>(1);
   const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
@@ -268,9 +271,10 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
         activityLog: [
           {
             id: Math.random().toString(36).substr(2, 9),
-            type: 'system',
+            type: 'user' as const,
             message: `Case created via Document Extraction Intake. ${identifiedDocs.length} document(s) uploaded.${extractedData.retainerSigned ? ' Retainer verified as signed.' : ''}${extractedData.hipaaSigned ? ' HIPAA verified as signed.' : ''}`,
             timestamp: new Date().toISOString(),
+            author: authorName,
           },
         ],
       };

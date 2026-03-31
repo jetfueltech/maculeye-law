@@ -53,12 +53,13 @@ const ACTION_ICONS: Record<string, string> = {
   update_intake_field: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
 };
 
-function addActivity(c: CaseFile, message: string): CaseFile {
+function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
   const log = {
     id: Math.random().toString(36).substr(2, 9),
-    type: 'system' as const,
+    type: (author ? 'user' : 'system') as const,
     message,
     timestamp: new Date().toISOString(),
+    author: author || 'System',
   };
   return { ...c, activityLog: [log, ...(c.activityLog || [])] };
 }

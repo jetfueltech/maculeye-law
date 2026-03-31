@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CaseFile, DocumentAttachment, CaseStatus, DocumentType } from '../../types';
 import { uploadBase64Document } from '../../services/documentStorageService';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ManualIntakeFormProps {
   onSubmit: (newCase: CaseFile) => void;
@@ -8,6 +9,8 @@ interface ManualIntakeFormProps {
 }
 
 export const ManualIntakeForm: React.FC<ManualIntakeFormProps> = ({ onSubmit, referralSource }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -127,9 +130,10 @@ export const ManualIntakeForm: React.FC<ManualIntakeFormProps> = ({ onSubmit, re
       documents: uploadedDocs,
       activityLog: [{
         id: Math.random().toString(36).substr(2, 9),
-        type: 'system',
+        type: 'user' as const,
         message: 'Case created via Manual Intake',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        author: authorName,
       }]
     };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CaseFile, Insurance, CoverageStatusType, LiabilityStatusType, PolicyLimitsStatusType, ActivityLog } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface CoverageTrackerProps {
   caseData: CaseFile;
@@ -39,17 +40,20 @@ const STATUS_COLORS: Record<string, string> = {
   na: 'bg-slate-50 text-slate-400 border-slate-200',
 };
 
-function addActivity(c: CaseFile, message: string): CaseFile {
+function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
   const log: ActivityLog = {
     id: Math.random().toString(36).substr(2, 9),
-    type: 'system',
+    type: author ? 'user' : 'system',
     message,
     timestamp: new Date().toISOString(),
+    author: author || 'System',
   };
   return { ...c, activityLog: [log, ...(c.activityLog || [])] };
 }
 
 export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUpdateCase }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   const defInsurance = (caseData.insurance || []).filter(i => i.type === 'Defendant');
@@ -68,13 +72,13 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
       allIns[defIdx] = { ...allIns[defIdx], ...updates };
       let updated = { ...caseData, insurance: allIns };
       if (updates.coverageStatus && updates.coverageStatus !== caseData.insurance?.[defIdx]?.coverageStatus) {
-        updated = addActivity(updated, `Coverage status updated to "${COVERAGE_LABELS[updates.coverageStatus]}" for ${allIns[defIdx].provider}`);
+        updated = addActivity(updated, `Coverage status updated to "${COVERAGE_LABELS[updates.coverageStatus]}" for ${allIns[defIdx].provider}`, authorName);
       }
       if (updates.liabilityStatus && updates.liabilityStatus !== caseData.insurance?.[defIdx]?.liabilityStatus) {
-        updated = addActivity(updated, `Liability status updated to "${LIABILITY_LABELS[updates.liabilityStatus]}" for ${allIns[defIdx].provider}`);
+        updated = addActivity(updated, `Liability status updated to "${LIABILITY_LABELS[updates.liabilityStatus]}" for ${allIns[defIdx].provider}`, authorName);
       }
       if (updates.policyLimitsStatus && updates.policyLimitsStatus !== caseData.insurance?.[defIdx]?.policyLimitsStatus) {
-        updated = addActivity(updated, `Policy limits status updated to "${POLICY_LIMITS_LABELS[updates.policyLimitsStatus]}" for ${allIns[defIdx].provider}`);
+        updated = addActivity(updated, `Policy limits status updated to "${POLICY_LIMITS_LABELS[updates.policyLimitsStatus]}" for ${allIns[defIdx].provider}`, authorName);
       }
       onUpdateCase(updated);
     }
@@ -282,7 +286,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                   if (e.target.checked && !caseData.mriCompletedDate) {
                     updated.mriCompletedDate = new Date().toISOString().split('T')[0];
                   }
-                  updated = addActivity(updated, e.target.checked ? 'MRI marked as completed' : 'MRI completion status removed');
+                  updated = addActivity(updated, e.target.checked ? 'MRI marked as completed' : 'MRI completion status removed', authorName);
                   onUpdateCase(updated);
                 }}
               />
@@ -306,7 +310,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
               onChange={e => {
                 let updated = { ...caseData, treatmentEndDate: e.target.value };
                 if (e.target.value) {
-                  updated = addActivity(updated, `Treatment end date set to ${e.target.value}`);
+                  updated = addActivity(updated, `Treatment end date set to ${e.target.value}`, authorName);
                 }
                 onUpdateCase(updated);
               }}

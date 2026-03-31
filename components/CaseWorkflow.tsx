@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CaseFile, CaseTask, TaskType, ActivityLog, MedicalProvider, ERVisit, CommunicationLog } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import {
   getWorkflowProgress,
   generateInitialWorkflowTasks,
@@ -29,12 +30,13 @@ interface ContactModalState {
   mode: 'call' | 'sms' | 'email';
 }
 
-function addActivity(c: CaseFile, message: string): CaseFile {
+function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
   const log: ActivityLog = {
     id: Math.random().toString(36).substr(2, 9),
-    type: 'system',
+    type: author ? 'user' : 'system',
     message,
     timestamp: new Date().toISOString(),
+    author: author || 'System',
   };
   return { ...c, activityLog: [log, ...(c.activityLog || [])] };
 }
@@ -67,6 +69,8 @@ const ACTION_LABELS: Record<WorkflowItemAction, string> = {
 type ViewMode = 'checklist' | 'kanban';
 
 export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCase }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [viewMode, setViewMode] = useState<ViewMode>('checklist');
   const [expandedStage, setExpandedStage] = useState<string | null>(null);
   const [completingItem, setCompletingItem] = useState<string | null>(null);
@@ -207,7 +211,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
       ...caseData,
       communications: [newLog, ...(caseData.communications || [])],
     };
-    updated = addActivity(updated, `Outbound call to ${contactModal.contact.name}`);
+    updated = addActivity(updated, `Outbound call to ${contactModal.contact.name}`, authorName);
     onUpdateCase(updated);
     setContactModal(null);
   };
@@ -228,14 +232,14 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
       ...caseData,
       communications: [newLog, ...(caseData.communications || [])],
     };
-    updated = addActivity(updated, `SMS sent to ${contactModal.contact.name}`);
+    updated = addActivity(updated, `SMS sent to ${contactModal.contact.name}`, authorName);
     onUpdateCase(updated);
     setContactModal(null);
   };
 
   const handleSendEmail = () => {
     if (!contactModal || !emailBody.trim()) return;
-    let updated = addActivity(caseData, `Email sent to ${contactModal.contact.name} (${contactModal.contact.email})`);
+    let updated = addActivity(caseData, `Email sent to ${contactModal.contact.name} (${contactModal.contact.email})`, authorName);
     onUpdateCase(updated);
     setContactModal(null);
   };

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CaseFile, CaseTask, TaskType, TaskStatus, ActivityLog, Assignee } from '../types';
 import { MemberPicker } from './MemberPicker';
+import { useAuth } from '../contexts/AuthContext';
 
 interface CaseTasksPanelProps {
   caseData: CaseFile;
@@ -81,17 +82,20 @@ function getDaysUntil(dateStr: string): number {
   return Math.floor((new Date(dateStr).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function addActivity(c: CaseFile, message: string): CaseFile {
+function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
   const log: ActivityLog = {
     id: Math.random().toString(36).substr(2, 9),
-    type: 'system',
+    type: author ? 'user' : 'system',
     message,
     timestamp: new Date().toISOString(),
+    author: author || 'System',
   };
   return { ...c, activityLog: [log, ...(c.activityLog || [])] };
 }
 
 export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpdateCase }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -125,7 +129,7 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
       createdAt: new Date().toISOString(),
     };
     let updated = { ...caseData, tasks: [...tasks, task] };
-    updated = addActivity(updated, `Task created: "${form.title}"`);
+    updated = addActivity(updated, `Task created: "${form.title}"`, authorName);
     onUpdateCase(updated);
     setForm({ title: '', description: '', type: 'general', dueDate: '', priority: 'medium', recurrence: 'one-time', assignedTo: null });
     setShowAdd(false);
@@ -137,7 +141,7 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
       ...caseData,
       tasks: tasks.map(t => t.id === id ? { ...t, status: 'completed' as TaskStatus, completedDate: new Date().toISOString() } : t),
     };
-    if (task) updated = addActivity(updated, `Task completed: "${task.title}"`);
+    if (task) updated = addActivity(updated, `Task completed: "${task.title}"`, authorName);
     onUpdateCase(updated);
   };
 

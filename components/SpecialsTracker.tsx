@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CaseFile, SpecialsPackage, SpecialsItem, SpecialsStatus, ActivityLog } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SpecialsTrackerProps {
   caseData: CaseFile;
@@ -18,17 +19,20 @@ const STATUS_COLORS: Record<SpecialsStatus, string> = {
   sent_to_attorney: 'bg-teal-50 text-teal-700 border-teal-200',
 };
 
-function addActivity(c: CaseFile, message: string): CaseFile {
+function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
   const log: ActivityLog = {
     id: Math.random().toString(36).substr(2, 9),
-    type: 'system',
+    type: author ? 'user' : 'system',
     message,
     timestamp: new Date().toISOString(),
+    author: author || 'System',
   };
   return { ...c, activityLog: [log, ...(c.activityLog || [])] };
 }
 
 export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUpdateCase }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItem, setNewItem] = useState<Partial<SpecialsItem>>({ providerName: '', documentType: 'Medical Bills', amount: 0, included: false });
 
@@ -53,14 +57,14 @@ export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUp
       lastUpdated: new Date().toISOString(),
     };
     let updated = { ...caseData, specials: pkg };
-    updated = addActivity(updated, 'Specials package tracking initiated');
+    updated = addActivity(updated, 'Specials package tracking initiated', authorName);
     onUpdateCase(updated);
   };
 
   const updateStatus = (status: SpecialsStatus) => {
     if (!specials) return;
     const updated = { ...caseData, specials: { ...specials, status, lastUpdated: new Date().toISOString() } };
-    onUpdateCase(addActivity(updated, `Specials package status updated to "${STATUS_LABELS[status]}"`));
+    onUpdateCase(addActivity(updated, `Specials package status updated to "${STATUS_LABELS[status]}"`, authorName));
   };
 
   const toggleItem = (idx: number) => {

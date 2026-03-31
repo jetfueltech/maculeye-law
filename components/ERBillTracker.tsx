@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CaseFile, ERVisit, ERBillLine, ERBillStatus, ActivityLog } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ERBillTrackerProps {
   caseData: CaseFile;
@@ -26,12 +27,13 @@ const BILL_TYPE_LABELS: Record<string, string> = {
   radiology: 'ER Radiology',
 };
 
-function addActivity(c: CaseFile, message: string): CaseFile {
+function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
   const log: ActivityLog = {
     id: Math.random().toString(36).substr(2, 9),
-    type: 'system',
+    type: author ? 'user' : 'system',
     message,
     timestamp: new Date().toISOString(),
+    author: author || 'System',
   };
   return { ...c, activityLog: [log, ...(c.activityLog || [])] };
 }
@@ -58,6 +60,8 @@ function getDaysSince(dateStr?: string): number | null {
 }
 
 export const ERBillTracker: React.FC<ERBillTrackerProps> = ({ caseData, onUpdateCase }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [showAddForm, setShowAddForm] = useState(false);
   const [newVisit, setNewVisit] = useState<ERVisit>(createEmptyERVisit());
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -89,7 +93,7 @@ export const ERBillTracker: React.FC<ERBillTrackerProps> = ({ caseData, onUpdate
     if (!newVisit.facilityName.trim()) return;
     const visits = [...erVisits, newVisit];
     let updated = { ...caseData, erVisits: visits };
-    updated = addActivity(updated, `ER visit added: ${newVisit.facilityName}`);
+    updated = addActivity(updated, `ER visit added: ${newVisit.facilityName}`, authorName);
     onUpdateCase(updated);
     setNewVisit(createEmptyERVisit());
     setShowAddForm(false);
@@ -100,7 +104,7 @@ export const ERBillTracker: React.FC<ERBillTrackerProps> = ({ caseData, onUpdate
     if (!window.confirm('Remove this ER visit?')) return;
     const visits = erVisits.filter(v => v.id !== id);
     let updated = { ...caseData, erVisits: visits };
-    updated = addActivity(updated, `ER visit removed`);
+    updated = addActivity(updated, `ER visit removed`, authorName);
     onUpdateCase(updated);
     if (expandedId === id) setExpandedId(null);
   };
@@ -119,7 +123,7 @@ export const ERBillTracker: React.FC<ERBillTrackerProps> = ({ caseData, onUpdate
     let updated = { ...caseData, erVisits: visits };
     if (updates.status) {
       const visit = erVisits.find(v => v.id === visitId);
-      updated = addActivity(updated, `ER ${BILL_TYPE_LABELS[billType]} bill status updated to "${BILL_STATUS_LABELS[updates.status]}" for ${visit?.facilityName || 'Unknown'}`);
+      updated = addActivity(updated, `ER ${BILL_TYPE_LABELS[billType]} bill status updated to "${BILL_STATUS_LABELS[updates.status]}" for ${visit?.facilityName || 'Unknown'}`, authorName);
     }
     onUpdateCase(updated);
   };

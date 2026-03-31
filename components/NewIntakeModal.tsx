@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { CaseFile, DocumentAttachment, CaseStatus, DocumentType } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 interface NewIntakeModalProps {
   isOpen: boolean;
@@ -8,6 +9,8 @@ interface NewIntakeModalProps {
 }
 
 export const NewIntakeModal: React.FC<NewIntakeModalProps> = ({ isOpen, onClose, onSubmit }) => {
+  const { profile } = useAuth();
+  const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
@@ -132,9 +135,10 @@ export const NewIntakeModal: React.FC<NewIntakeModalProps> = ({ isOpen, onClose,
         activityLog: [
             {
                 id: Math.random().toString(36).substr(2, 9),
-                type: 'system',
+                type: 'user' as const,
                 message: 'Case created via Web Intake Form',
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                author: authorName,
             }
         ]
       };

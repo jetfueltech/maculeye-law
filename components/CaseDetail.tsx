@@ -116,13 +116,15 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const currentUserName = profile?.full_name || profile?.email || 'Unknown User';
+
   const addActivity = (updatedCase: CaseFile, message: string, type: 'system' | 'user' | 'note' = 'system') => {
       const newLog: ActivityLog = {
           id: Math.random().toString(36).substr(2, 9),
           type,
           message,
           timestamp: new Date().toISOString(),
-          author: type === 'user' || type === 'note' ? 'John Doe, Esq.' : 'System'
+          author: type === 'system' ? 'System' : currentUserName
       };
       return {
           ...updatedCase,
@@ -136,8 +138,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       
       const newMsg: ChatMessage = {
           id: Date.now().toString(),
-          sender: 'John Doe',
-          senderInitials: 'JD',
+          sender: currentUserName,
+          senderInitials: profile?.avatar_initials || currentUserName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
           isCurrentUser: true,
           message: chatMessage,
           timestamp: new Date().toISOString()
@@ -157,8 +159,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           const isImage = file.type.startsWith('image/');
           const newMsg: ChatMessage = {
               id: Date.now().toString(),
-              sender: 'John Doe',
-              senderInitials: 'JD',
+              sender: currentUserName,
+              senderInitials: profile?.avatar_initials || currentUserName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
               isCurrentUser: true,
               message: '',
               timestamp: new Date().toISOString(),

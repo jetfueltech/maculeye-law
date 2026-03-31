@@ -753,6 +753,7 @@ export function applyWorkflowToCase(c: CaseFile): CaseFile {
         type: 'system',
         message: `${allNew.length} workflow task${allNew.length > 1 ? 's' : ''} generated`,
         timestamp: new Date().toISOString(),
+        author: 'System',
       }]
     : [];
 
