@@ -40,15 +40,18 @@ function inferDocTypeFromName(filename: string): DocumentAttachment['type'] {
   return 'other';
 }
 
+type CaseDetailTab = 'overview' | 'extended' | 'medical' | 'documents' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials';
+
 interface CaseDetailProps {
   caseData: CaseFile;
   onBack: () => void;
   onUpdateCase: (updatedCase: CaseFile) => void;
+  defaultTab?: CaseDetailTab;
 }
 
-export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase }) => {
+export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase, defaultTab }) => {
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'overview' | 'extended' | 'medical' | 'documents' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials'>('overview');
+  const [activeTab, setActiveTab] = useState<CaseDetailTab>(defaultTab || 'overview');
   const [analyzing, setAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   

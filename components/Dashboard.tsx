@@ -7,7 +7,7 @@ import { useFirm } from '../contexts/FirmContext';
 
 interface DashboardProps {
   cases: CaseFile[];
-  onSelectCase: (c: CaseFile) => void;
+  onSelectCase: (c: CaseFile, defaultTab?: string) => void;
   onOpenNewIntake: () => void;
   onUpdateCase: (c: CaseFile) => void;
   onDeleteCase: (caseId: string) => void;
@@ -597,7 +597,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         </button>
                                     </div>
                                     {isExpanded && (
-                                        <KanbanCardDetails caseData={c} onSelectCase={() => onSelectCase(c)} />
+                                        <KanbanCardDetails caseData={c} onSelectCase={(tab) => onSelectCase(c, tab)} />
                                     )}
                                 </div>
                                 );
@@ -666,7 +666,7 @@ function formatTimeAgo(timestamp: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-const KanbanCardDetails: React.FC<{ caseData: CaseFile; onSelectCase: () => void }> = ({ caseData, onSelectCase }) => {
+const KanbanCardDetails: React.FC<{ caseData: CaseFile; onSelectCase: (defaultTab?: string) => void }> = ({ caseData, onSelectCase }) => {
   const [tab, setTab] = useState<'tasks' | 'activity' | 'notes' | 'chats'>('tasks');
 
   const recentTasks = (caseData.tasks || [])
@@ -716,7 +716,7 @@ const KanbanCardDetails: React.FC<{ caseData: CaseFile; onSelectCase: () => void
             {resolvedTab === 'tasks' && recentTasks.map(task => (
               <div
                 key={task.id}
-                onClick={onSelectCase}
+                onClick={() => onSelectCase('tasks')}
                 className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-slate-50/70 border border-slate-100 cursor-pointer hover:bg-blue-50/50 hover:border-blue-200 transition-colors"
               >
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${

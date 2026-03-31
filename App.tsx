@@ -87,6 +87,7 @@ function AppContent() {
   const currentUserName = profile?.full_name || profile?.email || 'Unknown User';
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState<CaseFile | null>(null);
+  const [caseDefaultTab, setCaseDefaultTab] = useState<string | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [casesLoading, setCasesLoading] = useState(true);
 
@@ -275,7 +276,8 @@ function AppContent() {
           {!casesLoading && currentView === 'dashboard' && !selectedCase && (
             <Dashboard
               cases={cases}
-              onSelectCase={(c) => {
+              onSelectCase={(c, defaultTab) => {
+                setCaseDefaultTab(defaultTab);
                 setSelectedCase(c);
               }}
               onOpenNewIntake={() => setCurrentView('new-intake')}
@@ -306,8 +308,9 @@ function AppContent() {
           {!casesLoading && selectedCase && (
             <CaseDetail
               caseData={selectedCase}
-              onBack={() => setSelectedCase(null)}
+              onBack={() => { setSelectedCase(null); setCaseDefaultTab(undefined); }}
               onUpdateCase={handleCaseUpdate}
+              defaultTab={caseDefaultTab as any}
             />
           )}
 
