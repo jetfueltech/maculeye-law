@@ -8,6 +8,7 @@ import { MedicalTreatment } from './MedicalTreatment';
 import { CoverageTracker } from './CoverageTracker';
 import { CaseTasksPanel } from './CaseTasksPanel';
 import { DocumentsPanel } from './DocumentsPanel';
+import { DocumentPreviewModal } from './DocumentPreviewModal';
 import { MemberPicker } from './MemberPicker';
 import { CaseTeamPanel } from './CaseTeamPanel';
 import { FinancialsTab } from './FinancialsTab';
@@ -77,6 +78,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
   const [docDragOver, setDocDragOver] = useState(false);
   const [docUploading, setDocUploading] = useState(false);
+  const [docPreviewIndex, setDocPreviewIndex] = useState<number | null>(null);
   const overviewFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOverviewDocDragOver = useCallback((e: React.DragEvent) => {
@@ -1095,10 +1097,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                               {[...(caseData.documents || [])].reverse().slice(0, 8).map((doc, idx) => {
                                 const style = DOC_TYPE_ICONS[doc.type] || DOC_TYPE_ICONS.other;
                                 const isImage = doc.mimeType?.startsWith('image/');
+                                const realIndex = (caseData.documents || []).length - 1 - idx;
                                 return (
                                   <div
                                     key={idx}
-                                    onClick={() => setActiveTab('documents')}
+                                    onClick={() => setDocPreviewIndex(realIndex)}
                                     className="group relative overflow-hidden rounded-xl cursor-pointer hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-200 hover:-translate-y-0.5"
                                   >
                                     <div className={`h-[88px] flex items-center justify-center ${isImage && doc.storageUrl ? 'bg-slate-100' : style.bg} relative overflow-hidden`}>
@@ -1600,6 +1603,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   </div>
               </div>
           </div>
+      )}
+      {docPreviewIndex !== null && (
+        <DocumentPreviewModal
+          documents={caseData.documents}
+          currentIndex={docPreviewIndex}
+          onClose={() => setDocPreviewIndex(null)}
+          onNavigate={setDocPreviewIndex}
+        />
       )}
     </div>
   );
