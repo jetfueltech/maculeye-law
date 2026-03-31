@@ -41,7 +41,7 @@ function inferDocTypeFromName(filename: string): DocumentAttachment['type'] {
   return 'other';
 }
 
-type CaseDetailTab = 'overview' | 'extended' | 'medical' | 'documents' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials';
+type CaseDetailTab = 'overview' | 'extended' | 'medical' | 'documents' | 'evidence' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials';
 
 interface CaseDetailProps {
   caseData: CaseFile;
@@ -671,6 +671,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                  Documents ({caseData.documents.length})
                  {activeTab === 'documents' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
+             <button onClick={() => setActiveTab('evidence')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'evidence' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                 Evidence
+                 {(caseData.preservationRecipients?.length || 0) > 0 && (
+                   <span className="ml-1.5 text-[10px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full">{caseData.preservationRecipients!.length}</span>
+                 )}
+                 {activeTab === 'evidence' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
+             </button>
              <button onClick={() => setActiveTab('ai_analysis')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'ai_analysis' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
                  AI Analysis
                  {activeTab === 'ai_analysis' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
@@ -713,6 +720,60 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           <div className="animate-fade-in"><MedicalTreatment caseData={caseData} onUpdateCase={onUpdateCase} /></div>
       ) : activeTab === 'documents' ? (
         <DocumentsPanel caseData={caseData} onUpdateCase={onUpdateCase} />
+      ) : activeTab === 'evidence' ? (
+        <div className="animate-fade-in p-8 bg-white rounded-2xl border border-slate-200 min-h-[400px]">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-lg text-slate-800 flex items-center">
+              <svg className="w-5 h-5 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              Preservation of Evidence
+            </h3>
+            <button
+              onClick={() => setShowPreservationModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              New Request
+            </button>
+          </div>
+
+          {(caseData.preservationRecipients?.length || 0) > 0 ? (
+            <div className="space-y-3">
+              {caseData.preservationRecipients!.map((r) => (
+                <div key={r.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-slate-800 text-sm">{r.businessName}</p>
+                      {r.contactName && <p className="text-xs text-slate-500">{r.contactName}</p>}
+                      <p className="text-xs text-slate-400">{r.address}, {r.city}, {r.state} {r.zip}</p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className="inline-block bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Sent</span>
+                    <p className="text-xs text-slate-400 mt-1">{new Date(r.sentDate).toLocaleDateString()}</p>
+                    <p className="text-[10px] text-slate-400">by {r.sentBy}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              </div>
+              <h4 className="text-base font-semibold text-slate-700 mb-1">No Evidence Requests Sent</h4>
+              <p className="text-sm text-slate-400 mb-4 max-w-sm">Send preservation of evidence letters to businesses requesting they retain surveillance footage and other evidence.</p>
+              <button
+                onClick={() => setShowPreservationModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Send First Request
+              </button>
+            </div>
+          )}
+        </div>
       ) : activeTab === 'ai_analysis' ? (
           <div className="animate-fade-in p-8 bg-white rounded-2xl border border-slate-200 min-h-[400px]">
               {caseData.aiAnalysis ? (
