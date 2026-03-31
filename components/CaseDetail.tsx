@@ -1249,25 +1249,75 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
                   {/* Tasks / Next Steps */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                      <h3 className="font-bold text-slate-800 mb-4 flex items-center">
-                          <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-                          Next Steps
+                      <h3 className="font-bold text-slate-800 mb-4 flex items-center justify-between">
+                          <span className="flex items-center">
+                              <svg className="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                              Next Steps
+                              {(caseData.tasks || []).filter(t => t.status !== 'completed').length > 0 && (
+                                <span className="ml-2 text-[10px] font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded-full">
+                                  {(caseData.tasks || []).filter(t => t.status !== 'completed').length}
+                                </span>
+                              )}
+                          </span>
+                          <button onClick={() => setActiveTab('tasks')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                              View All
+                          </button>
                       </h3>
-                      <div className="space-y-3">
-                          <label className="flex items-center space-x-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
-                              <input type="checkbox" className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
-                              <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">Verify insurance limits</span>
-                          </label>
-                          <label className="flex items-center space-x-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
-                              <input type="checkbox" className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
-                              <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">Request medical records</span>
-                          </label>
-                          <label className="flex items-center space-x-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
-                              <input type="checkbox" className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
-                              <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium">Send representation letter</span>
-                          </label>
+                      <div className="space-y-2">
+                          {(() => {
+                            const openTasks = (caseData.tasks || [])
+                              .filter(t => t.status !== 'completed')
+                              .sort((a, b) => {
+                                const priorityOrder = { high: 0, medium: 1, low: 2 };
+                                if (priorityOrder[a.priority] !== priorityOrder[b.priority]) return priorityOrder[a.priority] - priorityOrder[b.priority];
+                                return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+                              })
+                              .slice(0, 5);
+                            if (openTasks.length === 0) return (
+                              <div className="text-center py-6 text-slate-400">
+                                <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <p className="text-xs">No open tasks</p>
+                              </div>
+                            );
+                            return openTasks.map(task => {
+                              const daysUntil = Math.floor((new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                              const isOverdue = daysUntil < 0;
+                              return (
+                                <label key={task.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
+                                    <input
+                                      type="checkbox"
+                                      className="w-4 h-4 mt-0.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 flex-shrink-0"
+                                      checked={false}
+                                      onChange={() => {
+                                        const updated = {
+                                          ...caseData,
+                                          tasks: (caseData.tasks || []).map(t => t.id === task.id ? { ...t, status: 'completed' as const, completedDate: new Date().toISOString() } : t),
+                                        };
+                                        onUpdateCase(updated);
+                                      }}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium truncate">{task.title}</span>
+                                            {task.priority === 'high' && (
+                                              <svg className="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.53 13H4.47L12 6zm-1 5v4h2v-4h-2zm0 6v2h2v-2h-2z"/></svg>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`text-[10px] font-medium ${isOverdue ? 'text-red-600' : daysUntil <= 2 ? 'text-amber-600' : 'text-slate-400'}`}>
+                                              {isOverdue ? `${Math.abs(daysUntil)}d overdue` : daysUntil === 0 ? 'Due today' : `${daysUntil}d left`}
+                                            </span>
+                                            {task.assignedTo && (
+                                              <span className="text-[10px] text-slate-400 truncate">{task.assignedTo.name}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </label>
+                              );
+                            });
+                          })()}
                       </div>
-                      <button className="w-full mt-4 text-xs font-bold text-slate-500 hover:text-blue-600 py-2 border border-dashed border-slate-300 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all">
+                      <button onClick={() => setActiveTab('tasks')} className="w-full mt-4 text-xs font-bold text-slate-500 hover:text-blue-600 py-2 border border-dashed border-slate-300 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-all">
                           + Add Task
                       </button>
                   </div>
