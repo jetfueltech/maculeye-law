@@ -13,6 +13,7 @@ import { MemberPicker } from './MemberPicker';
 import { CaseTeamPanel } from './CaseTeamPanel';
 import { FinancialsTab } from './FinancialsTab';
 import { AdjusterPanel } from './AdjusterPanel';
+import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { uploadDocument } from '../services/documentStorageService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 
@@ -79,6 +80,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const [docDragOver, setDocDragOver] = useState(false);
   const [docUploading, setDocUploading] = useState(false);
   const [docPreviewIndex, setDocPreviewIndex] = useState<number | null>(null);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [selectedForm, setSelectedForm] = useState<DocumentFormType | null>(null);
+  const [showDocGenerator, setShowDocGenerator] = useState(false);
   const overviewFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOverviewDocDragOver = useCallback((e: React.DragEvent) => {
@@ -619,6 +623,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                      <>
                         <button onClick={() => setIsEditing(true)} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
                             Edit Details
+                        </button>
+                        <button
+                          onClick={() => setIsFormModalOpen(true)}
+                          className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1.5"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            Generate Forms
                         </button>
                         {caseData.status === CaseStatus.NEW && !analyzing && (
                             <button 
@@ -1612,6 +1623,74 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           onNavigate={setDocPreviewIndex}
         />
       )}
+
+      {isFormModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-800">Generate Legal Documents</h3>
+              <button onClick={() => setIsFormModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-slate-600 mb-4">Select the document you wish to generate based on the current case data.</p>
+              <div className="space-y-3 mb-6">
+                {([
+                  { key: 'rep_lien' as DocumentFormType, title: 'Letter of Representation + Lien', desc: 'Includes notification to insurance carrier and attorney lien notice.' },
+                  { key: 'foia' as DocumentFormType, title: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
+                  { key: 'intake_summary' as DocumentFormType, title: 'Client Intake Summary', desc: 'Detailed form including Accident, Client, Medical, and Insurance info.' },
+                  { key: 'boss_intake_form' as DocumentFormType, title: 'Boss Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },
+                ]).map(opt => (
+                  <label key={opt.key} className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === opt.key ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                    <input
+                      type="radio"
+                      name="formType"
+                      checked={selectedForm === opt.key}
+                      onChange={() => setSelectedForm(opt.key)}
+                      className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                    />
+                    <div>
+                      <span className="text-sm font-bold text-slate-800 block">{opt.title}</span>
+                      <span className="text-xs text-slate-500">{opt.desc}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-end pt-2 border-t border-slate-100">
+                <button onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg mr-2">Cancel</button>
+                <button
+                  onClick={() => { if (selectedForm) { setShowDocGenerator(true); setIsFormModalOpen(false); } }}
+                  disabled={!selectedForm}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold shadow-md hover:bg-blue-700 transition-all flex items-center disabled:opacity-50"
+                >
+                  Preview & Print
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DocumentGenerator
+        isOpen={showDocGenerator}
+        onClose={() => setShowDocGenerator(false)}
+        caseData={caseData}
+        formType={selectedForm}
+        onSaveToDocuments={(docName: string, docFormType: DocumentFormType) => {
+          const newDoc: DocumentAttachment = {
+            type: 'other',
+            fileData: null,
+            fileName: `${docName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.pdf`,
+            mimeType: 'application/pdf',
+            source: 'Generated',
+            category: 'intake',
+            generatedFormType: docFormType,
+            uploadedAt: new Date().toISOString(),
+          };
+          onUpdateCase({ ...caseData, documents: [...caseData.documents, newDoc] });
+        }}
+      />
     </div>
   );
 };
