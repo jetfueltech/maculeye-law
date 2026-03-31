@@ -1265,6 +1265,72 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       </h3>
                       <div className="space-y-2">
                           {(() => {
+                            const taskTabMap: Record<string, typeof activeTab> = {
+                              coverage_followup: 'coverage',
+                              liability_followup: 'coverage',
+                              policy_limits: 'coverage',
+                              verify_insurance: 'coverage',
+                              er_records: 'medical',
+                              er_bills: 'medical',
+                              medical_records: 'medical',
+                              treatment_followup: 'medical',
+                              bill_request: 'medical',
+                              records_request: 'medical',
+                              send_hipaa_to_medical: 'medical',
+                              send_demographics: 'medical',
+                              check_er_ambulance: 'medical',
+                              mass_order_records: 'medical',
+                              receive_records_bills: 'medical',
+                              medical_summary: 'medical',
+                              retainer: 'documents',
+                              crash_report_request: 'documents',
+                              crash_report_received: 'documents',
+                              hipaa: 'documents',
+                              upload_case_files: 'documents',
+                              upload_intake_form: 'documents',
+                              lor_defendant: 'documents',
+                              lor_client_ins: 'documents',
+                              demand_prep: 'financials',
+                              demand_review: 'financials',
+                              specials_compile: 'financials',
+                              complete_intake_form: 'extended',
+                              contact_client: 'overview',
+                              client_communication: 'overview',
+                              create_cms_case: 'overview',
+                              general: 'tasks',
+                            };
+                            const taskActionLabels: Record<string, string> = {
+                              coverage_followup: 'Update coverage status',
+                              liability_followup: 'Update liability status',
+                              policy_limits: 'Update policy limits',
+                              verify_insurance: 'Verify insurance details',
+                              er_records: 'Update ER records status',
+                              er_bills: 'Update ER bill status',
+                              medical_records: 'Update medical records',
+                              treatment_followup: 'Check treatment status',
+                              bill_request: 'Upload or track bills',
+                              records_request: 'Request records from provider',
+                              send_hipaa_to_medical: 'Send HIPAA authorization',
+                              send_demographics: 'Send demographics',
+                              check_er_ambulance: 'Check ER/ambulance',
+                              mass_order_records: 'Order records',
+                              receive_records_bills: 'Confirm receipt',
+                              medical_summary: 'Create medical summary',
+                              retainer: 'Upload signed retainer',
+                              crash_report_request: 'Upload crash report',
+                              crash_report_received: 'Upload crash report',
+                              hipaa: 'Upload HIPAA forms',
+                              upload_case_files: 'Upload case files',
+                              upload_intake_form: 'Upload intake form',
+                              lor_defendant: 'Upload LOR',
+                              lor_client_ins: 'Upload LOR',
+                              demand_prep: 'Prepare demand',
+                              demand_review: 'Review demand',
+                              specials_compile: 'Compile specials',
+                              complete_intake_form: 'Complete intake form',
+                              contact_client: 'Contact client',
+                              client_communication: 'Contact client',
+                            };
                             const openTasks = (caseData.tasks || [])
                               .filter(t => t.status !== 'completed')
                               .sort((a, b) => {
@@ -1282,11 +1348,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                             return openTasks.map(task => {
                               const daysUntil = Math.floor((new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
                               const isOverdue = daysUntil < 0;
+                              const targetTab = taskTabMap[task.type] || 'tasks';
+                              const actionLabel = taskActionLabels[task.type];
                               return (
-                                <label key={task.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors group">
+                                <div key={task.id} className="flex items-start gap-3 p-3 rounded-xl border border-slate-100 hover:bg-blue-50/50 hover:border-blue-200 transition-all group">
                                     <input
                                       type="checkbox"
-                                      className="w-4 h-4 mt-0.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 flex-shrink-0"
+                                      className="w-4 h-4 mt-1 text-blue-600 rounded border-slate-300 focus:ring-blue-500 flex-shrink-0 cursor-pointer"
                                       checked={false}
                                       onChange={() => {
                                         const updated = {
@@ -1296,7 +1364,10 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                         onUpdateCase(updated);
                                       }}
                                     />
-                                    <div className="flex-1 min-w-0">
+                                    <div
+                                      className="flex-1 min-w-0 cursor-pointer"
+                                      onClick={() => setActiveTab(targetTab)}
+                                    >
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-slate-700 group-hover:text-slate-900 font-medium truncate">{task.title}</span>
                                             {task.priority === 'high' && (
@@ -1311,8 +1382,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                               <span className="text-[10px] text-slate-400 truncate">{task.assignedTo.name}</span>
                                             )}
                                         </div>
+                                        {actionLabel && (
+                                          <div className="flex items-center gap-1 mt-1.5">
+                                            <svg className="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                            <span className="text-[10px] font-medium text-blue-600 group-hover:text-blue-700">{actionLabel}</span>
+                                          </div>
+                                        )}
                                     </div>
-                                </label>
+                                </div>
                               );
                             });
                           })()}
