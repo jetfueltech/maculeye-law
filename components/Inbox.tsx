@@ -7,17 +7,19 @@ interface InboxProps {
   emails: Email[];
   setEmails: React.Dispatch<React.SetStateAction<Email[]>>;
   onLinkCase: (caseId: string, email: Email) => void;
+  onProcessAttachment?: (caseId: string, email: Email, attachmentIndex: number) => void;
 }
 
-export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCase }) => {
+export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCase, onProcessAttachment }) => {
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSorting, setIsSorting] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   
-  // Preview State
   const [previewAttachment, setPreviewAttachment] = useState<DocumentAttachment | null>(null);
+  const [processedAttachments, setProcessedAttachments] = useState<Set<string>>(new Set());
+  const [processingAttachment, setProcessingAttachment] = useState<string | null>(null);
   
   // Ref to track if we've already simulated the arrival in this mount lifecycle
   // Note: We also check the email list itself to prevent duplicates across navigations
@@ -221,9 +223,14 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
             </div>
             <div className="flex-1 overflow-y-auto">
                 {filteredEmails.map(email => (
-                    <div 
+                    <div
                         key={email.id}
-                        onClick={() => setSelectedEmail(email)}
+                        onClick={() => {
+                            setSelectedEmail(email);
+                            if (!email.isRead) {
+                                setEmails(prev => prev.map(e => e.id === email.id ? { ...e, isRead: true } : e));
+                            }
+                        }}
                         className={`p-4 border-b border-slate-100 cursor-pointer transition-colors hover:bg-slate-50 ${selectedEmail?.id === email.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : 'border-l-4 border-l-transparent'}`}
                     >
                         <div className="flex justify-between mb-1">
@@ -352,26 +359,73 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                                     {selectedEmail.attachments.length} Attachments
                                 </h4>
-                                <div className="flex flex-wrap gap-4">
-                                    {selectedEmail.attachments.map((att, i) => (
-                                        <div 
-                                            key={i} 
-                                            onClick={(e) => handlePreview(e, att)}
-                                            className="flex items-center p-3 border border-slate-200 rounded-xl bg-slate-50 hover:border-blue-300 transition-colors cursor-pointer group"
-                                        >
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${att.type === 'pdf' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
-                                                {att.type === 'pdf' ? (
-                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                                                ) : (
-                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                )}
+                                <div className="space-y-3">
+                                    {selectedEmail.attachments.map((att, i) => {
+                                        const attKey = `${selectedEmail.id}-${i}`;
+                                        const isProcessed = processedAttachments.has(attKey);
+                                        const isProcessing = processingAttachment === attKey;
+                                        const canProcess = selectedEmail.linkedCaseId && onProcessAttachment && !isProcessed;
+
+                                        return (
+                                            <div
+                                                key={i}
+                                                className="flex items-center justify-between p-3 border border-slate-200 rounded-xl bg-slate-50 group"
+                                            >
+                                                <div
+                                                    className="flex items-center cursor-pointer flex-1 min-w-0"
+                                                    onClick={(e) => handlePreview(e, att)}
+                                                >
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 flex-shrink-0 ${att.type === 'pdf' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                                                        {att.type === 'pdf' ? (
+                                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                                        ) : (
+                                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-slate-900 group-hover:text-blue-700 truncate">{att.name}</p>
+                                                        <p className="text-xs text-slate-500">{att.size}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 ml-3 flex-shrink-0">
+                                                    {isProcessed ? (
+                                                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+                                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                                                            Added to Case
+                                                        </span>
+                                                    ) : canProcess ? (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setProcessingAttachment(attKey);
+                                                                onProcessAttachment!(selectedEmail.linkedCaseId!, selectedEmail, i);
+                                                                setTimeout(() => {
+                                                                    setProcessedAttachments(prev => new Set(prev).add(attKey));
+                                                                    setProcessingAttachment(null);
+                                                                }, 800);
+                                                            }}
+                                                            disabled={isProcessing}
+                                                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-colors disabled:opacity-50"
+                                                        >
+                                                            {isProcessing ? (
+                                                                <>
+                                                                    <div className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                                                                    Processing...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                                    Process to Case
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    ) : !selectedEmail.linkedCaseId ? (
+                                                        <span className="text-[10px] text-slate-400 italic">Tag to case first</span>
+                                                    ) : null}
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-slate-900 group-hover:text-blue-700">{att.name}</p>
-                                                <p className="text-xs text-slate-500">{att.size}</p>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}

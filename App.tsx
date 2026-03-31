@@ -237,6 +237,46 @@ function AppContent() {
       });
   };
 
+  const handleProcessAttachment = async (caseId: string, email: Email, attachmentIndex: number) => {
+    const att = email.attachments[attachmentIndex];
+    if (!att) return;
+
+    const docType = await classifyAttachmentType(att.name, email.subject, email.body);
+    const newDoc: DocumentAttachment = {
+      type: docType,
+      fileName: att.name,
+      fileData: null,
+      mimeType: att.type === 'pdf' ? 'application/pdf' : 'image/jpeg',
+      source: `Email: ${email.subject}`,
+      tags: ['Email Attachment'],
+    };
+
+    setCases(prevCases => prevCases.map(c => {
+      if (c.id === caseId) {
+        const alreadyExists = c.documents.some(d => d.fileName === att.name && d.source === `Email: ${email.subject}`);
+        if (alreadyExists) return c;
+
+        const log = {
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'user' as const,
+          message: `Processed attachment "${att.name}" from email "${email.subject}" into case documents.`,
+          timestamp: new Date().toISOString(),
+          author: currentUserName,
+        };
+        const updatedCase = {
+          ...c,
+          documents: [...c.documents, newDoc],
+          activityLog: [log, ...c.activityLog],
+        };
+        if (activeFirm) {
+          upsertCase(updatedCase, activeFirm.id);
+        }
+        return updatedCase;
+      }
+      return c;
+    }));
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
@@ -259,6 +299,7 @@ function AppContent() {
         }}
         caseCount={cases.filter(c => c.status === CaseStatus.NEW).length}
         taskCount={cases.reduce((sum, c) => sum + (c.tasks || []).filter(t => t.status !== 'completed').length, 0)}
+        unreadEmailCount={emails.filter(e => !e.isRead).length}
         isCollapsed={isSidebarCollapsed}
         toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
@@ -292,6 +333,7 @@ function AppContent() {
                 emails={emails}
                 setEmails={setEmails}
                 onLinkCase={handleLinkEmail}
+                onProcessAttachment={handleProcessAttachment}
               />
           )}
 

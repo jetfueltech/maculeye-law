@@ -7,6 +7,7 @@ interface SidebarProps {
   setCurrentView: (view: string) => void;
   caseCount: number;
   taskCount?: number;
+  unreadEmailCount?: number;
   isCollapsed: boolean;
   toggleSidebar: () => void;
 }
@@ -22,6 +23,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setCurrentView,
   caseCount,
   taskCount = 0,
+  unreadEmailCount = 0,
   isCollapsed,
   toggleSidebar,
 }) => {
@@ -162,11 +164,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {taskCount}
               </span>
             )}
-            {item.id === 'inbox' && !isCollapsed && (
-              <span className="ml-auto bg-red-500 text-xs font-bold px-2 py-0.5 rounded-full text-white">3</span>
+            {item.id === 'inbox' && unreadEmailCount > 0 && !isCollapsed && (
+              <span className="ml-auto bg-red-500 text-xs font-bold px-2 py-0.5 rounded-full text-white">{unreadEmailCount}</span>
             )}
-            {(item.id === 'dashboard' || item.id === 'inbox' || item.id === 'tasks') && isCollapsed && (
-              <div className={`absolute top-1 right-1 w-2 h-2 rounded-full ${item.id === 'inbox' ? 'bg-red-500' : item.id === 'tasks' ? 'bg-rose-500' : 'bg-slate-600'}`} />
+            {item.id === 'dashboard' && caseCount > 0 && isCollapsed && (
+              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-slate-600" />
+            )}
+            {item.id === 'tasks' && taskCount > 0 && isCollapsed && (
+              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />
+            )}
+            {item.id === 'inbox' && unreadEmailCount > 0 && isCollapsed && (
+              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
             )}
           </button>
         ))}
