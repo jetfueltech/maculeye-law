@@ -597,7 +597,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ cases, onSelectCase, onOpe
                                         </button>
                                     </div>
                                     {isExpanded && (
-                                        <KanbanCardDetails caseData={c} />
+                                        <KanbanCardDetails caseData={c} onSelectCase={() => onSelectCase(c)} />
                                     )}
                                 </div>
                                 );
@@ -666,7 +666,7 @@ function formatTimeAgo(timestamp: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-const KanbanCardDetails: React.FC<{ caseData: CaseFile }> = ({ caseData }) => {
+const KanbanCardDetails: React.FC<{ caseData: CaseFile; onSelectCase: () => void }> = ({ caseData, onSelectCase }) => {
   const [tab, setTab] = useState<'tasks' | 'activity' | 'notes' | 'chats'>('tasks');
 
   const recentTasks = (caseData.tasks || [])
@@ -714,7 +714,11 @@ const KanbanCardDetails: React.FC<{ caseData: CaseFile }> = ({ caseData }) => {
 
           <div className="space-y-1 max-h-[200px] overflow-y-auto">
             {resolvedTab === 'tasks' && recentTasks.map(task => (
-              <div key={task.id} className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-slate-50/70 border border-slate-100">
+              <div
+                key={task.id}
+                onClick={onSelectCase}
+                className="flex items-start gap-2 px-2 py-1.5 rounded-lg bg-slate-50/70 border border-slate-100 cursor-pointer hover:bg-blue-50/50 hover:border-blue-200 transition-colors"
+              >
                 <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                   task.status === 'completed' ? 'bg-emerald-500' : task.status === 'overdue' ? 'bg-rose-500' : 'border-2 border-slate-300'
                 }`}>
@@ -742,6 +746,14 @@ const KanbanCardDetails: React.FC<{ caseData: CaseFile }> = ({ caseData }) => {
                         ? `Done ${formatTimeAgo(task.completedDate)}`
                         : `Due ${task.dueDate}`}
                     </span>
+                    {task.assignedTo && (
+                      <span className="text-[9px] font-medium text-slate-500 flex items-center gap-1 ml-auto">
+                        <span className="w-3.5 h-3.5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[7px] font-bold flex-shrink-0">
+                          {task.assignedTo.initials}
+                        </span>
+                        {task.assignedTo.name.split(' ')[0]}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
