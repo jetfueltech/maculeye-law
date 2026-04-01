@@ -237,9 +237,9 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
     { id: 'vehicle', label: 'Vehicle' }
   ];
 
-  const inputClass = "w-full bg-white border border-slate-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none";
-  const labelClass = "block text-xs font-bold text-slate-500 uppercase mb-1";
-  const sectionClass = "bg-white rounded-lg border border-slate-200 p-6 animate-fade-in";
+  const inputClass = "w-full bg-white border border-stone-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none";
+  const labelClass = "block text-xs font-bold text-stone-500 uppercase mb-1";
+  const sectionClass = "bg-white rounded-lg border border-stone-200 p-6 animate-fade-in";
 
   const renderClientFields = (client: ClientDetails, isPrimary: boolean, index?: number) => {
       const isAddl = !isPrimary && index !== undefined;
@@ -255,7 +255,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
       };
 
       return (
-          <div className={`grid grid-cols-2 gap-4 ${isAddl ? 'bg-slate-50 p-4 rounded-xl border border-slate-200 mt-6 relative' : ''}`}>
+          <div className={`grid grid-cols-2 gap-4 ${isAddl ? 'bg-stone-50 p-4 rounded-xl border border-stone-200 mt-6 relative' : ''}`}>
                {isAddl && (
                    <button 
                         onClick={() => handleRemoveClient(index)} 
@@ -265,7 +265,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                        Remove
                    </button>
                )}
-               {isAddl && <h4 className="col-span-2 font-bold text-slate-700 border-b pb-2 mb-2">Additional Client #{index + 1}</h4>}
+               {isAddl && <h4 className="col-span-2 font-bold text-stone-700 border-b pb-2 mb-2">Additional Client #{index + 1}</h4>}
                
                <div>
                    <label className={labelClass}>Full Name</label>
@@ -320,13 +320,13 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
   return (
     <div className="space-y-6">
        {/* Section Navigation & Tools */}
-       <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+       <div className="flex justify-between items-center pb-2 border-b border-stone-200">
            <div className="flex space-x-2 overflow-x-auto">
                 {sections.map(s => (
                     <button
                         key={s.id}
                         onClick={() => setActiveSection(s.id)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${activeSection === s.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors ${activeSection === s.id ? 'bg-blue-600 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
                     >
                         {s.label}
                     </button>
@@ -339,11 +339,11 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Form Sections (omitted unchanged parts) */}
        {activeSection === 'admin' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Intake Administration</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Intake Administration</h3>
                <div className="grid grid-cols-2 gap-4">
                    <div>
                        <label className={labelClass}>Total Clients</label>
-                       <input type="number" readOnly className={inputClass + " bg-slate-50"} value={formData.intake_admin?.total_clients} />
+                       <input type="number" readOnly className={inputClass + " bg-stone-50"} value={formData.intake_admin?.total_clients} />
                    </div>
                    <div>
                        <label className={labelClass}>Primary Language</label>
@@ -389,7 +389,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Client Section */}
        {activeSection === 'client' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Client Details</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Client Details</h3>
                
                {/* Primary Client */}
                <div className="mb-8">
@@ -406,7 +406,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
 
                <button 
                   onClick={handleAddClient}
-                  className="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-bold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center"
+                  className="w-full py-3 border-2 border-dashed border-stone-300 rounded-xl text-stone-500 font-bold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center"
                >
                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                    Add Another Client
@@ -417,7 +417,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Accident Section */}
        {activeSection === 'accident' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Accident Details</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Accident Details</h3>
                <div className="grid grid-cols-2 gap-4">
                    <div>
                        <label className={labelClass}>Crash Report #</label>
@@ -485,7 +485,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Defendant Section */}
        {activeSection === 'defendant' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Defendant Information</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Defendant Information</h3>
                <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className={labelClass}>Name</label>
@@ -511,7 +511,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                         </div>
                     </div>
                     <div className="col-span-2 border-t pt-4 mt-2">
-                        <h4 className="font-bold text-slate-700 mb-3 text-sm">Defendant Insurance</h4>
+                        <h4 className="font-bold text-stone-700 mb-3 text-sm">Defendant Insurance</h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className={labelClass}>Insurance Company</label>
@@ -542,11 +542,11 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Employment Section */}
        {activeSection === 'employment' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Employment & Lost Wages</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Employment & Lost Wages</h3>
                <div className="grid grid-cols-2 gap-4">
                    <div className="flex items-center space-x-2 col-span-2">
                        <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.employment?.time_lost_from_work || false} onChange={e => handleChange('employment', 'time_lost_from_work', e.target.checked)} />
-                       <span className="text-sm font-medium text-slate-700">Time lost from work?</span>
+                       <span className="text-sm font-medium text-stone-700">Time lost from work?</span>
                    </div>
                    
                    {formData.employment?.time_lost_from_work && (
@@ -588,7 +588,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Medical Section */}
        {activeSection === 'medical' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Medical Treatment</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Medical Treatment</h3>
                <div className="grid grid-cols-2 gap-4">
                    <div className="col-span-2">
                        <label className={labelClass}>Injuries Detail</label>
@@ -596,11 +596,11 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    </div>
                    <div className="flex items-center space-x-2">
                        <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.medical?.ambulance || false} onChange={e => handleChange('medical', 'ambulance', e.target.checked)} />
-                       <span className="text-sm font-medium text-slate-700">Ambulance taken?</span>
+                       <span className="text-sm font-medium text-stone-700">Ambulance taken?</span>
                    </div>
                    <div className="flex items-center space-x-2">
                        <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.medical?.xrays_taken || false} onChange={e => handleChange('medical', 'xrays_taken', e.target.checked)} />
-                       <span className="text-sm font-medium text-slate-700">X-Rays taken?</span>
+                       <span className="text-sm font-medium text-stone-700">X-Rays taken?</span>
                    </div>
                    <div className="col-span-2 mt-2">
                        <label className={labelClass}>Hospital Name</label>
@@ -612,16 +612,16 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    </div>
 
                    <div className="col-span-2 border-t pt-4 mt-4">
-                        <h4 className="font-semibold text-slate-700 mb-3 text-sm">Additional Treatment Providers</h4>
+                        <h4 className="font-semibold text-stone-700 mb-3 text-sm">Additional Treatment Providers</h4>
                         
                         {/* List Existing */}
                         {formData.medical?.providers && formData.medical.providers.length > 0 && (
                             <div className="space-y-3 mb-4">
                                 {formData.medical.providers.map((p, idx) => (
-                                    <div key={idx} className="flex justify-between items-center bg-slate-50 p-3 rounded border border-slate-200 text-sm">
+                                    <div key={idx} className="flex justify-between items-center bg-stone-50 p-3 rounded border border-stone-200 text-sm">
                                         <div>
-                                            <div className="font-bold text-slate-800">{p.name}</div>
-                                            <div className="text-slate-500 text-xs">{p.address} • {p.phone}</div>
+                                            <div className="font-bold text-stone-800">{p.name}</div>
+                                            <div className="text-stone-500 text-xs">{p.address} • {p.phone}</div>
                                         </div>
                                         <button onClick={() => handleDeleteProvider(idx)} className="text-red-500 hover:text-red-700">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -632,7 +632,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                         )}
 
                         {/* Add New */}
-                        <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded border border-slate-200">
+                        <div className="grid grid-cols-2 gap-3 bg-stone-50 p-3 rounded border border-stone-200">
                             <div className="col-span-2">
                                 <input 
                                     placeholder="Provider Name (e.g. Dr. Smith)" 
@@ -671,17 +671,17 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Insurance Section (New) */}
        {activeSection === 'insurance' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Other Insurance (Health & 1st Party)</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Other Insurance (Health & 1st Party)</h3>
                <div className="space-y-6">
                    <div>
-                       <h4 className="font-semibold text-slate-700 mb-2 text-sm">Health Insurance</h4>
+                       <h4 className="font-semibold text-stone-700 mb-2 text-sm">Health Insurance</h4>
                        <div className="grid grid-cols-2 gap-4">
                             <input className={inputClass} placeholder="Company (e.g. AETNA)" value={formData.health_insurance?.company || ''} onChange={e => handleChange('health_insurance', 'company', e.target.value)} />
                             <input className={inputClass} placeholder="Member ID" value={formData.health_insurance?.member_number || ''} onChange={e => handleChange('health_insurance', 'member_number', e.target.value)} />
                        </div>
                    </div>
                    <div>
-                       <h4 className="font-semibold text-slate-700 mb-2 text-sm">First Party Insurance (Client Auto)</h4>
+                       <h4 className="font-semibold text-stone-700 mb-2 text-sm">First Party Insurance (Client Auto)</h4>
                        <div className="grid grid-cols-2 gap-4">
                             <input className={inputClass} placeholder="Company" value={formData.first_party_insurance?.company || ''} onChange={e => handleChange('first_party_insurance', 'company', e.target.value)} />
                             <input className={inputClass} placeholder="Claim #" value={formData.first_party_insurance?.claim_number || ''} onChange={e => handleChange('first_party_insurance', 'claim_number', e.target.value)} />
@@ -696,7 +696,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {/* Vehicle Section */}
        {activeSection === 'vehicle' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b pb-2">Vehicle Property Damage</h3>
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Vehicle Property Damage</h3>
                <div className="grid grid-cols-2 gap-4">
                    <div>
                        <label className={labelClass}>License Plate</label>
@@ -709,20 +709,20 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    <div className="col-span-2 flex space-x-6 mt-2">
                        <label className="flex items-center space-x-2">
                            <input type="checkbox" checked={formData.vehicle_property_damage?.vehicle_drivable || false} onChange={e => handleChange('vehicle_property_damage', 'vehicle_drivable', e.target.checked)} />
-                           <span className="text-sm text-slate-700">Vehicle Drivable</span>
+                           <span className="text-sm text-stone-700">Vehicle Drivable</span>
                        </label>
                        <label className="flex items-center space-x-2">
                            <input type="checkbox" checked={formData.vehicle_property_damage?.airbags_deployed || false} onChange={e => handleChange('vehicle_property_damage', 'airbags_deployed', e.target.checked)} />
-                           <span className="text-sm text-slate-700">Airbags Deployed</span>
+                           <span className="text-sm text-stone-700">Airbags Deployed</span>
                        </label>
                        <label className="flex items-center space-x-2">
                            <input type="checkbox" checked={formData.vehicle_property_damage?.seatbelt_worn || false} onChange={e => handleChange('vehicle_property_damage', 'seatbelt_worn', e.target.checked)} />
-                           <span className="text-sm text-slate-700">Seatbelt Worn</span>
+                           <span className="text-sm text-stone-700">Seatbelt Worn</span>
                        </label>
                    </div>
                    
                    <div className="col-span-2 mt-4 border-t pt-4">
-                        <h4 className="font-semibold text-slate-700 mb-2 text-sm">Body Shop Information</h4>
+                        <h4 className="font-semibold text-stone-700 mb-2 text-sm">Body Shop Information</h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="col-span-2">
                                 <label className={labelClass}>Shop Name</label>
@@ -743,7 +743,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        )}
 
        {/* Actions */}
-       <div className="flex justify-end pt-4 border-t border-slate-200">
+       <div className="flex justify-end pt-4 border-t border-stone-200">
            <button 
              onClick={handleSave}
              disabled={saveStatus === 'saving' || saveStatus === 'saved'}
@@ -776,16 +776,16 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
        {isFormModalOpen && (
            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-                   <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                       <h3 className="font-bold text-slate-800">Generate Legal Documents</h3>
-                       <button onClick={() => setIsFormModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                   <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+                       <h3 className="font-bold text-stone-800">Generate Legal Documents</h3>
+                       <button onClick={() => setIsFormModalOpen(false)} className="text-stone-400 hover:text-stone-600">
                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                        </button>
                    </div>
                    <div className="p-6">
-                       <p className="text-sm text-slate-600 mb-4">Select the documents you wish to generate based on the current intake data.</p>
+                       <p className="text-sm text-stone-600 mb-4">Select the documents you wish to generate based on the current intake data.</p>
                        <div className="space-y-3 mb-6">
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'rep_lien' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'rep_lien' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
                                <input 
                                    type="radio" 
                                    name="formType"
@@ -794,12 +794,12 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500" 
                                />
                                <div>
-                                   <span className="text-sm font-bold text-slate-800 block">Letter of Representation + Lien</span>
-                                   <span className="text-xs text-slate-500">Includes notification to insurance carrier and attorney lien notice.</span>
+                                   <span className="text-sm font-bold text-stone-800 block">Letter of Representation + Lien</span>
+                                   <span className="text-xs text-stone-500">Includes notification to insurance carrier and attorney lien notice.</span>
                                </div>
                            </label>
 
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'foia' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'foia' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
                                <input 
                                    type="radio" 
                                    name="formType"
@@ -808,12 +808,12 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500" 
                                />
                                <div>
-                                   <span className="text-sm font-bold text-slate-800 block">Chicago FOIA Package</span>
-                                   <span className="text-xs text-slate-500">Request letter, CPD form, and crash report attachment placeholder.</span>
+                                   <span className="text-sm font-bold text-stone-800 block">Chicago FOIA Package</span>
+                                   <span className="text-xs text-stone-500">Request letter, CPD form, and crash report attachment placeholder.</span>
                                </div>
                            </label>
 
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'intake_summary' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'intake_summary' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
                                <input
                                    type="radio"
                                    name="formType"
@@ -822,12 +822,12 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
                                />
                                <div>
-                                   <span className="text-sm font-bold text-slate-800 block">Client Intake Summary</span>
-                                   <span className="text-xs text-slate-500">Detailed form including Accident, Client, Medical, and Insurance info.</span>
+                                   <span className="text-sm font-bold text-stone-800 block">Client Intake Summary</span>
+                                   <span className="text-xs text-stone-500">Detailed form including Accident, Client, Medical, and Insurance info.</span>
                                </div>
                            </label>
 
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'boss_intake_form' ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'boss_intake_form' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
                                <input
                                    type="radio"
                                    name="formType"
@@ -836,14 +836,14 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                    className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
                                />
                                <div>
-                                   <span className="text-sm font-bold text-slate-800 block">Boss Intake Form</span>
-                                   <span className="text-xs text-slate-500">Auto-populated intake spreadsheet with all case data, providers, and insurance.</span>
+                                   <span className="text-sm font-bold text-stone-800 block">Boss Intake Form</span>
+                                   <span className="text-xs text-stone-500">Auto-populated intake spreadsheet with all case data, providers, and insurance.</span>
                                </div>
                            </label>
                        </div>
                        
-                       <div className="flex justify-end pt-2 border-t border-slate-100">
-                           <button onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg mr-2">Cancel</button>
+                       <div className="flex justify-end pt-2 border-t border-stone-100">
+                           <button onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg mr-2">Cancel</button>
                            <button 
                                onClick={handleGenerateClick}
                                disabled={!selectedForm}

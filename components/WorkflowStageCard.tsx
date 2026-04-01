@@ -25,8 +25,8 @@ interface WorkflowStageCardProps {
 const STATUS_COLORS: Record<WorkflowStageProgress['status'], string> = {
   complete: 'bg-emerald-500 text-white border-emerald-500',
   active: 'bg-blue-600 text-white border-blue-600',
-  pending: 'bg-white text-slate-400 border-slate-200',
-  blocked: 'bg-white text-slate-300 border-slate-100',
+  pending: 'bg-white text-stone-400 border-stone-200',
+  blocked: 'bg-white text-stone-300 border-stone-100',
 };
 
 export const WorkflowStageCard: React.FC<WorkflowStageCardProps> = ({
@@ -42,11 +42,11 @@ export const WorkflowStageCard: React.FC<WorkflowStageCardProps> = ({
 
   return (
     <div className={`bg-white rounded-2xl border overflow-hidden transition-all ${
-      stage.status === 'active' ? 'border-blue-200 shadow-sm shadow-blue-50' : 'border-slate-200'
+      stage.status === 'active' ? 'border-blue-200 shadow-sm shadow-blue-50' : 'border-stone-200'
     }`}>
       <div
         className={`flex items-center justify-between px-6 py-4 cursor-pointer transition-colors ${
-          stage.status === 'active' ? 'bg-blue-50 hover:bg-blue-100/50' : 'bg-slate-50 hover:bg-slate-100/50'
+          stage.status === 'active' ? 'bg-blue-50 hover:bg-blue-100/50' : 'bg-stone-50 hover:bg-stone-100/50'
         }`}
         onClick={onToggle}
       >
@@ -60,7 +60,7 @@ export const WorkflowStageCard: React.FC<WorkflowStageCardProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900">{stage.label}</span>
+              <span className="font-bold text-stone-900">{stage.label}</span>
               {stage.status === 'active' && (
                 <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full uppercase tracking-wide">Current</span>
               )}
@@ -73,23 +73,23 @@ export const WorkflowStageCard: React.FC<WorkflowStageCardProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">{stage.description}</p>
+            <p className="text-xs text-stone-500 mt-0.5">{stage.description}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {hasContacts && stage.status !== 'complete' && (
             <div className="flex -space-x-1.5 mr-2">
               {stage.contacts!.slice(0, 3).map((contact, i) => (
-                <div key={i} className="w-6 h-6 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center" title={contact.name}>
-                  <span className="text-[8px] font-bold text-slate-500">
+                <div key={i} className="w-6 h-6 rounded-full bg-stone-100 border-2 border-white flex items-center justify-center" title={contact.name}>
+                  <span className="text-[8px] font-bold text-stone-500">
                     {contact.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
                   </span>
                 </div>
               ))}
             </div>
           )}
-          <span className="text-sm font-bold text-slate-700">{stage.completedItems}/{stage.totalItems}</span>
-          <svg className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <span className="text-sm font-bold text-stone-700">{stage.completedItems}/{stage.totalItems}</span>
+          <svg className={`w-4 h-4 text-stone-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -98,13 +98,13 @@ export const WorkflowStageCard: React.FC<WorkflowStageCardProps> = ({
       {isExpanded && (
         <div>
           {(hasContacts || hasInfoFields) && stage.status !== 'complete' && (
-            <div className="px-6 py-3 bg-slate-50/50 border-b border-slate-100">
+            <div className="px-6 py-3 bg-stone-50/50 border-b border-stone-100">
               <div className="flex items-center gap-2">
                 {hasContacts && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowContacts(!showContacts); setShowInfo(false); }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                      showContacts ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      showContacts ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                     }`}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,7 +117,7 @@ export const WorkflowStageCard: React.FC<WorkflowStageCardProps> = ({
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowInfo(!showInfo); setShowContacts(false); }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                      showInfo ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      showInfo ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                     }`}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@ export const WorkflowStageCard: React.FC<WorkflowStageCardProps> = ({
             </div>
           )}
 
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-stone-50">
             {stage.items.map(item => (
               <WorkflowItemRow
                 key={item.id}
@@ -181,24 +181,24 @@ const ContactBadge: React.FC<{
   const hasEmail = !!contact.email;
 
   return (
-    <div className="flex items-center gap-3 bg-white rounded-lg border border-slate-200 px-3 py-2.5 group hover:border-blue-200 transition-colors">
-      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-        <span className="text-[10px] font-bold text-slate-600">{initials}</span>
+    <div className="flex items-center gap-3 bg-white rounded-lg border border-stone-200 px-3 py-2.5 group hover:border-blue-200 transition-colors">
+      <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+        <span className="text-[10px] font-bold text-stone-600">{initials}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-800 truncate">{contact.name}</p>
+        <p className="text-sm font-medium text-stone-800 truncate">{contact.name}</p>
         <div className="flex items-center gap-2">
-          {contact.role && <span className="text-[10px] text-slate-400">{contact.role}</span>}
+          {contact.role && <span className="text-[10px] text-stone-400">{contact.role}</span>}
           {contact.phone && (
             <>
-              <span className="text-[10px] text-slate-300">|</span>
-              <span className="text-[10px] text-slate-500 font-mono">{contact.phone}</span>
+              <span className="text-[10px] text-stone-300">|</span>
+              <span className="text-[10px] text-stone-500 font-mono">{contact.phone}</span>
             </>
           )}
           {contact.email && (
             <>
-              <span className="text-[10px] text-slate-300">|</span>
-              <span className="text-[10px] text-slate-500 truncate">{contact.email}</span>
+              <span className="text-[10px] text-stone-300">|</span>
+              <span className="text-[10px] text-stone-500 truncate">{contact.email}</span>
             </>
           )}
         </div>
@@ -258,9 +258,9 @@ const InfoFieldRow: React.FC<{ field: InfoField }> = ({ field }) => {
     <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${statusStyles[field.status]}`}>
       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${statusDot[field.status]}`} />
       <div className="flex-1 min-w-0">
-        <span className="text-[10px] font-bold text-slate-400 uppercase">{field.label}</span>
+        <span className="text-[10px] font-bold text-stone-400 uppercase">{field.label}</span>
         {field.value ? (
-          <p className="text-xs text-slate-700 truncate">{field.value}</p>
+          <p className="text-xs text-stone-700 truncate">{field.value}</p>
         ) : (
           <p className="text-xs text-rose-400 italic">Not provided</p>
         )}
@@ -279,7 +279,7 @@ const WorkflowItemRow: React.FC<{
   onText: (c: ContactInfo) => void;
   actionLabels: Record<WorkflowItemAction, string>;
 }> = ({ item, completingItem, onMarkDone, onAction, onCall, onEmail, onText, actionLabels }) => (
-  <div className={`flex items-start gap-3 px-6 py-3.5 group ${item.done ? 'bg-white' : item.urgent ? 'bg-amber-50' : 'bg-white hover:bg-slate-50/50'}`}>
+  <div className={`flex items-start gap-3 px-6 py-3.5 group ${item.done ? 'bg-white' : item.urgent ? 'bg-amber-50' : 'bg-white hover:bg-stone-50/50'}`}>
     <button
       onClick={() => !item.done && item.taskType && onMarkDone(item.id, item.taskType)}
       className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5 ${
@@ -290,8 +290,8 @@ const WorkflowItemRow: React.FC<{
           : item.urgent
           ? 'border-amber-400 hover:bg-amber-50'
           : item.taskType
-          ? 'border-slate-300 hover:border-blue-400 hover:bg-blue-50'
-          : 'border-slate-200 cursor-default'
+          ? 'border-stone-300 hover:border-blue-400 hover:bg-blue-50'
+          : 'border-stone-200 cursor-default'
       }`}
     >
       {item.done && (
@@ -301,17 +301,17 @@ const WorkflowItemRow: React.FC<{
 
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2">
-        <span className={`text-sm ${item.done ? 'text-slate-400 line-through' : 'text-slate-800 font-medium'}`}>
+        <span className={`text-sm ${item.done ? 'text-stone-400 line-through' : 'text-stone-800 font-medium'}`}>
           {item.label}
         </span>
       </div>
       {item.detail && !item.done && (
-        <p className={`text-xs mt-0.5 ${item.urgent ? 'text-amber-600 font-medium' : 'text-slate-400'}`}>{item.detail}</p>
+        <p className={`text-xs mt-0.5 ${item.urgent ? 'text-amber-600 font-medium' : 'text-stone-400'}`}>{item.detail}</p>
       )}
       {item.contact && !item.done && (
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-[10px] text-slate-400">{item.contact.name}</span>
-          {item.contact.phone && <span className="text-[10px] text-slate-400 font-mono">{item.contact.phone}</span>}
+          <span className="text-[10px] text-stone-400">{item.contact.name}</span>
+          {item.contact.phone && <span className="text-[10px] text-stone-400 font-mono">{item.contact.phone}</span>}
         </div>
       )}
       {item.infoNeeded && item.infoNeeded.length > 0 && !item.done && (

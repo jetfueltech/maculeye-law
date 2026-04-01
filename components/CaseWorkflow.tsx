@@ -45,15 +45,15 @@ function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
 const STATUS_COLORS: Record<WorkflowStageProgress['status'], string> = {
   complete: 'bg-emerald-500 text-white border-emerald-500',
   active: 'bg-blue-600 text-white border-blue-600',
-  pending: 'bg-white text-slate-400 border-slate-200',
-  blocked: 'bg-white text-slate-300 border-slate-100',
+  pending: 'bg-white text-stone-400 border-stone-200',
+  blocked: 'bg-white text-stone-300 border-stone-100',
 };
 
 const STATUS_CONNECTOR: Record<WorkflowStageProgress['status'], string> = {
   complete: 'bg-emerald-400',
   active: 'bg-gradient-to-r from-emerald-400 to-blue-300',
-  pending: 'bg-slate-100',
-  blocked: 'bg-slate-100',
+  pending: 'bg-stone-100',
+  blocked: 'bg-stone-100',
 };
 
 const ACTION_LABELS: Record<WorkflowItemAction, string> = {
@@ -259,11 +259,11 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+      <div className="bg-white rounded-2xl border border-stone-200 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="font-bold text-slate-900 text-lg">Case Workflow</h3>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <h3 className="font-bold text-stone-900 text-lg">Case Workflow</h3>
+            <p className="text-sm text-stone-500 mt-0.5">
               {completedItems} of {totalItems} steps completed
               {overdueCount > 0 && (
                 <span className="ml-2 text-rose-600 font-medium">· {overdueCount} overdue</span>
@@ -271,13 +271,13 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex bg-slate-100 rounded-lg p-0.5">
+            <div className="flex bg-stone-100 rounded-lg p-0.5">
               <button
                 onClick={() => setViewMode('checklist')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
                   viewMode === 'checklist'
-                    ? 'bg-white text-slate-800 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-white text-stone-800 shadow-sm'
+                    : 'text-stone-500 hover:text-stone-700'
                 }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
@@ -287,8 +287,8 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
                 onClick={() => setViewMode('kanban')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
                   viewMode === 'kanban'
-                    ? 'bg-white text-slate-800 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-white text-stone-800 shadow-sm'
+                    : 'text-stone-500 hover:text-stone-700'
                 }`}
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>
@@ -297,7 +297,7 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
             </div>
             <button
               onClick={handleCheckReminders}
-              className="px-3.5 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors flex items-center gap-1.5"
             >
               <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
               Check Reminders
@@ -315,10 +315,10 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
         </div>
 
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs text-slate-500">Overall Progress</span>
-          <span className="text-xs font-bold text-slate-700">{overallPct}%</span>
+          <span className="text-xs text-stone-500">Overall Progress</span>
+          <span className="text-xs font-bold text-stone-700">{overallPct}%</span>
         </div>
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-6">
+        <div className="h-2 bg-stone-100 rounded-full overflow-hidden mb-6">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-700"
             style={{ width: `${overallPct}%` }}
@@ -343,11 +343,11 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
                       <span className="text-xs font-bold">{idx + 1}</span>
                     )}
                   </div>
-                  <span className={`text-[10px] font-semibold mt-1.5 text-center leading-tight transition-colors ${stage.status === 'complete' ? 'text-emerald-600' : stage.status === 'active' ? 'text-blue-700' : 'text-slate-400'}`}>
+                  <span className={`text-[10px] font-semibold mt-1.5 text-center leading-tight transition-colors ${stage.status === 'complete' ? 'text-emerald-600' : stage.status === 'active' ? 'text-blue-700' : 'text-stone-400'}`}>
                     {stage.label}
                   </span>
                   {stage.status !== 'complete' && stage.status !== 'blocked' && (
-                    <span className="text-[10px] text-slate-400">{stage.completedItems}/{stage.totalItems}</span>
+                    <span className="text-[10px] text-stone-400">{stage.completedItems}/{stage.totalItems}</span>
                   )}
                 </button>
                 {idx < stages.length - 1 && (
@@ -382,16 +382,16 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
         ) : null
       ))}
 
-      {viewMode === 'checklist' && <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      {viewMode === 'checklist' && <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
         <button
-          className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
+          className="w-full flex items-center justify-between px-6 py-4 hover:bg-stone-50 transition-colors"
           onClick={() => setExpandedStage(expandedStage === '__all__' ? null : '__all__')}
         >
-          <span className="font-semibold text-slate-700 text-sm">All Stages</span>
-          <svg className={`w-4 h-4 text-slate-400 transition-transform ${expandedStage === '__all__' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          <span className="font-semibold text-stone-700 text-sm">All Stages</span>
+          <svg className={`w-4 h-4 text-stone-400 transition-transform ${expandedStage === '__all__' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
         </button>
         {expandedStage === '__all__' && (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-stone-100">
             {stages.map(stage => (
               <div key={stage.stage} className="px-6 py-4">
                 <div className="flex items-center gap-3 mb-3">
@@ -402,16 +402,16 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stage.icon} /></svg>
                     )}
                   </div>
-                  <span className="font-semibold text-slate-800 text-sm">{stage.label}</span>
-                  <span className="text-xs text-slate-400">{stage.completedItems}/{stage.totalItems}</span>
+                  <span className="font-semibold text-stone-800 text-sm">{stage.label}</span>
+                  <span className="text-xs text-stone-400">{stage.completedItems}/{stage.totalItems}</span>
                 </div>
                 <div className="space-y-2 pl-9">
                   {stage.items.map(item => (
                     <div key={item.id} className="flex items-center gap-2">
-                      <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center ${item.done ? 'bg-emerald-500' : item.urgent ? 'bg-amber-200 border border-amber-400' : 'border border-slate-200'}`}>
+                      <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center ${item.done ? 'bg-emerald-500' : item.urgent ? 'bg-amber-200 border border-amber-400' : 'border border-stone-200'}`}>
                         {item.done && <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                       </div>
-                      <span className={`text-xs flex-1 ${item.done ? 'text-slate-400 line-through' : item.urgent ? 'text-amber-700 font-medium' : 'text-slate-600'}`}>{item.label}</span>
+                      <span className={`text-xs flex-1 ${item.done ? 'text-stone-400 line-through' : item.urgent ? 'text-amber-700 font-medium' : 'text-stone-600'}`}>{item.label}</span>
                       {item.action && !item.done && (
                         <button
                           onClick={() => openAction(item.action!, item.providerId, item.erVisitId)}
@@ -445,11 +445,11 @@ export const CaseWorkflow: React.FC<CaseWorkflowProps> = ({ caseData, onUpdateCa
       )}
 
       {showPreservation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h3 className="font-bold text-lg text-slate-800">Preservation of Evidence</h3>
-              <button onClick={() => setShowPreservation(false)} className="text-slate-400 hover:text-slate-600">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200">
+              <h3 className="font-bold text-lg text-stone-800">Preservation of Evidence</h3>
+              <button onClick={() => setShowPreservation(false)} className="text-stone-400 hover:text-stone-600">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>

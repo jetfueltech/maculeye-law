@@ -285,14 +285,14 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
   };
 
   const extractionSteps = ['Upload Documents', 'Review & Submit'];
-  const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 transition-all shadow-sm";
+  const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-stone-400 transition-all shadow-sm";
 
   return (
     <div className={`animate-fade-in pb-20 mx-auto transition-all ${mode === 'extraction' && step === 2 ? 'max-w-7xl' : 'max-w-5xl'}`}>
       <button
         onClick={mode === 'extraction' && step === 2 && !isExtracting ? () => setStep(1) : onBack}
         disabled={isExtracting}
-        className={`mb-6 flex items-center transition-colors font-medium ${isExtracting ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:text-slate-700'}`}
+        className={`mb-6 flex items-center transition-colors font-medium ${isExtracting ? 'text-stone-300 cursor-not-allowed' : 'text-stone-500 hover:text-stone-700'}`}
       >
         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -300,24 +300,24 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
         {mode === 'extraction' && step === 2 ? 'Back to Documents' : 'Back to Dashboard'}
       </button>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden flex flex-col">
-        <div className="bg-slate-50 px-8 py-6 border-b border-slate-100 flex justify-between items-center flex-wrap gap-4">
+      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden flex flex-col">
+        <div className="bg-stone-50 px-8 py-6 border-b border-stone-100 flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h3 className="text-xl font-bold text-slate-800">New Client Intake</h3>
-            <p className="text-sm text-slate-500">
+            <h3 className="text-xl font-bold text-stone-800">New Client Intake</h3>
+            <p className="text-sm text-stone-500">
               {mode === 'extraction'
                 ? 'Upload documents and auto-extract client information'
                 : 'Enter client information manually'}
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+            <div className="flex items-center bg-white border border-stone-200 rounded-xl p-1 shadow-sm">
               <button
                 onClick={() => handleModeSwitch('extraction')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                   mode === 'extraction'
                     ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    : 'text-stone-500 hover:text-stone-700'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +330,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                   mode === 'manual'
                     ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-500 hover:text-slate-700'
+                    : 'text-stone-500 hover:text-stone-700'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,7 +340,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
               </button>
             </div>
             <div className="flex items-center gap-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Source:</label>
+              <label className="text-xs font-bold text-stone-500 uppercase tracking-wide">Source:</label>
               <select
                 className={inputClass + " !w-auto"}
                 value={referralSource}
@@ -365,7 +365,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
           <>
             <div className="px-8 pt-8">
               <div className="flex items-center justify-center gap-0 relative max-w-md mx-auto">
-                <div className="absolute left-8 right-8 top-4 h-0.5 bg-slate-200 -z-10" />
+                <div className="absolute left-8 right-8 top-4 h-0.5 bg-stone-200 -z-10" />
                 <div className="absolute left-8 top-4 h-0.5 bg-blue-500 -z-10 transition-all duration-500" style={{ width: step >= 2 ? '100%' : '0%', maxWidth: 'calc(100% - 64px)' }} />
                 {extractionSteps.map((label, i) => (
                   <div
@@ -382,7 +382,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                         ? 'bg-emerald-500 border-emerald-500 text-white'
                         : step === i + 1
                         ? 'bg-blue-600 border-blue-600 text-white ring-4 ring-blue-50'
-                        : 'bg-white border-slate-200 text-slate-400 group-hover:border-slate-300'
+                        : 'bg-white border-stone-200 text-stone-400 group-hover:border-stone-300'
                     }`}>
                       {step > i + 1 ? (
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -390,7 +390,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                         </svg>
                       ) : i + 1}
                     </div>
-                    <span className={`text-xs mt-2 font-bold uppercase tracking-wider ${step === i + 1 ? 'text-blue-600' : 'text-slate-400'}`}>
+                    <span className={`text-xs mt-2 font-bold uppercase tracking-wider ${step === i + 1 ? 'text-blue-600' : 'text-stone-400'}`}>
                       {label}
                     </span>
                   </div>
@@ -402,10 +402,10 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
               {step === 1 && (
                 <div className="space-y-6">
                   <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5 block">
+                    <label className="text-xs font-bold text-stone-500 uppercase tracking-wide mb-1.5 block">
                       Client Name(s) <span className="text-red-500">*</span>
                     </label>
-                    <p className="text-xs text-slate-400 mb-3">
+                    <p className="text-xs text-stone-400 mb-3">
                       Enter the client name so the AI can identify them on the police report. Add additional clients for multi-party matters.
                     </p>
                     <div className="space-y-2 max-w-md">
@@ -413,7 +413,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                         <div key={idx} className="flex items-center gap-2">
                           <div className="relative flex-1">
                             {idx === 0 && (
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-blue-500 uppercase tracking-wide pointer-events-none">Primary</span>
+                              <span className="absolute left-3 top-1/2 -transtone-y-1/2 text-[10px] font-bold text-blue-500 uppercase tracking-wide pointer-events-none">Primary</span>
                             )}
                             <input
                               type="text"
@@ -430,7 +430,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                           {idx > 0 && (
                             <button
                               onClick={() => setClientNames(clientNames.filter((_, i) => i !== idx))}
-                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                              className="p-2 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                               title="Remove client"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,11 +474,11 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
               )}
             </div>
 
-            <div className="bg-slate-50 px-8 py-5 border-t border-slate-100 flex justify-between flex-shrink-0">
+            <div className="bg-stone-50 px-8 py-5 border-t border-stone-100 flex justify-between flex-shrink-0">
               {step === 2 && !isExtracting ? (
                 <button
                   onClick={() => setStep(1)}
-                  className="px-6 py-2.5 text-slate-600 font-bold hover:text-slate-900 transition-colors hover:bg-slate-200 rounded-lg"
+                  className="px-6 py-2.5 text-stone-600 font-bold hover:text-stone-900 transition-colors hover:bg-stone-200 rounded-lg"
                 >
                   Back to Documents
                 </button>
@@ -490,7 +490,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                   disabled={pendingDocs.length === 0 || !hasClientName}
                   className={`px-8 py-2.5 rounded-lg font-bold shadow-lg transition-all flex items-center ${
                     pendingDocs.length === 0 || !hasClientName
-                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed shadow-none'
                       : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700'
                   }`}
                 >
@@ -505,7 +505,7 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
                   disabled={isSubmitting}
                   className={`px-8 py-2.5 rounded-lg font-bold shadow-lg transition-all flex items-center ${
                     isSubmitting
-                      ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                      ? 'bg-stone-300 text-stone-500 cursor-not-allowed shadow-none'
                       : 'bg-emerald-600 text-white shadow-emerald-200 hover:bg-emerald-700'
                   }`}
                 >

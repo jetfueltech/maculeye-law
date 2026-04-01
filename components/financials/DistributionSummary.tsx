@@ -40,8 +40,8 @@ export const DistributionSummary: React.FC<Props> = ({ fin }) => {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <div className="px-6 py-4 border-b border-slate-100 bg-slate-800">
+    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+      <div className="px-6 py-4 border-b border-stone-100 bg-black">
         <h3 className="text-sm font-bold text-white uppercase tracking-wide">Balance Due Client</h3>
       </div>
       <div className="p-6 space-y-2">
@@ -52,9 +52,9 @@ export const DistributionSummary: React.FC<Props> = ({ fin }) => {
         <SummaryRow label="Medical Expenses" value={-d.medicalExpenses} />
         <SummaryRow label="Health Insurance Subrogation" value={-d.healthInsuranceSub} />
 
-        <div className="border-t-2 border-slate-300 pt-3 mt-4">
+        <div className="border-t-2 border-stone-300 pt-3 mt-4">
           <div className="flex justify-between items-center">
-            <span className="text-base font-bold text-slate-900">BALANCE DUE CLIENT</span>
+            <span className="text-base font-bold text-stone-900">BALANCE DUE CLIENT</span>
             <span className={`text-xl font-bold tabular-nums ${d.balanceDueClient >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
               {currency(d.balanceDueClient)}
             </span>
@@ -67,9 +67,9 @@ export const DistributionSummary: React.FC<Props> = ({ fin }) => {
 
 function SummaryRow({ label, value, bold, underline }: { label: string; value: number; bold?: boolean; underline?: boolean }) {
   return (
-    <div className={`flex justify-between items-center py-1 ${underline ? 'border-b border-slate-200 pb-2 mb-1' : ''}`}>
-      <span className={`text-sm ${bold ? 'font-bold text-slate-800' : 'text-slate-600'}`}>{label}</span>
-      <span className={`text-sm tabular-nums ${bold ? 'font-bold text-slate-900' : value < 0 ? 'text-slate-700' : 'text-slate-800'} font-medium`}>
+    <div className={`flex justify-between items-center py-1 ${underline ? 'border-b border-stone-200 pb-2 mb-1' : ''}`}>
+      <span className={`text-sm ${bold ? 'font-bold text-stone-800' : 'text-stone-600'}`}>{label}</span>
+      <span className={`text-sm tabular-nums ${bold ? 'font-bold text-stone-900' : value < 0 ? 'text-stone-700' : 'text-stone-800'} font-medium`}>
         {currency(Math.abs(value))}
       </span>
     </div>

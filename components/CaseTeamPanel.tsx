@@ -14,7 +14,7 @@ const AVATAR_COLORS = [
   'bg-amber-100 text-amber-700',
   'bg-rose-100 text-rose-700',
   'bg-cyan-100 text-cyan-700',
-  'bg-slate-100 text-slate-700',
+  'bg-stone-100 text-stone-700',
   'bg-orange-100 text-orange-700',
   'bg-teal-100 text-teal-700',
 ];
@@ -99,7 +99,7 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
           </span>
         ))}
         {team.length === 0 && (
-          <span className="text-[10px] text-slate-400 italic">No team</span>
+          <span className="text-[10px] text-stone-400 italic">No team</span>
         )}
       </div>
     );
@@ -108,7 +108,7 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-700">Case Team</h3>
+        <h3 className="text-sm font-bold text-stone-700">Case Team</h3>
         <div className="relative" ref={addRef}>
           <button
             onClick={() => setShowAdd(!showAdd)}
@@ -119,18 +119,18 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
           </button>
 
           {showAdd && (
-            <div className="absolute right-0 top-8 z-50 bg-white border border-slate-200 shadow-xl rounded-xl w-72 py-1 animate-fade-in">
-              <div className="px-3 py-2 space-y-2 border-b border-slate-100">
+            <div className="absolute right-0 top-8 z-50 bg-white border border-stone-200 shadow-xl rounded-xl w-72 py-1 animate-fade-in">
+              <div className="px-3 py-2 space-y-2 border-b border-stone-100">
                 <input
                   type="text"
                   placeholder="Search members..."
-                  className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full text-xs border border-stone-200 rounded-lg px-2 py-1.5 outline-none focus:ring-1 focus:ring-blue-500"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   autoFocus
                 />
                 <select
-                  className="w-full text-xs border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                  className="w-full text-xs border border-stone-200 rounded-lg px-2 py-1.5 outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                   value={selectedRole}
                   onChange={e => setSelectedRole(e.target.value as CaseTeamRole)}
                 >
@@ -141,7 +141,7 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
               </div>
               <div className="max-h-48 overflow-y-auto">
                 {filteredMembers.length === 0 && (
-                  <div className="px-3 py-4 text-xs text-slate-400 text-center">
+                  <div className="px-3 py-4 text-xs text-stone-400 text-center">
                     {availableMembers.length === 0 ? 'All members assigned' : 'No matches'}
                   </div>
                 )}
@@ -149,13 +149,13 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
                   <button
                     key={m.userId}
                     onClick={() => handleAdd(m)}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-stone-50 flex items-center gap-2 text-stone-700"
                   >
                     <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${colorForId(m.userId)}`}>
                       {m.initials}
                     </span>
                     <span className="truncate font-medium">{m.name}</span>
-                    <span className="text-[10px] text-slate-400 ml-auto flex-shrink-0 capitalize">{m.firmRole}</span>
+                    <span className="text-[10px] text-stone-400 ml-auto flex-shrink-0 capitalize">{m.firmRole}</span>
                   </button>
                 ))}
               </div>
@@ -166,10 +166,10 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
 
       {team.length === 0 ? (
         <div className="flex items-center gap-2 py-1">
-          <span className="w-6 h-6 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
+          <span className="w-6 h-6 rounded-full border-2 border-dashed border-stone-200 flex items-center justify-center text-stone-300">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           </span>
-          <span className="text-xs text-slate-400">No team members</span>
+          <span className="text-xs text-stone-400">No team members</span>
         </div>
       ) : (
         <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -179,21 +179,21 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
                 {m.initials}
               </span>
               <div className="flex items-center gap-1 min-w-0">
-                <span className="text-xs font-medium text-slate-800 truncate">{m.name}</span>
+                <span className="text-xs font-medium text-stone-800 truncate">{m.name}</span>
                 <div className="relative">
                   <button
                     onClick={() => setEditingMemberId(editingMemberId === m.id ? null : m.id)}
-                    className="text-[10px] text-slate-400 hover:text-slate-600 whitespace-nowrap"
+                    className="text-[10px] text-stone-400 hover:text-stone-600 whitespace-nowrap"
                   >
                     ({CASE_TEAM_ROLE_LABELS[m.role]})
                   </button>
                   {editingMemberId === m.id && (
-                    <div className="absolute left-0 top-5 z-50 bg-white border border-slate-200 shadow-lg rounded-lg w-40 py-1 animate-fade-in">
+                    <div className="absolute left-0 top-5 z-50 bg-white border border-stone-200 shadow-lg rounded-lg w-40 py-1 animate-fade-in">
                       {ROLES.map(r => (
                         <button
                           key={r}
                           onClick={() => handleRoleChange(m.id, r)}
-                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 ${m.role === r ? 'text-blue-600 bg-blue-50 font-semibold' : 'text-slate-700'}`}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-stone-50 ${m.role === r ? 'text-blue-600 bg-blue-50 font-semibold' : 'text-stone-700'}`}
                         >
                           {CASE_TEAM_ROLE_LABELS[r]}
                         </button>
@@ -204,7 +204,7 @@ export const CaseTeamPanel: React.FC<CaseTeamPanelProps> = ({ team, onChange, co
               </div>
               <button
                 onClick={() => handleRemove(m.id)}
-                className="p-0.5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                className="p-0.5 text-stone-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                 title="Remove"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

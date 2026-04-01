@@ -31,7 +31,7 @@ const PROVIDER_TYPE_COLORS: Record<MedicalProviderType, string> = {
   chiropractor: 'bg-teal-50 text-teal-700 border-teal-200',
   physical_therapy: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   orthopedic: 'bg-blue-50 text-blue-700 border-blue-200',
-  neurologist: 'bg-slate-100 text-slate-700 border-slate-200',
+  neurologist: 'bg-stone-100 text-stone-700 border-stone-200',
   pain_management: 'bg-amber-50 text-amber-700 border-amber-200',
   primary_care: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   imaging: 'bg-sky-50 text-sky-700 border-sky-200',
@@ -361,15 +361,15 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
     setShowBillUpload(false);
   };
 
-  const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
 
   const renderProviderForm = (isNew: boolean) => (
-    <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 animate-fade-in">
+    <div className="bg-white border border-stone-200 rounded-2xl p-6 space-y-6 animate-fade-in">
       <div className="flex items-center justify-between mb-2">
-        <h4 className="font-bold text-slate-800">{isNew ? 'Add Medical Provider' : 'Edit Provider'}</h4>
+        <h4 className="font-bold text-stone-800">{isNew ? 'Add Medical Provider' : 'Edit Provider'}</h4>
         <button
           onClick={() => { isNew ? setShowAddForm(false) : setEditingId(null); setForm(emptyProvider); setSearchQuery(''); setSelectedFromDirectory(false); }}
-          className="text-slate-400 hover:text-slate-600"
+          className="text-stone-400 hover:text-stone-600"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
@@ -377,7 +377,7 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2 relative" ref={searchRef}>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Facility Name</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Facility Name</label>
           <div className="relative">
             <input
               className={inputClass}
@@ -393,33 +393,33 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
               placeholder="Start typing to search existing providers..."
             />
             {searching && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="absolute right-3 top-1/2 -transtone-y-1/2">
                 <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
           </div>
           {isNew && showSearchResults && searchResults.length > 0 && (
-            <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-              <div className="px-3 py-2 border-b border-slate-100">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Existing Providers</p>
+            <div className="absolute z-20 w-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+              <div className="px-3 py-2 border-b border-stone-100">
+                <p className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Existing Providers</p>
               </div>
               {searchResults.map(dp => (
                 <button
                   key={dp.id}
                   onClick={() => handleSelectFromDirectory(dp)}
-                  className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-slate-50 last:border-0"
+                  className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-stone-50 last:border-0"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-sm font-medium text-slate-900">{dp.name}</span>
-                      <span className={`ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full border ${PROVIDER_TYPE_COLORS[dp.type] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+                      <span className="text-sm font-medium text-stone-900">{dp.name}</span>
+                      <span className={`ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full border ${PROVIDER_TYPE_COLORS[dp.type] || 'bg-stone-100 text-stone-600 border-stone-200'}`}>
                         {PROVIDER_TYPE_LABELS[dp.type] || dp.type}
                       </span>
                     </div>
-                    <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                   </div>
                   {(dp.address || dp.city || dp.phone) && (
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-stone-500 mt-0.5">
                       {[dp.address, dp.city, dp.state].filter(Boolean).join(', ')}
                       {dp.phone ? ` - ${dp.phone}` : ''}
                     </p>
@@ -436,7 +436,7 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
           )}
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Provider Type</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Provider Type</label>
           <select className={inputClass} value={form.type} onChange={e => setForm({ ...form, type: e.target.value as MedicalProviderType })}>
             {Object.entries(PROVIDER_TYPE_LABELS).map(([val, label]) => (
               <option key={val} value={val}>{label}</option>
@@ -444,48 +444,48 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
           </select>
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Contact Person</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Contact Person</label>
           <input className={inputClass} value={form.contactPerson || ''} onChange={e => setForm({ ...form, contactPerson: e.target.value })} placeholder="Dr. Smith" />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Street Address</label>
+        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Street Address</label>
         <input className={inputClass} value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="123 Medical Center Dr" />
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">City</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">City</label>
           <input className={inputClass} value={form.city || ''} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="Chicago" />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">State</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">State</label>
           <input className={inputClass} value={form.state || ''} onChange={e => setForm({ ...form, state: e.target.value })} placeholder="IL" />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">ZIP</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">ZIP</label>
           <input className={inputClass} value={form.zip || ''} onChange={e => setForm({ ...form, zip: e.target.value })} placeholder="60611" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Phone</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Phone</label>
           <input className={inputClass} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="(312) 555-0000" />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Fax</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Fax</label>
           <input className={inputClass} value={form.fax || ''} onChange={e => setForm({ ...form, fax: e.target.value })} placeholder="(312) 555-0001" />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Email</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Email</label>
           <input className={inputClass} value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="records@hospital.com" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Preferred Contact Method</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Preferred Contact Method</label>
           <select className={inputClass} value={form.preferredContactMethod || ''} onChange={e => setForm({ ...form, preferredContactMethod: (e.target.value || undefined) as PreferredContactMethod | undefined })}>
             <option value="">Not specified</option>
             {Object.entries(CONTACT_METHOD_LABELS).map(([val, label]) => (
@@ -497,15 +497,15 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">First Visit</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">First Visit</label>
           <input type="date" className={inputClass} value={form.dateOfFirstVisit || ''} onChange={e => setForm({ ...form, dateOfFirstVisit: e.target.value })} />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Last Visit</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Last Visit</label>
           <input type="date" className={inputClass} value={form.dateOfLastVisit || ''} onChange={e => setForm({ ...form, dateOfLastVisit: e.target.value })} />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Total Cost ($)</label>
+          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Total Cost ($)</label>
           <input
             type="number"
             step="0.01"
@@ -522,23 +522,23 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+            className="w-4 h-4 text-blue-600 rounded border-stone-300 focus:ring-blue-500"
             checked={form.isCurrentlyTreating || false}
             onChange={e => setForm({ ...form, isCurrentlyTreating: e.target.checked })}
           />
-          <span className="text-sm text-slate-700 font-medium">Currently treating</span>
+          <span className="text-sm text-stone-700 font-medium">Currently treating</span>
         </label>
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Notes</label>
+        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Notes</label>
         <textarea className={inputClass + ' h-20 resize-none'} value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="Treatment details, diagnosis, etc." />
       </div>
 
       <div className="flex justify-end gap-3 pt-2">
         <button
           onClick={() => { isNew ? setShowAddForm(false) : setEditingId(null); setForm(emptyProvider); setSearchQuery(''); setSelectedFromDirectory(false); }}
-          className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+          className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 rounded-lg transition-colors"
         >
           Cancel
         </button>
@@ -556,17 +556,17 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Providers</div>
-          <div className="text-2xl font-bold text-slate-900">{providers.length}</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-5">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Total Providers</div>
+          <div className="text-2xl font-bold text-stone-900">{providers.length}</div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Medical Costs</div>
-          <div className="text-2xl font-bold text-slate-900">{formatCurrency(totalMedicalCosts) || '$0.00'}</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-5">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Total Medical Costs</div>
+          <div className="text-2xl font-bold text-stone-900">{formatCurrency(totalMedicalCosts) || '$0.00'}</div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Currently Treating</div>
-          <div className="text-2xl font-bold text-slate-900">{providers.filter(p => p.isCurrentlyTreating).length}</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-5">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Currently Treating</div>
+          <div className="text-2xl font-bold text-stone-900">{providers.filter(p => p.isCurrentlyTreating).length}</div>
         </div>
       </div>
 
@@ -585,7 +585,7 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
         <div className="flex gap-3">
           <button
             onClick={() => { setForm(emptyProvider); setSearchQuery(''); setSelectedFromDirectory(false); setShowAddForm(true); }}
-            className="flex-1 py-3 border-2 border-dashed border-slate-300 rounded-xl text-sm font-bold text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 transition-all"
+            className="flex-1 py-3 border-2 border-dashed border-stone-300 rounded-xl text-sm font-bold text-stone-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50/50 transition-all"
           >
             + Add Medical Provider
           </button>
@@ -604,12 +604,12 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
       )}
 
       {providers.length === 0 && !showAddForm && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+        <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
+          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-1">No Medical Providers</h3>
-          <p className="text-sm text-slate-500">Add medical facilities and treatment providers for this case.</p>
+          <h3 className="text-lg font-bold text-stone-800 mb-1">No Medical Providers</h3>
+          <p className="text-sm text-stone-500">Add medical facilities and treatment providers for this case.</p>
         </div>
       )}
 
@@ -621,9 +621,9 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
           if (isEditing) return null;
 
           return (
-            <div key={provider.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all">
+            <div key={provider.id} className="bg-white rounded-2xl border border-stone-200 overflow-hidden transition-all">
               <div
-                className="px-6 py-5 flex items-start justify-between cursor-pointer hover:bg-slate-50/50 transition-colors"
+                className="px-6 py-5 flex items-start justify-between cursor-pointer hover:bg-stone-50/50 transition-colors"
                 onClick={() => setExpandedId(isExpanded ? null : provider.id)}
               >
                 <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -632,7 +632,7 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-bold text-slate-900 text-base">{provider.name}</h4>
+                      <h4 className="font-bold text-stone-900 text-base">{provider.name}</h4>
                       <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${PROVIDER_TYPE_COLORS[provider.type]}`}>
                         {PROVIDER_TYPE_LABELS[provider.type]}
                       </span>
@@ -640,9 +640,9 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">Active</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
+                    <div className="flex items-center gap-3 mt-1 text-sm text-stone-500">
                       {provider.phone && <span>{provider.phone}</span>}
-                      {provider.phone && provider.address && <span className="text-slate-300">|</span>}
+                      {provider.phone && provider.address && <span className="text-stone-300">|</span>}
                       {provider.address && <span className="truncate">{provider.address}{provider.city ? `, ${provider.city}` : ''}</span>}
                     </div>
                   </div>
@@ -650,51 +650,51 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
 
                 <div className="flex items-center gap-4 flex-shrink-0 ml-4">
                   <div className="text-right">
-                    <div className="text-lg font-bold text-slate-900">{provider.totalCost ? formatCurrency(provider.totalCost) : '--'}</div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase">Total Cost</div>
+                    <div className="text-lg font-bold text-stone-900">{provider.totalCost ? formatCurrency(provider.totalCost) : '--'}</div>
+                    <div className="text-[10px] font-bold text-stone-400 uppercase">Total Cost</div>
                   </div>
                   {linkedDocs.length > 0 && (
                     <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2 py-1 rounded-full border border-blue-200">
                       {linkedDocs.length} doc{linkedDocs.length !== 1 ? 's' : ''}
                     </span>
                   )}
-                  <svg className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-5 h-5 text-stone-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
               </div>
 
               {isExpanded && (
-                <div className="border-t border-slate-100 animate-fade-in">
+                <div className="border-t border-stone-100 animate-fade-in">
                   <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                     <div>
-                      <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pb-1 border-b border-slate-100">Facility Details</h5>
+                      <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 pb-1 border-b border-stone-100">Facility Details</h5>
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Address</span>
-                          <span className="text-sm font-medium text-slate-900 text-right">
+                          <span className="text-sm text-stone-500">Address</span>
+                          <span className="text-sm font-medium text-stone-900 text-right">
                             {[provider.address, provider.city, provider.state, provider.zip].filter(Boolean).join(', ') || '--'}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Phone</span>
-                          <span className="text-sm font-medium text-slate-900">{provider.phone || '--'}</span>
+                          <span className="text-sm text-stone-500">Phone</span>
+                          <span className="text-sm font-medium text-stone-900">{provider.phone || '--'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Fax</span>
-                          <span className="text-sm font-medium text-slate-900">{provider.fax || '--'}</span>
+                          <span className="text-sm text-stone-500">Fax</span>
+                          <span className="text-sm font-medium text-stone-900">{provider.fax || '--'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Email</span>
-                          <span className="text-sm font-medium text-slate-900">{provider.email || '--'}</span>
+                          <span className="text-sm text-stone-500">Email</span>
+                          <span className="text-sm font-medium text-stone-900">{provider.email || '--'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Contact</span>
-                          <span className="text-sm font-medium text-slate-900">{provider.contactPerson || '--'}</span>
+                          <span className="text-sm text-stone-500">Contact</span>
+                          <span className="text-sm font-medium text-stone-900">{provider.contactPerson || '--'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Preferred Method</span>
-                          <span className={`text-sm font-bold ${provider.preferredContactMethod ? 'text-blue-600' : 'text-slate-400'}`}>
+                          <span className="text-sm text-stone-500">Preferred Method</span>
+                          <span className={`text-sm font-bold ${provider.preferredContactMethod ? 'text-blue-600' : 'text-stone-400'}`}>
                             {provider.preferredContactMethod ? CONTACT_METHOD_LABELS[provider.preferredContactMethod] : '--'}
                           </span>
                         </div>
@@ -702,25 +702,25 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
                     </div>
 
                     <div>
-                      <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pb-1 border-b border-slate-100">Treatment Info</h5>
+                      <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3 pb-1 border-b border-stone-100">Treatment Info</h5>
                       <div className="space-y-3">
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">First Visit</span>
-                          <span className="text-sm font-medium text-slate-900">{provider.dateOfFirstVisit || '--'}</span>
+                          <span className="text-sm text-stone-500">First Visit</span>
+                          <span className="text-sm font-medium text-stone-900">{provider.dateOfFirstVisit || '--'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Last Visit</span>
-                          <span className="text-sm font-medium text-slate-900">{provider.dateOfLastVisit || '--'}</span>
+                          <span className="text-sm text-stone-500">Last Visit</span>
+                          <span className="text-sm font-medium text-stone-900">{provider.dateOfLastVisit || '--'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Status</span>
-                          <span className={`text-sm font-bold ${provider.isCurrentlyTreating ? 'text-green-600' : 'text-slate-500'}`}>
+                          <span className="text-sm text-stone-500">Status</span>
+                          <span className={`text-sm font-bold ${provider.isCurrentlyTreating ? 'text-green-600' : 'text-stone-500'}`}>
                             {provider.isCurrentlyTreating ? 'Currently Treating' : 'Discharged / Inactive'}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-sm text-slate-500">Total Cost</span>
-                          <span className="text-sm font-bold text-slate-900">{provider.totalCost ? formatCurrency(provider.totalCost) : '--'}</span>
+                          <span className="text-sm text-stone-500">Total Cost</span>
+                          <span className="text-sm font-bold text-stone-900">{provider.totalCost ? formatCurrency(provider.totalCost) : '--'}</span>
                         </div>
                       </div>
                     </div>
@@ -728,13 +728,13 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
 
                   {provider.notes && (
                     <div className="px-6 pb-4">
-                      <div className="bg-slate-50 rounded-lg p-3 text-sm text-slate-700 border border-slate-100">{provider.notes}</div>
+                      <div className="bg-stone-50 rounded-lg p-3 text-sm text-stone-700 border border-stone-100">{provider.notes}</div>
                     </div>
                   )}
 
                   <div className="px-6 pb-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider">
                         Tagged Documents ({linkedDocs.length})
                       </h5>
                       <button
@@ -762,17 +762,17 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
                                     alreadyLinked
                                       ? 'bg-blue-100 text-blue-400 cursor-not-allowed'
                                       : doc.linkedFacilityId
-                                        ? 'bg-white text-slate-500 hover:bg-blue-100 border border-slate-200'
-                                        : 'bg-white text-slate-800 hover:bg-blue-100 border border-slate-200'
+                                        ? 'bg-white text-stone-500 hover:bg-blue-100 border border-stone-200'
+                                        : 'bg-white text-stone-800 hover:bg-blue-100 border border-stone-200'
                                   }`}
                                 >
                                   <div className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                    <svg className="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                                     <span className="truncate">{doc.fileName}</span>
                                   </div>
                                   {alreadyLinked && <span className="text-[10px] font-bold">LINKED</span>}
                                   {!alreadyLinked && doc.linkedFacilityId && (
-                                    <span className="text-[10px] text-slate-400">Linked elsewhere</span>
+                                    <span className="text-[10px] text-stone-400">Linked elsewhere</span>
                                   )}
                                 </button>
                               );
@@ -789,25 +789,25 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
                         {linkedDocs.map((doc) => {
                           const docIdx = caseData.documents.findIndex(d => d === doc);
                           return (
-                            <div key={docIdx} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100 group hover:border-slate-200 transition-colors">
+                            <div key={docIdx} className="flex items-center justify-between p-3 bg-stone-50 rounded-lg border border-stone-100 group hover:border-stone-200 transition-colors">
                               <div className="flex items-center gap-3 min-w-0 flex-1">
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${doc.mimeType?.includes('pdf') ? 'bg-red-50 text-red-500' : 'bg-blue-50 text-blue-500'}`}>
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-slate-800 truncate">{doc.fileName}</p>
+                                  <p className="text-sm font-medium text-stone-800 truncate">{doc.fileName}</p>
                                   <div className="flex items-center gap-2">
-                                    <p className="text-[11px] text-slate-400">{doc.documentTypeKey ? (doc.documentTypeKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())) : doc.type}{doc.source ? ` - ${doc.source}` : ''}</p>
+                                    <p className="text-[11px] text-stone-400">{doc.documentTypeKey ? (doc.documentTypeKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())) : doc.type}{doc.source ? ` - ${doc.source}` : ''}</p>
                                   </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-3 flex-shrink-0 ml-2">
                                 {doc.billAmount != null && (
-                                  <span className="text-sm font-bold text-slate-900">{formatCurrency(doc.billAmount)}</span>
+                                  <span className="text-sm font-bold text-stone-900">{formatCurrency(doc.billAmount)}</span>
                                 )}
                                 <button
                                   onClick={(e) => { e.stopPropagation(); handleUnlinkDoc(docIdx); }}
-                                  className="text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
+                                  className="text-stone-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all"
                                   title="Unlink from this facility"
                                 >
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -818,23 +818,23 @@ export const MedicalTreatment: React.FC<MedicalTreatmentProps> = ({ caseData, on
                         })}
                         {linkedDocs.some(d => d.billAmount != null) && linkedDocs.length > 1 && (
                           <div className="flex justify-end px-3 py-1.5">
-                            <span className="text-xs font-bold text-slate-500">
+                            <span className="text-xs font-bold text-stone-500">
                               Docs Total: {formatCurrency(linkedDocs.reduce((sum, d) => sum + (d.billAmount || 0), 0))}
                             </span>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="text-center py-4 text-sm text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                      <div className="text-center py-4 text-sm text-stone-400 bg-stone-50 rounded-lg border border-dashed border-stone-200">
                         No documents tagged to this facility
                       </div>
                     )}
                   </div>
 
-                  <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                  <div className="px-6 py-4 bg-stone-50 border-t border-stone-100 flex items-center justify-end gap-3">
                     <button
                       onClick={(e) => { e.stopPropagation(); handleStartEdit(provider); }}
-                      className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm"
+                      className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors shadow-sm"
                     >
                       Edit
                     </button>

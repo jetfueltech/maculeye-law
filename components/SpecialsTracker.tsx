@@ -38,7 +38,7 @@ export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUp
 
   const specials = caseData.specials;
   const providers = caseData.medicalProviders || [];
-  const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
 
   const initSpecials = () => {
     const items: SpecialsItem[] = providers.map(p => ({
@@ -98,12 +98,12 @@ export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUp
 
   if (!specials) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+      <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
+        <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
         </div>
-        <h3 className="text-lg font-bold text-slate-800 mb-1">Specials Package</h3>
-        <p className="text-sm text-slate-500 mb-4">Compile all medical bills from providers into a specials package for the demand.</p>
+        <h3 className="text-lg font-bold text-stone-800 mb-1">Specials Package</h3>
+        <p className="text-sm text-stone-500 mb-4">Compile all medical bills from providers into a specials package for the demand.</p>
         <button onClick={initSpecials} className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">
           Start Specials Package
         </button>
@@ -116,16 +116,16 @@ export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUp
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <div className="px-6 py-5 border-b border-stone-100 flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="font-bold text-stone-900 flex items-center gap-2">
               Specials Package
               <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${STATUS_COLORS[specials.status]}`}>
                 {STATUS_LABELS[specials.status]}
               </span>
             </h3>
-            <p className="text-xs text-slate-500 mt-1">{includedCount} of {specials.items.length} items included</p>
+            <p className="text-xs text-stone-500 mt-1">{includedCount} of {specials.items.length} items included</p>
           </div>
           <div className="flex items-center gap-2">
             {(['in_progress', 'complete', 'sent_to_attorney'] as SpecialsStatus[]).map(s => (
@@ -133,7 +133,7 @@ export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUp
                 key={s}
                 onClick={() => updateStatus(s)}
                 className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-                  specials.status === s ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100 border border-slate-200'
+                  specials.status === s ? 'bg-black text-white' : 'text-stone-500 hover:bg-stone-100 border border-stone-200'
                 }`}
               >
                 {STATUS_LABELS[s]}
@@ -144,37 +144,37 @@ export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUp
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-6">
           <div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Total Amount</div>
-            <div className="text-2xl font-bold text-slate-900">${specials.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+            <div className="text-xs font-bold text-stone-400 uppercase">Total Amount</div>
+            <div className="text-2xl font-bold text-stone-900">${specials.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Included Total</div>
+            <div className="text-xs font-bold text-stone-400 uppercase">Included Total</div>
             <div className="text-2xl font-bold text-emerald-600">${includedTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-400 uppercase">Last Updated</div>
-            <div className="text-sm font-medium text-slate-700">{new Date(specials.lastUpdated).toLocaleDateString()}</div>
+            <div className="text-xs font-bold text-stone-400 uppercase">Last Updated</div>
+            <div className="text-sm font-medium text-stone-700">{new Date(specials.lastUpdated).toLocaleDateString()}</div>
           </div>
         </div>
 
-        <div className="border-t border-slate-100">
-          <div className="divide-y divide-slate-50">
+        <div className="border-t border-stone-100">
+          <div className="divide-y divide-stone-50">
             {specials.items.map((item, idx) => (
-              <div key={idx} className="px-6 py-3 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+              <div key={idx} className="px-6 py-3 flex items-center gap-4 hover:bg-stone-50 transition-colors">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 text-blue-600 rounded border-slate-300"
+                  className="w-4 h-4 text-blue-600 rounded border-stone-300"
                   checked={item.included}
                   onChange={() => toggleItem(idx)}
                 />
                 <div className="flex-1">
-                  <span className={`text-sm font-medium ${item.included ? 'text-slate-900' : 'text-slate-500'}`}>
+                  <span className={`text-sm font-medium ${item.included ? 'text-stone-900' : 'text-stone-500'}`}>
                     {item.providerName}
                   </span>
-                  <span className="text-xs text-slate-400 ml-2">{item.documentType}</span>
+                  <span className="text-xs text-stone-400 ml-2">{item.documentType}</span>
                 </div>
-                <span className="text-sm font-bold text-slate-700">${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                <button onClick={() => removeItem(idx)} className="text-slate-300 hover:text-rose-500 transition-colors">
+                <span className="text-sm font-bold text-stone-700">${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <button onClick={() => removeItem(idx)} className="text-stone-300 hover:text-rose-500 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -182,13 +182,13 @@ export const SpecialsTracker: React.FC<SpecialsTrackerProps> = ({ caseData, onUp
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-stone-100">
           {showAddItem ? (
             <div className="flex items-center gap-3">
               <input className={inputClass + ' flex-1'} placeholder="Provider Name" value={newItem.providerName || ''} onChange={e => setNewItem({ ...newItem, providerName: e.target.value })} />
               <input className={inputClass + ' w-24'} type="number" step="0.01" placeholder="Amount" value={newItem.amount || ''} onChange={e => setNewItem({ ...newItem, amount: parseFloat(e.target.value) || 0 })} />
               <button onClick={handleAddItem} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add</button>
-              <button onClick={() => setShowAddItem(false)} className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700">Cancel</button>
+              <button onClick={() => setShowAddItem(false)} className="px-3 py-2 text-sm text-stone-500 hover:text-stone-700">Cancel</button>
             </div>
           ) : (
             <button onClick={() => setShowAddItem(true)} className="text-sm font-bold text-blue-600 hover:text-blue-800">+ Add Item</button>

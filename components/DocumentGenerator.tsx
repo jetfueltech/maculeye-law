@@ -991,7 +991,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
         </div>
         <div>
           <div className="border-b border-black h-10 mb-1 bg-yellow-50 flex items-end pb-1 px-1">
-            <span className="text-slate-400 text-xs">{today}</span>
+            <span className="text-stone-400 text-xs">{today}</span>
           </div>
           <p className="text-xs font-bold">Date</p>
         </div>
@@ -1096,10 +1096,10 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
         {policeReportUrl ? (
           <div className={paperClass}>
             <div className="text-center mb-4">
-              <h3 className="text-lg font-bold text-slate-700 uppercase tracking-wide">Attachment: Police / Crash Report</h3>
-              <p className="text-xs text-slate-500 mt-1">Crash Report #{crashReportNo}</p>
+              <h3 className="text-lg font-bold text-stone-700 uppercase tracking-wide">Attachment: Police / Crash Report</h3>
+              <p className="text-xs text-stone-500 mt-1">Crash Report #{crashReportNo}</p>
             </div>
-            <div className="border border-slate-300 rounded-lg overflow-hidden bg-white min-h-[800px]">
+            <div className="border border-stone-300 rounded-lg overflow-hidden bg-white min-h-[800px]">
               {policeReport?.mimeType?.startsWith('image/') || policeReportUrl.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
                 <img src={policeReportUrl} alt="Police Report" className="w-full h-auto" />
               ) : (
@@ -1353,16 +1353,16 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
-        <div className="bg-slate-200 w-full max-w-6xl h-[95vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div className="bg-stone-200 w-full max-w-6xl h-[95vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
             {/* Header */}
-            <div className="bg-slate-800 text-white px-6 py-4 flex justify-between items-center shadow-md z-10">
+            <div className="bg-black text-white px-6 py-4 flex justify-between items-center shadow-md z-10">
                 <div>
                     <h3 className="text-lg font-bold flex items-center">
                         <svg className="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                         {FORM_TITLES[formType]}
                     </h3>
-                    <p className="text-xs text-slate-400">Generated on {today}</p>
+                    <p className="text-xs text-stone-400">Generated on {today}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     {saved && (
@@ -1371,7 +1371,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                         Saved to case
                       </div>
                     )}
-                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-800 rounded-lg transition-colors">Cancel</button>
                     {onSaveToDocuments && !saved && (
                       <button
                         onClick={() => {
@@ -1393,7 +1393,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
             </div>
 
             {/* Scrollable Preview Area */}
-            <div className="flex-1 overflow-y-auto p-8 bg-slate-200">
+            <div className="flex-1 overflow-y-auto p-8 bg-stone-200">
                 {formType === 'rep_lien' && renderRepAndLien()}
                 {formType === 'foia' && renderFOIA()}
                 {formType === 'intake_summary' && renderIntakeSummary()}

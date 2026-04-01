@@ -310,9 +310,9 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-fade-in">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-          <div className="flex items-start justify-between p-6 border-b border-slate-100">
+          <div className="flex items-start justify-between p-6 border-b border-stone-100">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,40 +320,40 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
                 </svg>
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-lg leading-tight">{cfg.title}</h3>
+                <h3 className="font-bold text-stone-900 text-lg leading-tight">{cfg.title}</h3>
                 {recipientName && (
                   <p className="text-sm text-blue-600 font-medium mt-0.5">{recipientName}</p>
                 )}
-                <p className="text-sm text-slate-500 mt-1">{cfg.description}</p>
+                <p className="text-sm text-stone-500 mt-1">{cfg.description}</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-600 ml-2 flex-shrink-0">
+            <button onClick={onClose} className="text-stone-400 hover:text-stone-600 ml-2 flex-shrink-0">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
 
           <div className="p-6 space-y-4">
-            <div className="bg-slate-50 rounded-xl p-4 space-y-2 text-sm">
+            <div className="bg-stone-50 rounded-xl p-4 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-500">Client</span>
-                <span className="font-semibold text-slate-800">{caseData.clientName}</span>
+                <span className="text-stone-500">Client</span>
+                <span className="font-semibold text-stone-800">{caseData.clientName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Date of Loss</span>
-                <span className="font-semibold text-slate-800">{caseData.accidentDate}</span>
+                <span className="text-stone-500">Date of Loss</span>
+                <span className="font-semibold text-stone-800">{caseData.accidentDate}</span>
               </div>
               {recipientName && (
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Recipient</span>
-                  <span className="font-semibold text-slate-800">{recipientName}</span>
+                  <span className="text-stone-500">Recipient</span>
+                  <span className="font-semibold text-stone-800">{recipientName}</span>
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Notes (optional)</label>
+              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Notes (optional)</label>
               <textarea
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 rows={2}
                 placeholder="Add any notes about this correspondence..."
                 value={notes}
@@ -364,7 +364,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
             <div className="flex items-center gap-3 pt-1">
               <button
                 onClick={() => setShowDoc(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-stone-100 text-stone-700 rounded-xl hover:bg-stone-200 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                 Preview & Print Document
@@ -400,7 +400,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
                 Document saved to case files
               </div>
             )}
-            <p className="text-xs text-slate-400 text-center">
+            <p className="text-xs text-stone-400 text-center">
               Marking as sent will update the case workflow and log the activity
             </p>
           </div>

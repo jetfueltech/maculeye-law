@@ -16,7 +16,7 @@ const DOC_TYPE_ICON_COLORS: Record<string, string> = {
   medical_record: 'bg-rose-100 text-rose-600',
   photo: 'bg-teal-100 text-teal-600',
   email: 'bg-blue-100 text-blue-600',
-  other: 'bg-slate-100 text-slate-500',
+  other: 'bg-stone-100 text-stone-500',
 };
 
 function detectIsImage(doc: DocumentAttachment): boolean {
@@ -185,11 +185,11 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             />
           ) : (
             <div className="bg-white rounded-2xl shadow-2xl p-12 text-center max-w-md">
-              <div className="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+              <div className="w-20 h-20 bg-stone-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                <svg className="w-10 h-10 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
               </div>
-              <p className="text-slate-800 font-semibold text-lg break-all">{doc.fileName}</p>
-              <p className="text-sm text-slate-400 mt-2 mb-6">
+              <p className="text-stone-800 font-semibold text-lg break-all">{doc.fileName}</p>
+              <p className="text-sm text-stone-400 mt-2 mb-6">
                 {!previewSrc ? 'This document has no preview or download available' : 'Preview is not available for this file type'}
               </p>
               {downloadUrl && (
@@ -208,7 +208,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     href={downloadUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors text-sm font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                     Open in new tab
@@ -242,9 +242,9 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                     <img src={thumbSrc} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className={`w-full h-full flex items-center justify-center ${
-                      detectIsPdf(d) ? 'bg-red-100' : 'bg-slate-100'
+                      detectIsPdf(d) ? 'bg-red-100' : 'bg-stone-100'
                     }`}>
-                      <svg className={`w-5 h-5 ${detectIsPdf(d) ? 'text-red-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-5 h-5 ${detectIsPdf(d) ? 'text-red-400' : 'text-stone-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>

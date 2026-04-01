@@ -41,18 +41,18 @@ export const Directory: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Directory</h1>
-        <p className="text-sm text-slate-500 mt-1">Manage your shared medical provider, insurance company, and police department records.</p>
+        <h1 className="text-2xl font-bold text-stone-900">Directory</h1>
+        <p className="text-sm text-stone-500 mt-1">Manage your shared medical provider, insurance company, and police department records.</p>
       </div>
 
-      <div className="border-b border-slate-200">
+      <div className="border-b border-stone-200">
         <div className="flex gap-6">
           {tabs.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`pb-3 text-sm font-medium transition-colors relative whitespace-nowrap ${
-                tab === t.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'
+                tab === t.id ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'
               }`}
             >
               <div className="flex items-center gap-2">

@@ -151,50 +151,50 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ cases, onSelectCase 
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Activity Feed</h1>
-          <p className="text-sm text-slate-500 mt-1">Real-time overview of all case activity across your firm</p>
+          <h1 className="text-2xl font-bold text-stone-900">Activity Feed</h1>
+          <p className="text-sm text-stone-500 mt-1">Real-time overview of all case activity across your firm</p>
         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="text-2xl font-bold text-slate-900">{stats.today}</div>
-          <div className="text-xs font-medium text-slate-500 mt-1">Activities Today</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <div className="text-2xl font-bold text-stone-900">{stats.today}</div>
+          <div className="text-xs font-medium text-stone-500 mt-1">Activities Today</div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="text-2xl font-bold text-slate-900">{stats.week}</div>
-          <div className="text-xs font-medium text-slate-500 mt-1">This Week</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <div className="text-2xl font-bold text-stone-900">{stats.week}</div>
+          <div className="text-xs font-medium text-stone-500 mt-1">This Week</div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="text-2xl font-bold text-slate-900">{stats.activeCases}</div>
-          <div className="text-xs font-medium text-slate-500 mt-1">Active Cases Today</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <div className="text-2xl font-bold text-stone-900">{stats.activeCases}</div>
+          <div className="text-xs font-medium text-stone-500 mt-1">Active Cases Today</div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4">
-          <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
-          <div className="text-xs font-medium text-slate-500 mt-1">Total Activities</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <div className="text-2xl font-bold text-stone-900">{stats.total}</div>
+          <div className="text-xs font-medium text-stone-500 mt-1">Total Activities</div>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200">
-        <div className="px-5 py-3 border-b border-slate-100 flex flex-wrap items-center gap-3">
+      <div className="bg-white rounded-xl border border-stone-200">
+        <div className="px-5 py-3 border-b border-stone-100 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <svg className="absolute left-3 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             <input
               type="text"
               placeholder="Search activities..."
-              className="w-full pl-9 pr-3 py-1.5 text-sm border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-3 py-1.5 text-sm border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+          <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
             {([['all', 'All'], ['system', 'System'], ['user', 'User'], ['note', 'Notes']] as const).map(([val, label]) => (
               <button
                 key={val}
                 onClick={() => setFilterType(val)}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                  filterType === val ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                  filterType === val ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                 }`}
               >
                 {label}
@@ -203,7 +203,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ cases, onSelectCase 
           </div>
 
           <select
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-xs border border-stone-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-500"
             value={timeRange}
             onChange={e => setTimeRange(e.target.value as TimeRange)}
           >
@@ -214,7 +214,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ cases, onSelectCase 
           </select>
 
           <select
-            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px] truncate"
+            className="text-xs border border-stone-200 rounded-lg px-2 py-1.5 bg-white outline-none focus:ring-2 focus:ring-blue-500 max-w-[200px] truncate"
             value={selectedCaseFilter}
             onChange={e => setSelectedCaseFilter(e.target.value)}
           >
@@ -225,19 +225,19 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ cases, onSelectCase 
           </select>
         </div>
 
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-stone-50">
           {filteredEntries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <svg className="w-12 h-12 text-slate-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <p className="text-sm font-medium text-slate-400">No activities match your filters</p>
-              <p className="text-xs text-slate-300 mt-1">Try adjusting the time range or search query</p>
+              <svg className="w-12 h-12 text-stone-200 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <p className="text-sm font-medium text-stone-400">No activities match your filters</p>
+              <p className="text-xs text-stone-300 mt-1">Try adjusting the time range or search query</p>
             </div>
           ) : (
             Object.entries(grouped).map(([dateLabel, entries]) => (
               <div key={dateLabel}>
-                <div className="px-5 py-2 bg-slate-50/70 sticky top-0 z-10">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{dateLabel}</span>
-                  <span className="text-[11px] text-slate-300 ml-2">({entries.length})</span>
+                <div className="px-5 py-2 bg-stone-50/70 sticky top-0 z-10">
+                  <span className="text-[11px] font-bold text-stone-400 uppercase tracking-wider">{dateLabel}</span>
+                  <span className="text-[11px] text-stone-300 ml-2">({entries.length})</span>
                 </div>
                 {entries.map((entry, idx) => {
                   const config = TYPE_CONFIG[entry.log.type] || TYPE_CONFIG.system;
@@ -245,11 +245,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ cases, onSelectCase 
                   return (
                     <div
                       key={`${entry.caseId}-${entry.log.id}-${idx}`}
-                      className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50/50 transition-colors group"
+                      className="flex items-start gap-3 px-5 py-3 hover:bg-stone-50/50 transition-colors group"
                     >
                       <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${config.dot}`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-800">{entry.log.message}</p>
+                        <p className="text-sm text-stone-800">{entry.log.message}</p>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           <button
                             onClick={() => caseRef && onSelectCase(caseRef)}
@@ -258,12 +258,12 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ cases, onSelectCase 
                             {entry.caseNumber || entry.clientName}
                           </button>
                           {entry.caseNumber && (
-                            <span className="text-[11px] text-slate-400 truncate max-w-[150px]">{entry.clientName}</span>
+                            <span className="text-[11px] text-stone-400 truncate max-w-[150px]">{entry.clientName}</span>
                           )}
-                          <span className="text-[11px] text-slate-300">|</span>
+                          <span className="text-[11px] text-stone-300">|</span>
                           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${config.bg}`}>{config.label}</span>
-                          <span className="text-[11px] text-slate-400">{entry.log.author || 'System'}</span>
-                          <span className="text-[11px] text-slate-300 ml-auto flex-shrink-0">{getRelativeTime(entry.log.timestamp)}</span>
+                          <span className="text-[11px] text-stone-400">{entry.log.author || 'System'}</span>
+                          <span className="text-[11px] text-stone-300 ml-auto flex-shrink-0">{getRelativeTime(entry.log.timestamp)}</span>
                         </div>
                       </div>
                     </div>
@@ -275,7 +275,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({ cases, onSelectCase 
         </div>
 
         {filteredEntries.length > 0 && (
-          <div className="px-5 py-3 border-t border-slate-100 text-xs text-slate-400 text-center">
+          <div className="px-5 py-3 border-t border-stone-100 text-xs text-stone-400 text-center">
             Showing {filteredEntries.length} of {allEntries.length} activities
           </div>
         )}

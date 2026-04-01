@@ -164,7 +164,7 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
       medical_bills: 'bg-orange-100 text-orange-700 border-orange-200',
       policy_limits_response: 'bg-cyan-100 text-cyan-700 border-cyan-200',
       client_communication: 'bg-sky-100 text-sky-700 border-sky-200',
-      attorney_correspondence: 'bg-slate-100 text-slate-700 border-slate-200',
+      attorney_correspondence: 'bg-stone-100 text-stone-700 border-stone-200',
       general: 'bg-gray-100 text-gray-600 border-gray-200',
   };
 
@@ -176,16 +176,16 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
   });
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex animate-fade-in bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <div className="h-[calc(100vh-4rem)] flex animate-fade-in bg-white rounded-2xl border border-stone-200 overflow-hidden">
         {/* Left Pane: Email List */}
-        <div className="w-1/3 border-r border-slate-200 flex flex-col">
-            <div className="p-4 border-b border-slate-100 bg-slate-50 space-y-3">
+        <div className="w-1/3 border-r border-stone-200 flex flex-col">
+            <div className="p-4 border-b border-stone-100 bg-stone-50 space-y-3">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-slate-800">Inbox</h2>
+                    <h2 className="text-lg font-bold text-stone-800">Inbox</h2>
                     <button 
                         onClick={runAIAutoSort}
                         disabled={isSorting}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center transition-all ${isSorting ? 'bg-indigo-100 text-indigo-400' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                        className={`text-xs font-bold px-3 py-1.5 rounded-full flex items-center transition-all ${isSorting ? 'bg-indigo-100 text-indigo-400' : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'}`}
                     >
                         {isSorting ? (
                             <>
@@ -204,14 +204,14 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                     <input
                         type="text"
                         placeholder="Search emails..."
-                        className="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                        className="w-full pl-9 pr-4 py-2 bg-white border border-stone-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <svg className="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <svg className="w-4 h-4 text-stone-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
                 <select
-                    className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full bg-white border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
                 >
@@ -231,14 +231,14 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                                 setEmails(prev => prev.map(e => e.id === email.id ? { ...e, isRead: true } : e));
                             }
                         }}
-                        className={`p-4 border-b border-slate-100 cursor-pointer transition-colors hover:bg-slate-50 ${selectedEmail?.id === email.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : 'border-l-4 border-l-transparent'}`}
+                        className={`p-4 border-b border-stone-100 cursor-pointer transition-colors hover:bg-stone-50 ${selectedEmail?.id === email.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : 'border-l-4 border-l-transparent'}`}
                     >
                         <div className="flex justify-between mb-1">
-                            <span className={`text-sm font-semibold truncate ${!email.isRead ? 'text-slate-900' : 'text-slate-600'}`}>{email.from}</span>
-                            <span className="text-xs text-slate-400 whitespace-nowrap">{email.date}</span>
+                            <span className={`text-sm font-semibold truncate ${!email.isRead ? 'text-stone-900' : 'text-stone-600'}`}>{email.from}</span>
+                            <span className="text-xs text-stone-400 whitespace-nowrap">{email.date}</span>
                         </div>
-                        <h3 className={`text-sm mb-1 truncate ${!email.isRead ? 'font-bold text-slate-800' : 'font-medium text-slate-600'}`}>{email.subject}</h3>
-                        <p className="text-xs text-slate-500 truncate">{email.body}</p>
+                        <h3 className={`text-sm mb-1 truncate ${!email.isRead ? 'font-bold text-stone-800' : 'font-medium text-stone-600'}`}>{email.subject}</h3>
+                        <p className="text-xs text-stone-500 truncate">{email.body}</p>
                         
                         {/* Status Badges */}
                         <div className="flex flex-wrap gap-2 mt-2">
@@ -261,7 +261,7 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                             )}
 
                             {!email.linkedCaseId && email.attachments.length > 0 && (
-                                <div className="inline-flex items-center text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                                <div className="inline-flex items-center text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded">
                                     <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                                     {email.attachments.length}
                                 </div>
@@ -277,12 +277,12 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
             {selectedEmail ? (
                 <>
                     {/* Toolbar */}
-                    <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                    <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
                         <div className="flex space-x-2">
-                            <button className="p-2 hover:bg-slate-100 rounded text-slate-500" title="Reply">
+                            <button className="p-2 hover:bg-stone-100 rounded text-stone-500" title="Reply">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
                             </button>
-                            <button className="p-2 hover:bg-slate-100 rounded text-slate-500" title="Delete">
+                            <button className="p-2 hover:bg-stone-100 rounded text-stone-500" title="Delete">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                         </div>
@@ -333,29 +333,29 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                     {/* Content */}
                     <div className="flex-1 p-8 overflow-y-auto">
                         <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-slate-900 mb-2">{selectedEmail.subject}</h1>
+                            <h1 className="text-2xl font-bold text-stone-900 mb-2">{selectedEmail.subject}</h1>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
-                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold mr-3">
+                                    <div className="w-10 h-10 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 font-bold mr-3">
                                         {selectedEmail.from.substring(0,2).toUpperCase()}
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-slate-900">{selectedEmail.from} <span className="text-slate-400 font-normal">&lt;{selectedEmail.fromEmail}&gt;</span></p>
-                                        <p className="text-xs text-slate-500">To: You</p>
+                                        <p className="text-sm font-bold text-stone-900">{selectedEmail.from} <span className="text-stone-400 font-normal">&lt;{selectedEmail.fromEmail}&gt;</span></p>
+                                        <p className="text-xs text-stone-500">To: You</p>
                                     </div>
                                 </div>
-                                <span className="text-sm text-slate-500">{selectedEmail.date}</span>
+                                <span className="text-sm text-stone-500">{selectedEmail.date}</span>
                             </div>
                         </div>
 
-                        <div className="prose prose-sm max-w-none text-slate-700 mb-8 whitespace-pre-wrap font-sans">
+                        <div className="prose prose-sm max-w-none text-stone-700 mb-8 whitespace-pre-wrap font-sans">
                             {selectedEmail.body}
                         </div>
 
                         {/* Attachments */}
                         {selectedEmail.attachments.length > 0 && (
-                            <div className="border-t border-slate-100 pt-6">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center">
+                            <div className="border-t border-stone-100 pt-6">
+                                <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-4 flex items-center">
                                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                                     {selectedEmail.attachments.length} Attachments
                                 </h4>
@@ -369,7 +369,7 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                                         return (
                                             <div
                                                 key={i}
-                                                className="flex items-center justify-between p-3 border border-slate-200 rounded-xl bg-slate-50 group"
+                                                className="flex items-center justify-between p-3 border border-stone-200 rounded-xl bg-stone-50 group"
                                             >
                                                 <div
                                                     className="flex items-center cursor-pointer flex-1 min-w-0"
@@ -383,8 +383,8 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                                                         )}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-medium text-slate-900 group-hover:text-blue-700 truncate">{att.name}</p>
-                                                        <p className="text-xs text-slate-500">{att.size}</p>
+                                                        <p className="text-sm font-medium text-stone-900 group-hover:text-blue-700 truncate">{att.name}</p>
+                                                        <p className="text-xs text-stone-500">{att.size}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 ml-3 flex-shrink-0">
@@ -420,7 +420,7 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                                                             )}
                                                         </button>
                                                     ) : !selectedEmail.linkedCaseId ? (
-                                                        <span className="text-[10px] text-slate-400 italic">Tag to case first</span>
+                                                        <span className="text-[10px] text-stone-400 italic">Tag to case first</span>
                                                     ) : null}
                                                 </div>
                                             </div>
@@ -432,8 +432,8 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                     </div>
                 </>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-                    <svg className="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                <div className="flex-1 flex flex-col items-center justify-center text-stone-400">
+                    <svg className="w-16 h-16 mb-4 text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                     <p>Select an email to view details</p>
                 </div>
             )}
@@ -443,26 +443,26 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
         {isLinkModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                        <h3 className="font-bold text-slate-800">Tag Email to Case</h3>
-                        <button onClick={() => setIsLinkModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+                        <h3 className="font-bold text-stone-800">Tag Email to Case</h3>
+                        <button onClick={() => setIsLinkModalOpen(false)} className="text-stone-400 hover:text-stone-600">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
                     <div className="p-6">
-                        <p className="text-sm text-slate-600 mb-4">Select a case to apply tag for <strong>{selectedEmail?.subject}</strong></p>
+                        <p className="text-sm text-stone-600 mb-4">Select a case to apply tag for <strong>{selectedEmail?.subject}</strong></p>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                             {cases.map(c => (
                                 <button 
                                     key={c.id}
                                     onClick={() => handleConfirmLink(c.id)}
-                                    className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center justify-between group"
+                                    className="w-full text-left p-3 rounded-lg border border-stone-200 hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center justify-between group"
                                 >
                                     <div>
-                                        <p className="font-bold text-slate-900 group-hover:text-blue-700">{getCaseTag(c.id)}</p>
-                                        <p className="text-xs text-slate-500">ID: {c.id} • {c.status.replace(/_/g, ' ')}</p>
+                                        <p className="font-bold text-stone-900 group-hover:text-blue-700">{getCaseTag(c.id)}</p>
+                                        <p className="text-xs text-stone-500">ID: {c.id} • {c.status.replace(/_/g, ' ')}</p>
                                     </div>
-                                    <svg className="w-5 h-5 text-slate-300 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                                    <svg className="w-5 h-5 text-stone-300 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                                 </button>
                             ))}
                         </div>
@@ -475,26 +475,26 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
         {previewAttachment && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setPreviewAttachment(null)}>
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden animate-scale-in" onClick={(e) => e.stopPropagation()}>
-                    <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                         <div>
-                            <h3 className="font-bold text-slate-900">{previewAttachment.fileName}</h3>
-                            <p className="text-xs text-slate-500 uppercase font-bold tracking-wide">{previewAttachment.type.replace('_', ' ')}</p>
+                            <h3 className="font-bold text-stone-900">{previewAttachment.fileName}</h3>
+                            <p className="text-xs text-stone-500 uppercase font-bold tracking-wide">{previewAttachment.type.replace('_', ' ')}</p>
                         </div>
                         <div className="flex items-center space-x-3">
                             <button 
                                 onClick={() => alert('Simulation: Downloading file...')}
-                                className="text-xs bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold px-3 py-1.5 rounded transition-colors"
+                                className="text-xs bg-white border border-stone-200 hover:bg-stone-50 text-stone-600 font-bold px-3 py-1.5 rounded transition-colors"
                             >
                                 Download
                             </button>
-                            <button onClick={() => setPreviewAttachment(null)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded transition-colors">
+                            <button onClick={() => setPreviewAttachment(null)} className="text-stone-400 hover:text-stone-600 p-1 hover:bg-stone-200 rounded transition-colors">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                         </div>
                     </div>
-                    <div className="flex-1 bg-slate-100 overflow-auto flex items-center justify-center p-4">
-                        <div className="flex flex-col items-center justify-center text-slate-400">
-                            <svg className="w-16 h-16 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <div className="flex-1 bg-stone-100 overflow-auto flex items-center justify-center p-4">
+                        <div className="flex flex-col items-center justify-center text-stone-400">
+                            <svg className="w-16 h-16 mb-4 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             <p>Preview not available for this simulated file.</p>
                         </div>
                     </div>

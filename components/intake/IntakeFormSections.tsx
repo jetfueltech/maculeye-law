@@ -10,8 +10,8 @@ interface SectionProps {
   getBoolValue: (key: string) => boolean;
 }
 
-const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400 transition-all shadow-sm";
-const labelClass = "text-xs font-bold text-slate-500 uppercase mb-1.5 block tracking-wide";
+const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-stone-400 transition-all shadow-sm";
+const labelClass = "text-xs font-bold text-stone-500 uppercase mb-1.5 block tracking-wide";
 const checkboxRowClass = "flex items-center space-x-2";
 
 const Field: React.FC<{
@@ -74,7 +74,7 @@ const Checkbox: React.FC<{
       onChange={e => props.updateField(field, e.target.checked)}
       disabled={props.isAnimating(field)}
     />
-    <span className="text-sm font-medium text-slate-700">{label}</span>
+    <span className="text-sm font-medium text-stone-700">{label}</span>
   </div>
 );
 
@@ -111,8 +111,8 @@ export const ClientSection: React.FC<SectionProps> = (props) => (
       <Select label="Primary Language" field="primaryLanguage" options={['English', 'Spanish', 'Polish', 'Other']} props={props} />
     </div>
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Address</h5>
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-3">Address</h5>
       <div className="grid grid-cols-6 gap-3">
         <div style={{ gridColumn: 'span 6' }}>
           <Field label="Street" field="clientAddress" placeholder="Street address" props={props} />
@@ -129,16 +129,16 @@ export const ClientSection: React.FC<SectionProps> = (props) => (
       </div>
     </div>
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Driver's License</h5>
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-3">Driver's License</h5>
       <div className="grid grid-cols-2 gap-4">
         <Field label="DL Number" field="clientDriversLicenseNumber" placeholder="License number" props={props} />
         <Field label="State Issued" field="clientDriversLicenseState" placeholder="ST" props={props} />
       </div>
     </div>
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Emergency Contact</h5>
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-3">Emergency Contact</h5>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Contact Name" field="emergencyContactName" placeholder="Name" props={props} />
         <Field label="Contact Phone" field="emergencyContactPhone" placeholder="Phone" type="tel" props={props} />
@@ -188,8 +188,8 @@ export const DefendantSection: React.FC<SectionProps> = (props) => (
       <Field label="License Plate" field="defendantLicensePlate" placeholder="Plate number" props={props} />
     </div>
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Address</h5>
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-3">Address</h5>
       <div className="grid grid-cols-6 gap-3">
         <div style={{ gridColumn: 'span 6' }}>
           <Field label="Street" field="defendantAddressStreet" placeholder="Street" props={props} />
@@ -206,8 +206,8 @@ export const DefendantSection: React.FC<SectionProps> = (props) => (
       </div>
     </div>
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Defendant Vehicle</h5>
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-3">Defendant Vehicle</h5>
       <div className="grid grid-cols-4 gap-3">
         <Field label="Year" field="defendantVehicleYear" placeholder="Year" props={props} />
         <Field label="Make" field="defendantVehicleMake" placeholder="Make" props={props} />
@@ -216,8 +216,8 @@ export const DefendantSection: React.FC<SectionProps> = (props) => (
       </div>
     </div>
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Defendant Insurance</h5>
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-3">Defendant Insurance</h5>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Insurance Company" field="defendantInsurance" placeholder="Company" props={props} />
         <Select label="Type" field="defendantInsuranceType" options={['Personal', 'Commercial']} props={props} />
@@ -235,9 +235,9 @@ export const DefendantSection: React.FC<SectionProps> = (props) => (
 export const InsuranceSection: React.FC<SectionProps> = (props) => (
   <div className="space-y-5 animate-fade-in">
     <div>
-      <h5 className="text-sm font-bold text-slate-700 mb-3 flex items-center">
+      <h5 className="text-sm font-bold text-stone-700 mb-3 flex items-center">
         First Party Auto Insurance
-        <span className="ml-2 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full uppercase">Client</span>
+        <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">Client</span>
       </h5>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Insurance Company" field="clientInsurance" placeholder="Company" props={props} />
@@ -247,10 +247,10 @@ export const InsuranceSection: React.FC<SectionProps> = (props) => (
       </div>
     </div>
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-sm font-bold text-slate-700 mb-3 flex items-center">
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-sm font-bold text-stone-700 mb-3 flex items-center">
         Health Insurance
-        <span className="ml-2 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full uppercase">Medical</span>
+        <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">Medical</span>
       </h5>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Company" field="healthInsuranceCompany" placeholder="e.g. Blue Cross" props={props} />
@@ -280,8 +280,8 @@ export const VehicleSection: React.FC<SectionProps> = (props) => (
     </div>
     <Field label="Damage Description" field="vehicleDamage" type="textarea" placeholder="Describe vehicle damage..." props={props} colSpan={2} />
 
-    <div className="border-t border-slate-100 pt-4">
-      <h5 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Body Shop</h5>
+    <div className="border-t border-stone-100 pt-4">
+      <h5 className="text-xs font-bold text-stone-600 uppercase tracking-wider mb-3">Body Shop</h5>
       <div className="grid grid-cols-2 gap-4">
         <Field label="Shop Name" field="bodyShopName" placeholder="Shop name" props={props} colSpan={2} />
         <Field label="Phone" field="bodyShopPhone" placeholder="Phone" type="tel" props={props} />

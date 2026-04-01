@@ -48,21 +48,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const systemRoleLabel = ROLE_LABELS[profile?.system_role || ''] || 'Member';
 
   return (
-    <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-slate-100 text-slate-800 h-screen flex flex-col fixed left-0 top-0 border-r border-slate-200 shadow-sm z-20 transition-all duration-300`}>
-      <div className={`p-4 border-b border-slate-200 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+    <div className={`${isCollapsed ? 'w-20' : 'w-64'} bg-stone-100 text-stone-800 h-screen flex flex-col fixed left-0 top-0 border-r border-stone-200 shadow-sm z-20 transition-all duration-300`}>
+      <div className={`p-4 border-b border-stone-200 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         {!isCollapsed && (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
             </div>
-            <span className="font-bold text-lg tracking-tight text-slate-900">LegalFlow</span>
+            <span className="font-bold text-lg tracking-tight text-stone-900">LegalFlow</span>
           </div>
         )}
-        <button onClick={toggleSidebar} className="text-slate-400 hover:text-slate-700 transition-colors">
+        <button onClick={toggleSidebar} className="text-stone-400 hover:text-stone-700 transition-colors">
           {isCollapsed ? (
-            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
@@ -76,10 +76,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {firms.length > 0 && (
-        <div className={`px-4 py-3 border-b border-slate-200 relative ${isCollapsed ? 'flex justify-center' : ''}`}>
+        <div className={`px-4 py-3 border-b border-stone-200 relative ${isCollapsed ? 'flex justify-center' : ''}`}>
           {isCollapsed ? (
             <div
-              className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 cursor-pointer hover:bg-slate-300 transition-colors"
+              className="w-8 h-8 rounded-lg bg-stone-200 flex items-center justify-center text-xs font-bold text-stone-600 cursor-pointer hover:bg-stone-300 transition-colors"
               title={activeFirm?.name || 'Select Firm'}
             >
               {activeFirm?.name.slice(0, 2).toUpperCase() || '--'}
@@ -88,43 +88,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <>
               <button
                 onClick={() => setShowFirmMenu(!showFirmMenu)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors group"
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 transition-colors group"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
+                  <div className="w-6 h-6 rounded-md bg-black flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
                     {activeFirm?.name.slice(0, 2).toUpperCase() || '--'}
                   </div>
                   <div className="min-w-0 text-left">
-                    <p className="text-xs font-bold text-slate-900 truncate">{activeFirm?.name || 'Select Firm'}</p>
+                    <p className="text-xs font-bold text-stone-900 truncate">{activeFirm?.name || 'Select Firm'}</p>
                     {activeFirmRole && (
-                      <p className="text-[10px] text-slate-500">{ROLE_LABELS[activeFirmRole] || activeFirmRole}</p>
+                      <p className="text-[10px] text-stone-500">{ROLE_LABELS[activeFirmRole] || activeFirmRole}</p>
                     )}
                   </div>
                 </div>
                 {firms.length > 1 && (
-                  <svg className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${showFirmMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-4 h-4 text-stone-400 flex-shrink-0 transition-transform ${showFirmMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 )}
               </button>
 
               {showFirmMenu && firms.length > 1 && (
-                <div className="absolute left-4 right-4 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
-                  <div className="px-3 py-2 border-b border-slate-100">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Switch Firm</p>
+                <div className="absolute left-4 right-4 top-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg z-30 overflow-hidden animate-fade-in">
+                  <div className="px-3 py-2 border-b border-stone-100">
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Switch Firm</p>
                   </div>
                   {firms.map(firm => (
                     <button
                       key={firm.id}
                       onClick={() => { switchFirm(firm.id); setShowFirmMenu(false); }}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-slate-50 transition-colors text-left ${activeFirm?.id === firm.id ? 'bg-slate-50' : ''}`}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-stone-50 transition-colors text-left ${activeFirm?.id === firm.id ? 'bg-stone-50' : ''}`}
                     >
-                      <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${activeFirm?.id === firm.id ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                      <div className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${activeFirm?.id === firm.id ? 'bg-black text-white' : 'bg-stone-200 text-stone-600'}`}>
                         {firm.name.slice(0, 2).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-slate-700 truncate">{firm.name}</span>
+                      <span className="text-sm font-medium text-stone-700 truncate">{firm.name}</span>
                       {activeFirm?.id === firm.id && (
-                        <svg className="w-4 h-4 text-slate-800 ml-auto flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-stone-800 ml-auto flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -138,15 +138,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto" onClick={() => setShowFirmMenu(false)}>
-        {!isCollapsed && <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 pl-2">Menu</div>}
+        {!isCollapsed && <div className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-2 pl-2">Menu</div>}
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setCurrentView(item.id)}
             className={`relative w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-lg transition-all duration-200 ${
               currentView === item.id
-                ? 'bg-slate-800 text-white shadow-sm'
-                : 'text-slate-500 hover:bg-slate-200 hover:text-slate-800'
+                ? 'bg-black text-white shadow-sm'
+                : 'text-stone-500 hover:bg-stone-200 hover:text-stone-800'
             }`}
             title={isCollapsed ? item.label : ''}
           >
@@ -155,7 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </svg>
             {!isCollapsed && <span className="font-medium">{item.label}</span>}
             {item.id === 'dashboard' && caseCount > 0 && !isCollapsed && (
-              <span className="ml-auto bg-slate-600 text-xs font-bold px-2 py-0.5 rounded-full text-white">
+              <span className="ml-auto bg-stone-600 text-xs font-bold px-2 py-0.5 rounded-full text-white">
                 {caseCount}
               </span>
             )}
@@ -168,7 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="ml-auto bg-red-500 text-xs font-bold px-2 py-0.5 rounded-full text-white">{unreadEmailCount}</span>
             )}
             {item.id === 'dashboard' && caseCount > 0 && isCollapsed && (
-              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-slate-600" />
+              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-stone-600" />
             )}
             {item.id === 'tasks' && taskCount > 0 && isCollapsed && (
               <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />
@@ -180,25 +180,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-stone-200">
         <div className={`flex items-center ${isCollapsed ? 'flex-col gap-2' : 'gap-3'}`}>
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt={profile.full_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-stone-700 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
               {userInitials}
             </div>
           )}
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-900 truncate">{profile?.full_name || profile?.username || profile?.email || '...'}</p>
-              <p className="text-xs text-slate-400">{systemRoleLabel}</p>
+              <p className="text-sm font-bold text-stone-900 truncate">{profile?.full_name || profile?.username || profile?.email || '...'}</p>
+              <p className="text-xs text-stone-400">{systemRoleLabel}</p>
             </div>
           )}
           <button
             onClick={signOut}
             title="Sign out"
-            className="text-slate-400 hover:text-rose-500 transition-colors flex-shrink-0"
+            className="text-stone-400 hover:text-rose-500 transition-colors flex-shrink-0"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

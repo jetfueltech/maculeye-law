@@ -51,12 +51,12 @@ const TYPE_COLORS: Record<TaskType, string> = {
   er_bills: 'bg-orange-50 text-orange-700 border-orange-200',
   medical_records: 'bg-teal-50 text-teal-700 border-teal-200',
   demand_prep: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  general: 'bg-slate-50 text-slate-700 border-slate-200',
+  general: 'bg-stone-50 text-stone-700 border-stone-200',
   retainer: 'bg-violet-50 text-violet-700 border-violet-200',
   lor_defendant: 'bg-sky-50 text-sky-700 border-sky-200',
   lor_client_ins: 'bg-sky-50 text-sky-700 border-sky-200',
-  crash_report_request: 'bg-slate-50 text-slate-700 border-slate-200',
-  crash_report_received: 'bg-slate-50 text-slate-700 border-slate-200',
+  crash_report_request: 'bg-stone-50 text-stone-700 border-stone-200',
+  crash_report_received: 'bg-stone-50 text-stone-700 border-stone-200',
   hipaa: 'bg-pink-50 text-pink-700 border-pink-200',
   treatment_followup: 'bg-green-50 text-green-700 border-green-200',
   bill_request: 'bg-orange-50 text-orange-700 border-orange-200',
@@ -65,10 +65,10 @@ const TYPE_COLORS: Record<TaskType, string> = {
   demand_review: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   contact_client: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   verify_insurance: 'bg-blue-50 text-blue-700 border-blue-200',
-  complete_intake_form: 'bg-slate-50 text-slate-700 border-slate-200',
-  create_cms_case: 'bg-slate-50 text-slate-700 border-slate-200',
-  upload_case_files: 'bg-slate-50 text-slate-700 border-slate-200',
-  upload_intake_form: 'bg-slate-50 text-slate-700 border-slate-200',
+  complete_intake_form: 'bg-stone-50 text-stone-700 border-stone-200',
+  create_cms_case: 'bg-stone-50 text-stone-700 border-stone-200',
+  upload_case_files: 'bg-stone-50 text-stone-700 border-stone-200',
+  upload_intake_form: 'bg-stone-50 text-stone-700 border-stone-200',
   send_hipaa_to_medical: 'bg-pink-50 text-pink-700 border-pink-200',
   send_demographics: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   check_er_ambulance: 'bg-red-50 text-red-700 border-red-200',
@@ -110,7 +110,7 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
   const tasks = caseData.tasks || [];
   const openTasks = tasks.filter(t => t.status !== 'completed');
   const completedTasks = tasks.filter(t => t.status === 'completed');
-  const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
 
   const handleAdd = () => {
     if (!form.title.trim() || !form.dueDate) return;
@@ -252,11 +252,11 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-bold text-slate-900 text-lg">Case Tasks</h3>
-          <p className="text-xs text-slate-500">{openTasks.length} open, {completedTasks.length} completed</p>
+          <h3 className="font-bold text-stone-900 text-lg">Case Tasks</h3>
+          <p className="text-xs text-stone-500">{openTasks.length} open, {completedTasks.length} completed</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={generateAutoTasks} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
+          <button onClick={generateAutoTasks} className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             Auto-Generate
           </button>
@@ -265,19 +265,19 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
       </div>
 
       {showAdd && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4">
-          <h4 className="font-bold text-slate-800">New Task</h4>
+        <div className="bg-white border border-stone-200 rounded-2xl p-6 space-y-4">
+          <h4 className="font-bold text-stone-800">New Task</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Title</label>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Title</label>
               <input className={inputClass} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Follow up on coverage..." />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Description</label>
               <textarea className={inputClass + ' h-16 resize-none'} value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Type</label>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Type</label>
               <select className={inputClass} value={form.type} onChange={e => setForm({ ...form, type: e.target.value as TaskType })}>
                 {Object.entries(TYPE_LABELS).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
@@ -285,11 +285,11 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Due Date</label>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Due Date</label>
               <input type="date" className={inputClass} value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Priority</label>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Priority</label>
               <select className={inputClass} value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as 'high' | 'medium' | 'low' })}>
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
@@ -297,7 +297,7 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Recurrence</label>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Recurrence</label>
               <select className={inputClass} value={form.recurrence} onChange={e => setForm({ ...form, recurrence: e.target.value as 'one-time' | 'weekly' | 'monthly' })}>
                 <option value="one-time">One-time</option>
                 <option value="weekly">Weekly</option>
@@ -305,7 +305,7 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Assign To</label>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Assign To</label>
               <MemberPicker
                 value={form.assignedTo}
                 onChange={(member) => setForm({ ...form, assignedTo: member })}
@@ -314,7 +314,7 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <button onClick={() => setShowAdd(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
+            <button onClick={() => setShowAdd(false)} className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 rounded-lg">Cancel</button>
             <button onClick={handleAdd} disabled={!form.title.trim() || !form.dueDate} className="px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40">Add Task</button>
           </div>
         </div>
@@ -325,16 +325,16 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
           const days = getDaysUntil(task.dueDate);
           const isOverdue = days < 0;
           return (
-            <div key={task.id} className={`bg-white rounded-xl border p-4 flex items-center gap-4 ${isOverdue ? 'border-rose-200' : 'border-slate-200'}`}>
-              <button onClick={() => handleComplete(task.id)} className="w-5 h-5 rounded-full border-2 border-slate-300 hover:border-emerald-400 flex-shrink-0 transition-colors" />
+            <div key={task.id} className={`bg-white rounded-xl border p-4 flex items-center gap-4 ${isOverdue ? 'border-rose-200' : 'border-stone-200'}`}>
+              <button onClick={() => handleComplete(task.id)} className="w-5 h-5 rounded-full border-2 border-stone-300 hover:border-emerald-400 flex-shrink-0 transition-colors" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-slate-900">{task.title}</span>
+                  <span className="text-sm font-medium text-stone-900">{task.title}</span>
                   <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full border ${TYPE_COLORS[task.type]}`}>{TYPE_LABELS[task.type]}</span>
                   {task.priority === 'high' && <svg className="w-4 h-4 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>}
-                  {task.autoGenerated && <span className="text-[10px] text-slate-400">auto</span>}
+                  {task.autoGenerated && <span className="text-[10px] text-stone-400">auto</span>}
                 </div>
-                {task.description && <p className="text-xs text-slate-500 mt-0.5">{task.description}</p>}
+                {task.description && <p className="text-xs text-stone-500 mt-0.5">{task.description}</p>}
               </div>
               <div className="flex-shrink-0">
                 <MemberPicker
@@ -347,11 +347,11 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
                 />
               </div>
               <div className="text-right flex-shrink-0">
-                <div className={`text-xs font-bold ${isOverdue ? 'text-rose-600' : days === 0 ? 'text-amber-600' : 'text-slate-500'}`}>
+                <div className={`text-xs font-bold ${isOverdue ? 'text-rose-600' : days === 0 ? 'text-amber-600' : 'text-stone-500'}`}>
                   {isOverdue ? `${Math.abs(days)}d overdue` : days === 0 ? 'Due today' : `${days}d`}
                 </div>
               </div>
-              <button onClick={() => handleDelete(task.id)} className="text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0">
+              <button onClick={() => handleDelete(task.id)} className="text-stone-300 hover:text-rose-500 transition-colors flex-shrink-0">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -361,15 +361,15 @@ export const CaseTasksPanel: React.FC<CaseTasksPanelProps> = ({ caseData, onUpda
 
       {completedTasks.length > 0 && (
         <div>
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Completed ({completedTasks.length})</h4>
+          <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Completed ({completedTasks.length})</h4>
           <div className="space-y-2">
             {completedTasks.slice(0, 5).map(task => (
-              <div key={task.id} className="bg-slate-50 rounded-xl border border-slate-100 p-4 flex items-center gap-4 opacity-60">
+              <div key={task.id} className="bg-stone-50 rounded-xl border border-stone-100 p-4 flex items-center gap-4 opacity-60">
                 <button onClick={() => handleReopen(task.id)} className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center flex-shrink-0">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                 </button>
-                <span className="text-sm font-medium text-slate-500 line-through flex-1">{task.title}</span>
-                <span className="text-xs text-slate-400">{task.completedDate ? new Date(task.completedDate).toLocaleDateString() : ''}</span>
+                <span className="text-sm font-medium text-stone-500 line-through flex-1">{task.title}</span>
+                <span className="text-xs text-stone-400">{task.completedDate ? new Date(task.completedDate).toLocaleDateString() : ''}</span>
               </div>
             ))}
           </div>

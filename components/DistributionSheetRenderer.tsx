@@ -50,7 +50,7 @@ export const DistributionSheetRenderer: React.FC<Props> = ({ caseData, firmName,
     <>
       {/* Page 1: Settlement Calculation */}
       <div className={paperClass}>
-        <div className="flex justify-between text-[9pt] text-slate-500 mb-4">
+        <div className="flex justify-between text-[9pt] text-stone-500 mb-4">
           <span>Date: {today}</span>
           <span>Distribution Sheet (1 of 2)</span>
         </div>
@@ -94,7 +94,7 @@ export const DistributionSheetRenderer: React.FC<Props> = ({ caseData, firmName,
               <LetterRow letter="B" label="Litigation Costs:" value={currency(fin.litigationCosts)} />
               <LetterRow letter="C" label={`Other${fin.otherCostsDescription ? ` (${fin.otherCostsDescription})` : ' (Specify)'}:`} value={currency(fin.otherCosts)} />
             </div>
-            <div className="ml-4 mt-1 flex justify-between font-bold border-t border-dotted border-slate-400 pt-1">
+            <div className="ml-4 mt-1 flex justify-between font-bold border-t border-dotted border-stone-400 pt-1">
               <span>Total Miscellaneous Costs:</span>
               <span className="tabular-nums">{currency(d.miscCosts)}</span>
             </div>
@@ -297,7 +297,7 @@ export const DistributionSheetRenderer: React.FC<Props> = ({ caseData, firmName,
 
       {/* Page 2: Balance Due Client / Distribution */}
       <div className={paperClass}>
-        <div className="flex justify-between text-[9pt] text-slate-500 mb-4">
+        <div className="flex justify-between text-[9pt] text-stone-500 mb-4">
           <span>Date: {today}</span>
           <span>Distribution Sheet (Page 2 of 2)</span>
         </div>

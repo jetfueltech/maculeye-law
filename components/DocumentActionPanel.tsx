@@ -32,13 +32,13 @@ interface DocumentActionPanelProps {
 const PRIORITY_STYLES: Record<string, string> = {
   high: 'bg-rose-50 border-rose-200 text-rose-800',
   medium: 'bg-amber-50 border-amber-200 text-amber-800',
-  low: 'bg-slate-50 border-slate-200 text-slate-700',
+  low: 'bg-stone-50 border-stone-200 text-stone-700',
 };
 
 const PRIORITY_BADGES: Record<string, string> = {
   high: 'bg-rose-100 text-rose-700',
   medium: 'bg-amber-100 text-amber-700',
-  low: 'bg-slate-100 text-slate-600',
+  low: 'bg-stone-100 text-stone-600',
 };
 
 const ACTION_ICONS: Record<string, string> = {
@@ -410,8 +410,8 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-sm">AI Document Analysis</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="font-bold text-stone-800 text-sm">AI Document Analysis</h3>
+              <p className="text-xs text-stone-500">
                 {totalActions > 0
                   ? `${totalActions} recommended action${totalActions !== 1 ? 's' : ''} found`
                   : 'Document analyzed -- no actions needed'}
@@ -420,7 +420,7 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
           </div>
           <button
             onClick={onDismiss}
-            className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+            className="text-stone-400 hover:text-stone-600 p-1.5 hover:bg-stone-100 rounded-lg transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -429,7 +429,7 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
         </div>
       </div>
 
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-stone-100">
         {analyses.map((analysis, aIdx) => {
           const isExpanded = expandedDoc === aIdx;
           const allApplied = analysis.actions.length > 0 && analysis.actions.every((_, idx) => localApplied.has(`${aIdx}-${idx}`));
@@ -438,15 +438,15 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
             <div key={aIdx}>
               <button
                 onClick={() => setExpandedDoc(isExpanded ? null : aIdx)}
-                className="w-full px-6 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors text-left"
+                className="w-full px-6 py-3 flex items-center gap-3 hover:bg-stone-50 transition-colors text-left"
               >
-                <svg className={`w-4 h-4 text-slate-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 text-stone-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{analysis.fileName}</p>
+                  <p className="text-sm font-medium text-stone-800 truncate">{analysis.fileName}</p>
                   {analysis.summary && (
-                    <p className="text-xs text-slate-500 mt-0.5 truncate">{analysis.summary}</p>
+                    <p className="text-xs text-stone-500 mt-0.5 truncate">{analysis.summary}</p>
                   )}
                 </div>
                 {analysis.actions.length > 0 && (
@@ -470,8 +470,8 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
               {isExpanded && (
                 <div className="px-6 pb-4">
                   {analysis.summary && (
-                    <div className="mb-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <p className="text-xs text-slate-600">{analysis.summary}</p>
+                    <div className="mb-3 p-3 bg-stone-50 rounded-xl border border-stone-100">
+                      <p className="text-xs text-stone-600">{analysis.summary}</p>
                     </div>
                   )}
 
@@ -484,7 +484,7 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
                             <span className="text-[10px] text-cyan-600 font-medium capitalize whitespace-nowrap">
                               {key.replace(/([A-Z])/g, ' $1').trim()}:
                             </span>
-                            <span className="text-xs text-slate-700 truncate">{value}</span>
+                            <span className="text-xs text-stone-700 truncate">{value}</span>
                           </div>
                         ))}
                       </div>
@@ -494,7 +494,7 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
                   {analysis.actions.length > 0 && (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between mb-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Recommended Actions</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-stone-500">Recommended Actions</p>
                         {!allApplied && analysis.actions.length > 1 && (
                           <button
                             onClick={() => applyAllForAnalysis(aIdx, analysis)}
@@ -529,25 +529,25 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                   </svg>
                                 ) : (
-                                  <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <svg className="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPath} />
                                   </svg>
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5">
-                                  <p className={`text-sm font-semibold ${isApplied ? 'text-emerald-800' : 'text-slate-800'}`}>
+                                  <p className={`text-sm font-semibold ${isApplied ? 'text-emerald-800' : 'text-stone-800'}`}>
                                     {action.title}
                                   </p>
                                   <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${PRIORITY_BADGES[priority]}`}>
                                     {priority}
                                   </span>
                                 </div>
-                                <p className="text-xs text-slate-600">{action.description}</p>
+                                <p className="text-xs text-stone-600">{action.description}</p>
                                 {action.oldValue && action.newValue && (
                                   <div className="mt-1.5 flex items-center gap-2 text-xs">
-                                    <span className="text-slate-400 line-through">{action.oldValue}</span>
-                                    <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <span className="text-stone-400 line-through">{action.oldValue}</span>
+                                    <svg className="w-3 h-3 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                     </svg>
                                     <span className="font-medium text-blue-700">{action.newValue}</span>
@@ -573,7 +573,7 @@ export const DocumentActionPanel: React.FC<DocumentActionPanelProps> = ({
                   )}
 
                   {analysis.actions.length === 0 && (
-                    <p className="text-xs text-slate-400 italic">No actionable items detected in this document.</p>
+                    <p className="text-xs text-stone-400 italic">No actionable items detected in this document.</p>
                   )}
                 </div>
               )}

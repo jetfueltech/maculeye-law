@@ -35,13 +35,13 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
     }))
     .sort((a, b) => b.count - a.count);
 
-  const referralColors = ['bg-blue-500', 'bg-emerald-500', 'bg-cyan-500', 'bg-orange-500', 'bg-slate-400'];
+  const referralColors = ['bg-blue-500', 'bg-emerald-500', 'bg-cyan-500', 'bg-orange-500', 'bg-stone-400'];
 
   const funnelStages = [
     { label: 'New / Analyzing', val: newCount, color: 'bg-blue-100 text-blue-800' },
     { label: 'Review Needed', val: reviewCount, color: 'bg-amber-100 text-amber-800' },
     { label: 'Accepted / Processing', val: acceptedCount, color: 'bg-emerald-100 text-emerald-800' },
-    { label: 'Intake Complete', val: completeCount, color: 'bg-slate-100 text-slate-800' },
+    { label: 'Intake Complete', val: completeCount, color: 'bg-stone-100 text-stone-800' },
   ];
   const maxFunnelVal = funnelStages[0].val || 1;
 
@@ -67,18 +67,18 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
     <div className="space-y-8 animate-fade-in pb-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Intake Performance</h1>
-          <p className="text-slate-500 mt-2 text-lg">Metrics focused on intake process efficiency and completion rates.</p>
+          <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Intake Performance</h1>
+          <p className="text-stone-500 mt-2 text-lg">Metrics focused on intake process efficiency and completion rates.</p>
         </div>
 
         {canViewCombinedAnalytics && firms.length > 1 && (
-          <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm flex-shrink-0">
+          <div className="flex items-center bg-white border border-stone-200 rounded-xl p-1 shadow-sm flex-shrink-0">
             <button
               onClick={() => setViewMode('firm')}
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 viewMode === 'firm'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  : 'text-stone-500 hover:text-stone-700'
               }`}
             >
               {activeFirm?.name || 'Current Firm'}
@@ -88,7 +88,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                 viewMode === 'combined'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                  : 'text-stone-500 hover:text-stone-700'
               }`}
             >
               Combined
@@ -113,13 +113,13 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
           {firms.map((firm, i) => {
             const colors = ['bg-blue-600', 'bg-emerald-600', 'bg-cyan-600', 'bg-orange-600'];
             return (
-              <div key={firm.id} className="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
+              <div key={firm.id} className="bg-white rounded-xl border border-stone-200 p-5 flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-lg ${colors[i % colors.length]} flex items-center justify-center text-white text-sm font-bold flex-shrink-0`}>
                   {firm.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900 text-sm">{firm.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">{activeCases.length} active cases (demo)</p>
+                  <p className="font-bold text-stone-900 text-sm">{firm.name}</p>
+                  <p className="text-xs text-stone-500 mt-0.5">{activeCases.length} active cases (demo)</p>
                 </div>
               </div>
             );
@@ -128,44 +128,44 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Intakes Completed (MTD)</h3>
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+          <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Intakes Completed (MTD)</h3>
           <div className="flex items-end justify-between">
-            <span className="text-4xl font-bold text-slate-900">{completeCount}</span>
+            <span className="text-4xl font-bold text-stone-900">{completeCount}</span>
             <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+8%</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Intakes finalized this month</p>
+          <p className="text-xs text-stone-400 mt-2">Intakes finalized this month</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Active Cases</h3>
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+          <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Active Cases</h3>
           <div className="flex items-end justify-between">
-            <span className="text-4xl font-bold text-slate-900">{activeCases.length}</span>
+            <span className="text-4xl font-bold text-stone-900">{activeCases.length}</span>
             <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+2%</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Across all active stages</p>
+          <p className="text-xs text-stone-400 mt-2">Across all active stages</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Avg. Case Age</h3>
+        <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+          <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Avg. Case Age</h3>
           <div className="flex items-end justify-between">
-            <span className="text-4xl font-bold text-slate-900">{avgCaseAgeDays}<span className="text-lg font-semibold text-slate-500 ml-1">days</span></span>
+            <span className="text-4xl font-bold text-stone-900">{avgCaseAgeDays}<span className="text-lg font-semibold text-stone-500 ml-1">days</span></span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Average age of active cases</p>
+          <p className="text-xs text-stone-400 mt-2">Average age of active cases</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-6 text-lg">Intake Pipeline Funnel</h3>
+        <div className="bg-white p-8 rounded-2xl border border-stone-200 shadow-sm">
+          <h3 className="font-bold text-stone-800 mb-6 text-lg">Intake Pipeline Funnel</h3>
           <div className="space-y-5">
             {funnelStages.map((stage, i) => {
               const width = totalActive > 0 ? (stage.val / maxFunnelVal) * 100 : 0;
               return (
                 <div key={i} className="relative">
-                  <div className="flex items-center justify-between mb-1 text-sm font-bold text-slate-700">
+                  <div className="flex items-center justify-between mb-1 text-sm font-bold text-stone-700">
                     <span>{stage.label}</span>
                     <span>{stage.val} Cases</span>
                   </div>
-                  <div className="h-10 bg-slate-50 rounded-r-lg overflow-hidden relative">
+                  <div className="h-10 bg-stone-50 rounded-r-lg overflow-hidden relative">
                     <div
                       className={`h-full rounded-r-lg ${stage.color.split(' ')[0]} transition-all duration-1000 flex items-center px-3`}
                       style={{ width: `${Math.max(width, stage.val > 0 ? 5 : 0)}%` }}
@@ -179,17 +179,17 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
               );
             })}
           </div>
-          <div className="mt-6 pt-4 border-t border-slate-100">
-            <p className="text-xs text-slate-500">* Drop-offs include Rejected and Lost Contact statuses.</p>
+          <div className="mt-6 pt-4 border-t border-stone-100">
+            <p className="text-xs text-stone-500">* Drop-offs include Rejected and Lost Contact statuses.</p>
           </div>
         </div>
 
-        <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-6 text-lg">Member Case Load</h3>
+        <div className="bg-white p-8 rounded-2xl border border-stone-200 shadow-sm">
+          <h3 className="font-bold text-stone-800 mb-6 text-lg">Member Case Load</h3>
 
           <div className="space-y-6">
             {memberCaseloads.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-sm">No team members found. Add members in Settings.</div>
+              <div className="text-center py-8 text-stone-400 text-sm">No team members found. Add members in Settings.</div>
             ) : (
               memberCaseloads.map(m => (
                 <div key={m.id}>
@@ -197,15 +197,15 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
                     <div className="flex items-center">
                       <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold mr-3">{m.initials}</div>
                       <div>
-                        <h4 className="font-bold text-slate-900 text-sm">{m.name}</h4>
-                        <p className="text-xs text-slate-500 capitalize">{m.role}</p>
+                        <h4 className="font-bold text-stone-900 text-sm">{m.name}</h4>
+                        <p className="text-xs text-stone-500 capitalize">{m.role}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="block font-bold text-slate-900 text-lg">{m.count} Active</span>
+                      <span className="block font-bold text-stone-900 text-lg">{m.count} Active</span>
                     </div>
                   </div>
-                  <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-3 w-full bg-stone-100 rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 rounded-full transition-all duration-700" style={{ width: `${maxMemberLoad > 0 ? (m.count / maxMemberLoad) * 100 : 0}%` }}></div>
                   </div>
                 </div>
@@ -224,31 +224,31 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
         </div>
       </div>
 
-      <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-        <h3 className="font-bold text-slate-800 mb-6 text-lg">Referral Sources</h3>
+      <div className="bg-white p-8 rounded-2xl border border-stone-200 shadow-sm">
+        <h3 className="font-bold text-stone-800 mb-6 text-lg">Referral Sources</h3>
         {referralData.length > 0 ? (
           <div className="space-y-6">
             {referralData.slice(0, 5).map((item, i) => (
               <div key={i}>
-                <div className="flex justify-between text-sm font-medium text-slate-700 mb-2">
+                <div className="flex justify-between text-sm font-medium text-stone-700 mb-2">
                   <span>{item.label}</span>
                   <span>{item.val}%</span>
                 </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-stone-100 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full ${referralColors[i % referralColors.length]}`} style={{ width: `${item.val}%` }}></div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-slate-400 text-sm">No referral data available yet.</p>
+          <p className="text-stone-400 text-sm">No referral data available yet.</p>
         )}
-        <div className="mt-8 p-4 bg-slate-50 rounded-xl border border-slate-100">
-          <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center">
+        <div className="mt-8 p-4 bg-stone-50 rounded-xl border border-stone-100">
+          <h4 className="text-xs font-bold text-stone-500 uppercase mb-2 flex items-center">
             <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             AI Insight
           </h4>
-          <p className="text-sm text-slate-600">Google Ads leads have a <strong>12% higher completion rate</strong> than Social Media leads this month. Recommendation: Increase Ads budget for "Car Accident" keywords.</p>
+          <p className="text-sm text-stone-600">Google Ads leads have a <strong>12% higher completion rate</strong> than Social Media leads this month. Recommendation: Increase Ads budget for "Car Accident" keywords.</p>
         </div>
       </div>
     </div>

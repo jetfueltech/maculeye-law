@@ -100,7 +100,7 @@ const STRUCTURE_LABELS: Record<DocumentStructure, string> = {
 };
 
 const STRUCTURE_COLORS: Record<DocumentStructure, string> = {
-  single_bill: 'bg-slate-100 text-slate-600 border-slate-200',
+  single_bill: 'bg-stone-100 text-stone-600 border-stone-200',
   single_bill_multipage: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   bill_packet: 'bg-amber-50 text-amber-700 border-amber-200',
 };
@@ -272,8 +272,8 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden animate-fade-in">
-      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+    <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden animate-fade-in">
+      <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
             <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -281,15 +281,15 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm">Upload Medical Bills</h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="font-bold text-stone-900 text-sm">Upload Medical Bills</h3>
+            <p className="text-xs text-stone-500">
               {phase === 'upload' && 'Upload one or more bill files -- AI will find all bills in each document'}
               {phase === 'processing' && 'Analyzing documents...'}
               {phase === 'review' && `${extractedBills.length} bill${extractedBills.length !== 1 ? 's' : ''} found across ${new Set(extractedBills.map(e => e.fileName)).size} file${new Set(extractedBills.map(e => e.fileName)).size !== 1 ? 's' : ''}`}
             </p>
           </div>
         </div>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+        <button onClick={onClose} className="text-stone-400 hover:text-stone-600 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -302,7 +302,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
             className={`border-2 border-dashed rounded-xl p-10 text-center transition-all cursor-pointer ${
               dragOver
                 ? 'border-emerald-400 bg-emerald-50'
-                : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/30'
+                : 'border-stone-200 hover:border-emerald-300 hover:bg-emerald-50/30'
             }`}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
@@ -322,13 +322,13 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             </div>
-            <p className="text-sm font-semibold text-slate-700 mb-1">
+            <p className="text-sm font-semibold text-stone-700 mb-1">
               Drop medical bills here or click to browse
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-stone-400">
               PDF, PNG, JPG up to 20MB each -- select multiple files at once
             </p>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-stone-400 mt-1">
               Multi-page bills and bill packets with multiple bills are both supported
             </p>
           </div>
@@ -337,7 +337,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
         {phase === 'processing' && (
           <div className="space-y-4">
             {fileStates.map((fs, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div key={idx} className="flex items-center gap-4 p-4 bg-stone-50 rounded-xl border border-stone-100">
                 <div className="flex-shrink-0">
                   {fs.status === 'done' && (
                     <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center">
@@ -356,7 +356,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                   {(fs.status === 'pending' || fs.status === 'reading' || fs.status === 'extracting') && (
                     <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center relative">
                       {fs.status === 'pending' ? (
-                        <div className="w-2 h-2 bg-slate-300 rounded-full" />
+                        <div className="w-2 h-2 bg-stone-300 rounded-full" />
                       ) : (
                         <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                       )}
@@ -364,9 +364,9 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-800 truncate">{fs.name}</p>
+                  <p className="text-sm font-medium text-stone-800 truncate">{fs.name}</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-stone-500">
                       {fs.status === 'pending' && 'Waiting...'}
                       {fs.status === 'reading' && 'Reading file...'}
                       {fs.status === 'extracting' && 'AI analyzing for bills...'}
@@ -384,10 +384,10 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
             ))}
             {fileStates.every(f => f.status === 'done' || f.status === 'error') && extractedBills.length === 0 && (
               <div className="text-center py-4">
-                <p className="text-sm text-slate-500 mb-3">No bills could be extracted from the uploaded files.</p>
+                <p className="text-sm text-stone-500 mb-3">No bills could be extracted from the uploaded files.</p>
                 <button
                   onClick={handleAddMore}
-                  className="px-4 py-2 text-sm font-medium bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors"
                 >
                   Try Again
                 </button>
@@ -402,12 +402,12 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
               <div className="flex items-center gap-3">
                 <button
                   onClick={toggleAll}
-                  className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors"
+                  className="flex items-center gap-2 text-xs font-bold text-stone-500 hover:text-stone-700 transition-colors"
                 >
                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
                     extractedBills.every(e => e.selected)
                       ? 'bg-emerald-500 border-emerald-500'
-                      : 'border-slate-300'
+                      : 'border-stone-300'
                   }`}>
                     {extractedBills.every(e => e.selected) && (
                       <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,7 +417,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                   </div>
                   {extractedBills.every(e => e.selected) ? 'Deselect All' : 'Select All'}
                 </button>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-stone-400">
                   {selectedCount} of {extractedBills.length} selected
                 </span>
               </div>
@@ -443,7 +443,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                     className={`rounded-xl border transition-all ${
                       entry.selected
                         ? 'border-emerald-200 bg-emerald-50/30'
-                        : 'border-slate-200 bg-slate-50/50 opacity-60'
+                        : 'border-stone-200 bg-stone-50/50 opacity-60'
                     }`}
                   >
                     <div className="px-4 py-3 flex items-center gap-3">
@@ -454,7 +454,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                         <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                           entry.selected
                             ? 'bg-emerald-500 border-emerald-500'
-                            : 'border-slate-300 hover:border-slate-400'
+                            : 'border-stone-300 hover:border-stone-400'
                         }`}>
                           {entry.selected && (
                             <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -470,7 +470,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                       >
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-semibold text-slate-900 truncate">
+                            <span className="text-sm font-semibold text-stone-900 truncate">
                               {bill.providerName || 'Unknown Provider'}
                             </span>
                             {docTypeLabel && (
@@ -489,23 +489,23 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 mt-0.5 text-xs text-slate-500">
+                          <div className="flex items-center gap-3 mt-0.5 text-xs text-stone-500">
                             {bill.dateOfService && <span>DOS: {bill.dateOfService}</span>}
                             {bill.pageSpan && (
                               <>
-                                <span className="text-slate-300">|</span>
+                                <span className="text-stone-300">|</span>
                                 <span>Pages {bill.pageSpan}</span>
                               </>
                             )}
-                            <span className="text-slate-300">|</span>
+                            <span className="text-stone-300">|</span>
                             <span className="truncate">{entry.fileName}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-                          <span className="text-sm font-bold text-slate-900">
+                          <span className="text-sm font-bold text-stone-900">
                             {formatCurrency(bill.totalCharges)}
                           </span>
-                          <svg className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className={`w-4 h-4 text-stone-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </div>
@@ -513,53 +513,53 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                     </div>
 
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-1 border-t border-slate-100 space-y-3 animate-fade-in">
+                      <div className="px-4 pb-4 pt-1 border-t border-stone-100 space-y-3 animate-fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="bg-white rounded-lg p-3 border border-slate-100">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Provider</h5>
-                            {bill.providerName && <p className="text-sm font-medium text-slate-900">{bill.providerName}</p>}
+                          <div className="bg-white rounded-lg p-3 border border-stone-100">
+                            <h5 className="text-[10px] font-bold text-stone-400 uppercase mb-2">Provider</h5>
+                            {bill.providerName && <p className="text-sm font-medium text-stone-900">{bill.providerName}</p>}
                             {bill.providerType && (
                               <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
                                 {PROVIDER_TYPE_LABELS[bill.providerType] || bill.providerType}
                               </span>
                             )}
                             {(bill.providerAddress || bill.providerCity) && (
-                              <p className="text-xs text-slate-500 mt-1">
+                              <p className="text-xs text-stone-500 mt-1">
                                 {[bill.providerAddress, bill.providerCity, bill.providerState, bill.providerZip].filter(Boolean).join(', ')}
                               </p>
                             )}
-                            {bill.providerPhone && <p className="text-xs text-slate-500">Phone: {bill.providerPhone}</p>}
-                            {bill.providerFax && <p className="text-xs text-slate-500">Fax: {bill.providerFax}</p>}
+                            {bill.providerPhone && <p className="text-xs text-stone-500">Phone: {bill.providerPhone}</p>}
+                            {bill.providerFax && <p className="text-xs text-stone-500">Fax: {bill.providerFax}</p>}
                           </div>
 
-                          <div className="bg-white rounded-lg p-3 border border-slate-100">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase mb-2">Financial Summary</h5>
+                          <div className="bg-white rounded-lg p-3 border border-stone-100">
+                            <h5 className="text-[10px] font-bold text-stone-400 uppercase mb-2">Financial Summary</h5>
                             <div className="space-y-1.5">
                               <div className="flex justify-between">
-                                <span className="text-xs text-slate-500">Total Charges</span>
-                                <span className="text-xs font-bold text-slate-900">{formatCurrency(bill.totalCharges)}</span>
+                                <span className="text-xs text-stone-500">Total Charges</span>
+                                <span className="text-xs font-bold text-stone-900">{formatCurrency(bill.totalCharges)}</span>
                               </div>
                               {bill.insurancePayments != null && (
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-500">Insurance Paid</span>
+                                  <span className="text-xs text-stone-500">Insurance Paid</span>
                                   <span className="text-xs font-medium text-emerald-600">-{formatCurrency(bill.insurancePayments)}</span>
                                 </div>
                               )}
                               {bill.adjustments != null && (
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-500">Adjustments</span>
-                                  <span className="text-xs font-medium text-slate-500">-{formatCurrency(bill.adjustments)}</span>
+                                  <span className="text-xs text-stone-500">Adjustments</span>
+                                  <span className="text-xs font-medium text-stone-500">-{formatCurrency(bill.adjustments)}</span>
                                 </div>
                               )}
                               {bill.amountPaid != null && (
                                 <div className="flex justify-between">
-                                  <span className="text-xs text-slate-500">Amount Paid</span>
-                                  <span className="text-xs font-medium text-slate-600">{formatCurrency(bill.amountPaid)}</span>
+                                  <span className="text-xs text-stone-500">Amount Paid</span>
+                                  <span className="text-xs font-medium text-stone-600">{formatCurrency(bill.amountPaid)}</span>
                                 </div>
                               )}
                               {bill.amountDue != null && (
-                                <div className="flex justify-between pt-1.5 border-t border-slate-100">
-                                  <span className="text-xs font-bold text-slate-700">Balance Due</span>
+                                <div className="flex justify-between pt-1.5 border-t border-stone-100">
+                                  <span className="text-xs font-bold text-stone-700">Balance Due</span>
                                   <span className="text-xs font-bold text-red-600">{formatCurrency(bill.amountDue)}</span>
                                 </div>
                               )}
@@ -568,8 +568,8 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
                         </div>
 
                         {bill.patientName && (
-                          <div className="flex items-center gap-4 text-xs text-slate-500">
-                            <span>Patient: <strong className="text-slate-700">{bill.patientName}</strong></span>
+                          <div className="flex items-center gap-4 text-xs text-stone-500">
+                            <span>Patient: <strong className="text-stone-700">{bill.patientName}</strong></span>
                             {bill.patientDob && <span>DOB: {bill.patientDob}</span>}
                             {bill.patientAccountNumber && <span>Acct: {bill.patientAccountNumber}</span>}
                           </div>
@@ -577,33 +577,33 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
 
                         {bill.lineItems && bill.lineItems.length > 0 && (
                           <div>
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase mb-1.5">
+                            <h5 className="text-[10px] font-bold text-stone-400 uppercase mb-1.5">
                               Itemized Charges ({bill.lineItems.length})
                             </h5>
-                            <div className="bg-white rounded-lg border border-slate-100 overflow-hidden">
+                            <div className="bg-white rounded-lg border border-stone-100 overflow-hidden">
                               <table className="w-full text-xs">
                                 <thead>
-                                  <tr className="border-b border-slate-200 bg-slate-50">
-                                    <th className="text-left px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase">Service</th>
-                                    <th className="text-left px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase">CPT</th>
-                                    <th className="text-left px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase">Date</th>
-                                    <th className="text-right px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase">Amount</th>
+                                  <tr className="border-b border-stone-200 bg-stone-50">
+                                    <th className="text-left px-3 py-1.5 text-[10px] font-bold text-stone-400 uppercase">Service</th>
+                                    <th className="text-left px-3 py-1.5 text-[10px] font-bold text-stone-400 uppercase">CPT</th>
+                                    <th className="text-left px-3 py-1.5 text-[10px] font-bold text-stone-400 uppercase">Date</th>
+                                    <th className="text-right px-3 py-1.5 text-[10px] font-bold text-stone-400 uppercase">Amount</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {bill.lineItems.map((item, li) => (
-                                    <tr key={li} className="border-b border-slate-50 last:border-0">
-                                      <td className="px-3 py-1.5 text-slate-700">{item.description || '--'}</td>
-                                      <td className="px-3 py-1.5 text-slate-500 font-mono">{item.cptCode || '--'}</td>
-                                      <td className="px-3 py-1.5 text-slate-500">{item.date || '--'}</td>
-                                      <td className="px-3 py-1.5 text-right font-medium text-slate-900">{formatCurrency(item.amount)}</td>
+                                    <tr key={li} className="border-b border-stone-50 last:border-0">
+                                      <td className="px-3 py-1.5 text-stone-700">{item.description || '--'}</td>
+                                      <td className="px-3 py-1.5 text-stone-500 font-mono">{item.cptCode || '--'}</td>
+                                      <td className="px-3 py-1.5 text-stone-500">{item.date || '--'}</td>
+                                      <td className="px-3 py-1.5 text-right font-medium text-stone-900">{formatCurrency(item.amount)}</td>
                                     </tr>
                                   ))}
                                 </tbody>
                                 <tfoot>
-                                  <tr className="border-t border-slate-200 bg-slate-50">
-                                    <td colSpan={3} className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase text-right">Total</td>
-                                    <td className="px-3 py-1.5 text-right text-xs font-bold text-slate-900">{formatCurrency(bill.totalCharges)}</td>
+                                  <tr className="border-t border-stone-200 bg-stone-50">
+                                    <td colSpan={3} className="px-3 py-1.5 text-[10px] font-bold text-stone-500 uppercase text-right">Total</td>
+                                    <td className="px-3 py-1.5 text-right text-xs font-bold text-stone-900">{formatCurrency(bill.totalCharges)}</td>
                                   </tr>
                                 </tfoot>
                               </table>
@@ -613,7 +613,7 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
 
                         {bill.diagnosisCodes && bill.diagnosisCodes.length > 0 && (
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase">Dx:</span>
+                            <span className="text-[10px] font-bold text-stone-400 uppercase">Dx:</span>
                             {bill.diagnosisCodes.map((code, ci) => (
                               <span key={ci} className="px-2 py-0.5 bg-amber-50 text-amber-700 text-[11px] font-mono font-medium rounded border border-amber-200">
                                 {code}
@@ -634,19 +634,19 @@ export const MedicalBillUpload: React.FC<MedicalBillUploadProps> = ({ onBillsExt
               })}
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              <div className="text-sm text-slate-600">
+            <div className="flex items-center justify-between pt-3 border-t border-stone-100">
+              <div className="text-sm text-stone-600">
                 <span className="font-bold">{selectedCount}</span> bill{selectedCount !== 1 ? 's' : ''} selected
                 {selectedCount > 0 && (
-                  <span className="ml-2 text-slate-400">
-                    -- Total: <span className="font-bold text-slate-700">{formatCurrency(totalChargesSelected)}</span>
+                  <span className="ml-2 text-stone-400">
+                    -- Total: <span className="font-bold text-stone-700">{formatCurrency(totalChargesSelected)}</span>
                   </span>
                 )}
               </div>
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 rounded-lg transition-colors"
                 >
                   Cancel
                 </button>

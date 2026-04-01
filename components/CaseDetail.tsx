@@ -24,10 +24,10 @@ const DOC_TYPE_ICONS: Record<string, { bg: string; text: string; icon: string; l
   medical_record: { bg: 'bg-blue-50', text: 'text-blue-600', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', label: 'Medical' },
   authorization: { bg: 'bg-amber-50', text: 'text-amber-600', icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z', label: 'Authorization' },
   insurance_card: { bg: 'bg-cyan-50', text: 'text-cyan-600', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', label: 'Insurance' },
-  correspondence: { bg: 'bg-slate-100', text: 'text-slate-600', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', label: 'Letter' },
+  correspondence: { bg: 'bg-stone-100', text: 'text-stone-600', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', label: 'Letter' },
   photo: { bg: 'bg-rose-50', text: 'text-rose-600', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z', label: 'Photo' },
   email: { bg: 'bg-sky-50', text: 'text-sky-600', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', label: 'Email' },
-  other: { bg: 'bg-slate-50', text: 'text-slate-500', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', label: 'File' },
+  other: { bg: 'bg-stone-50', text: 'text-stone-500', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z', label: 'File' },
 };
 
 function inferDocTypeFromName(filename: string): DocumentAttachment['type'] {
@@ -519,7 +519,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
     return 'text-red-600 bg-red-50 border-red-200';
   };
 
-  const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
   const isAcceptedOrLater = [CaseStatus.ACCEPTED, CaseStatus.INTAKE_PROCESSING, CaseStatus.INTAKE_PAUSED, CaseStatus.INTAKE_COMPLETE].includes(caseData.status);
 
   const getIns = (type: 'Defendant' | 'Client') => editForm.insurance?.find(i => i.type === type) || { provider: '', claimNumber: '', coverageLimits: '' };
@@ -561,15 +561,15 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   return (
     <div className="space-y-8 animate-fade-in pb-20 relative">
       {/* 1. Header Section */}
-      <div className="bg-white px-8 py-6 rounded-2xl border border-slate-200">
+      <div className="bg-white px-8 py-6 rounded-2xl border border-stone-200">
          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
              <div className="flex items-start gap-4 flex-1">
-                 <button onClick={onBack} className="mt-1.5 p-2 hover:bg-slate-50 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+                 <button onClick={onBack} className="mt-1.5 p-2 hover:bg-stone-50 rounded-full text-stone-400 hover:text-stone-600 transition-colors">
                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                  </button>
                  <div className="flex-1">
                      <div className="flex flex-wrap items-center gap-3 mb-2">
-                         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{caseData.clientName}</h1>
+                         <h1 className="text-3xl font-bold text-stone-900 tracking-tight">{caseData.clientName}</h1>
                          <div className="relative group">
                             <select 
                                 value={caseData.status}
@@ -579,7 +579,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                       caseData.status === CaseStatus.ACCEPTED ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' :
                                       caseData.status === CaseStatus.REVIEW_NEEDED ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' :
                                       caseData.status === CaseStatus.LOST_CONTACT ? 'bg-stone-100 text-stone-700 hover:bg-stone-200' :
-                                      'bg-slate-100 text-slate-700 hover:bg-slate-200'}
+                                      'bg-stone-100 text-stone-700 hover:bg-stone-200'}
                                 `}
                             >
                                 <option value={CaseStatus.NEW}>New</option>
@@ -591,23 +591,23 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                 <option value={CaseStatus.INTAKE_PROCESSING}>Processing</option>
                                 <option value={CaseStatus.INTAKE_COMPLETE}>Complete</option>
                             </select>
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <div className="absolute right-2 top-1/2 -transtone-y-1/2 pointer-events-none">
                                 <svg className="w-3 h-3 text-current opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                             </div>
                          </div>
                      </div>
-                     <div className="flex items-center gap-2 text-slate-500 text-sm flex-wrap">
+                     <div className="flex items-center gap-2 text-stone-500 text-sm flex-wrap">
                          {caseData.caseNumber && (
                            <span className="font-mono text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{caseData.caseNumber}</span>
                          )}
-                         <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600">ID: {caseData.id}</span>
+                         <span className="font-mono text-xs bg-stone-100 px-2 py-0.5 rounded text-stone-600">ID: {caseData.id}</span>
                          <span>•</span>
                          <span>{caseData.accidentDate}</span>
                          <span>•</span>
                          <span>{caseData.location || 'Location Pending'}</span>
                      </div>
                      <div className="flex items-center gap-2 mt-2">
-                       <span className="text-xs font-semibold text-slate-400">Team:</span>
+                       <span className="text-xs font-semibold text-stone-400">Team:</span>
                        <CaseTeamPanel
                          compact
                          team={caseData.caseTeam || []}
@@ -622,17 +622,17 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
              <div className="flex items-center gap-3 mt-4 md:mt-0">
                  {isEditing ? (
                      <>
-                        <button onClick={handleCancel} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg">Cancel</button>
+                        <button onClick={handleCancel} className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 rounded-lg">Cancel</button>
                         <button onClick={handleSave} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-200">Save Changes</button>
                      </>
                  ) : (
                      <>
-                        <button onClick={() => setIsEditing(true)} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
+                        <button onClick={() => setIsEditing(true)} className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors shadow-sm">
                             Edit Details
                         </button>
                         <button
                           onClick={() => setIsFormModalOpen(true)}
-                          className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-1.5"
+                          className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors shadow-sm flex items-center gap-1.5"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                             Generate Forms
@@ -652,56 +652,56 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
          </div>
 
          {/* Navigation Tabs */}
-         <div className="flex gap-8 mt-8 border-b border-slate-100 overflow-x-auto">
-             <button onClick={() => setActiveTab('overview')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'overview' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+         <div className="flex gap-8 mt-8 border-b border-stone-100 overflow-x-auto">
+             <button onClick={() => setActiveTab('overview')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'overview' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Overview & Status
                  {activeTab === 'overview' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
              {isAcceptedOrLater && (
-                 <button onClick={() => setActiveTab('extended')} className={`pb-4 text-sm font-medium transition-colors relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'extended' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+                 <button onClick={() => setActiveTab('extended')} className={`pb-4 text-sm font-medium transition-colors relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'extended' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                      Detailed Intake
                      <span className="bg-blue-50 text-blue-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">FORM</span>
                      {activeTab === 'extended' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
                  </button>
              )}
-             <button onClick={() => setActiveTab('medical')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'medical' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('medical')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'medical' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Medical Treatment
                  {activeTab === 'medical' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('documents')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'documents' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('documents')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'documents' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Documents ({caseData.documents.length})
                  {activeTab === 'documents' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('evidence')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'evidence' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('evidence')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'evidence' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Evidence
                  {(caseData.preservationRecipients?.length || 0) > 0 && (
                    <span className="ml-1.5 text-[10px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full">{caseData.preservationRecipients!.length}</span>
                  )}
                  {activeTab === 'evidence' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('ai_analysis')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'ai_analysis' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('ai_analysis')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'ai_analysis' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  AI Analysis
                  {activeTab === 'ai_analysis' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('coverage')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'coverage' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('coverage')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'coverage' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Coverage & Limits
                  {(caseData.insurance || []).some(i => i.type === 'Defendant' && (!i.coverageStatus || i.coverageStatus === 'pending')) && (
                    <span className="ml-1.5 w-2 h-2 bg-amber-400 rounded-full inline-block"></span>
                  )}
                  {activeTab === 'coverage' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('tasks')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'tasks' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('tasks')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'tasks' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Tasks
                  {(caseData.tasks || []).filter(t => t.status !== 'completed').length > 0 && (
                    <span className="ml-1.5 text-[10px] font-bold bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded-full">{(caseData.tasks || []).filter(t => t.status !== 'completed').length}</span>
                  )}
                  {activeTab === 'tasks' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('financials')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'financials' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('financials')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'financials' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Financials
                  {activeTab === 'financials' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('activity_log')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'activity_log' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}>
+             <button onClick={() => setActiveTab('activity_log')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'activity_log' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Activity Log
                  {activeTab === 'activity_log' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
@@ -724,37 +724,37 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       ) : activeTab === 'evidence' ? (
         <PreservationOfEvidencePanel caseData={caseData} onUpdateCase={onUpdateCase} />
       ) : activeTab === 'ai_analysis' ? (
-          <div className="animate-fade-in p-8 bg-white rounded-2xl border border-slate-200 min-h-[400px]">
+          <div className="animate-fade-in p-8 bg-white rounded-2xl border border-stone-200 min-h-[400px]">
               {caseData.aiAnalysis ? (
                   <div className="max-w-4xl mx-auto">
                       <div className="flex items-center justify-between mb-8">
-                          <h3 className="font-bold text-2xl text-slate-900 flex items-center">
+                          <h3 className="font-bold text-2xl text-stone-900 flex items-center">
                               <svg className="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                               Intake Assessment
                           </h3>
-                          <span className="text-sm text-slate-500">Analysis run on {new Date().toLocaleDateString()}</span>
+                          <span className="text-sm text-stone-500">Analysis run on {new Date().toLocaleDateString()}</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
                           <div className={`p-6 rounded-2xl border-2 flex flex-col items-center justify-center text-center ${getScoreColor(caseData.aiAnalysis.caseScore)}`}>
                               <span className="text-5xl font-bold mb-2">{caseData.aiAnalysis.caseScore}</span>
                               <span className="text-sm font-bold uppercase tracking-wider">Case Score</span>
                           </div>
-                          <div className="col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                              <h4 className="font-bold text-slate-900 text-lg mb-2">Recommendation: {caseData.aiAnalysis.recommendedAction}</h4>
-                              <p className="text-slate-600 leading-relaxed">{caseData.aiAnalysis.summary}</p>
+                          <div className="col-span-2 bg-stone-50 p-6 rounded-2xl border border-stone-200">
+                              <h4 className="font-bold text-stone-900 text-lg mb-2">Recommendation: {caseData.aiAnalysis.recommendedAction}</h4>
+                              <p className="text-stone-600 leading-relaxed">{caseData.aiAnalysis.summary}</p>
                           </div>
                       </div>
                       <div className="space-y-8">
                           <div>
-                              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Liability Analysis</h4>
-                              <p className="text-slate-700 leading-relaxed bg-white p-4 border border-slate-200 rounded-xl shadow-sm">{caseData.aiAnalysis.liabilityAssessment}</p>
+                              <h4 className="font-bold text-stone-800 text-sm uppercase tracking-wider mb-4 border-b border-stone-100 pb-2">Liability Analysis</h4>
+                              <p className="text-stone-700 leading-relaxed bg-white p-4 border border-stone-200 rounded-xl shadow-sm">{caseData.aiAnalysis.liabilityAssessment}</p>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                               <div>
                                   <h4 className="font-bold text-rose-600 text-sm uppercase tracking-wider mb-4 border-b border-rose-100 pb-2">Key Risk Factors</h4>
                                   <ul className="space-y-3">
                                       {caseData.aiAnalysis.keyRiskFactors.map((risk, i) => (
-                                          <li key={i} className="flex items-start text-sm text-slate-700">
+                                          <li key={i} className="flex items-start text-sm text-stone-700">
                                               <svg className="w-5 h-5 text-rose-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                                               {risk}
                                           </li>
@@ -763,12 +763,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                               </div>
                               <div>
                                   <h4 className="font-bold text-blue-600 text-sm uppercase tracking-wider mb-4 border-b border-blue-100 pb-2">Document Verification</h4>
-                                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                  <div className="bg-stone-50 p-4 rounded-xl border border-stone-200">
                                       <div className="flex items-center justify-between mb-2">
-                                          <span className="text-sm font-medium text-slate-700">Retainer Status</span>
+                                          <span className="text-sm font-medium text-stone-700">Retainer Status</span>
                                           {caseData.aiAnalysis.retainerValid ? <span className="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded-full font-bold">Signed & Valid</span> : <span className="bg-rose-100 text-rose-700 text-xs px-2 py-1 rounded-full font-bold">Missing / Invalid</span>}
                                       </div>
-                                      <p className="text-xs text-slate-500">{caseData.aiAnalysis.retainerNotes}</p>
+                                      <p className="text-xs text-stone-500">{caseData.aiAnalysis.retainerNotes}</p>
                                   </div>
                               </div>
                           </div>
@@ -779,27 +779,27 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       <div className="w-20 h-20 bg-blue-50 text-blue-200 rounded-full flex items-center justify-center mb-6">
                           <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                       </div>
-                      <h3 className="text-xl font-bold text-slate-800 mb-2">No Analysis Generated</h3>
+                      <h3 className="text-xl font-bold text-stone-800 mb-2">No Analysis Generated</h3>
                       <button onClick={runAIAnalysis} className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all flex items-center mt-4">Run Analysis Now</button>
                   </div>
               )}
           </div>
       ) : activeTab === 'activity_log' ? (
-          <div className="animate-fade-in p-8 bg-white rounded-2xl border border-slate-200 min-h-[400px]">
-              <h3 className="font-bold text-lg text-slate-800 mb-6 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div className="animate-fade-in p-8 bg-white rounded-2xl border border-stone-200 min-h-[400px]">
+              <h3 className="font-bold text-lg text-stone-800 mb-6 flex items-center">
+                  <svg className="w-5 h-5 mr-2 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   Activity Timeline
               </h3>
-              <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
+              <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-stone-100">
                   {caseData.activityLog?.map((log) => (
                       <div key={log.id} className="relative pl-10">
-                          <div className={`absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2 border-white -translate-x-1/2 ${log.type === 'system' ? 'bg-blue-400' : log.type === 'note' ? 'bg-amber-400' : 'bg-emerald-400'}`}></div>
-                          <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
-                              <p className="text-sm text-slate-800 font-medium">{log.message}</p>
+                          <div className={`absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2 border-white -transtone-x-1/2 ${log.type === 'system' ? 'bg-blue-400' : log.type === 'note' ? 'bg-amber-400' : 'bg-emerald-400'}`}></div>
+                          <div className="bg-stone-50 p-4 rounded-xl border border-stone-100 hover:border-stone-200 transition-colors">
+                              <p className="text-sm text-stone-800 font-medium">{log.message}</p>
                               <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-xs text-slate-400 font-medium">{new Date(log.timestamp).toLocaleString()}</span>
-                                  <span className="text-xs text-slate-300">•</span>
-                                  <span className="text-xs text-slate-500 font-medium bg-white px-2 py-0.5 rounded border border-slate-100">{log.author || 'System'}</span>
+                                  <span className="text-xs text-stone-400 font-medium">{new Date(log.timestamp).toLocaleString()}</span>
+                                  <span className="text-xs text-stone-300">•</span>
+                                  <span className="text-xs text-stone-500 font-medium bg-white px-2 py-0.5 rounded border border-stone-100">{log.author || 'System'}</span>
                               </div>
                           </div>
                       </div>
@@ -810,13 +810,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           <div className="grid grid-cols-12 gap-8 animate-fade-in">
               <div className="col-span-12 lg:col-span-8 space-y-8">
                   {/* Case Information Grid */}
-                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-300">
+                  <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden transition-all duration-300">
                       <div 
-                        className="px-8 py-6 border-b border-slate-100 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors"
+                        className="px-8 py-6 border-b border-stone-100 flex justify-between items-center cursor-pointer hover:bg-stone-50 transition-colors"
                         onClick={() => setIsCaseInfoExpanded(!isCaseInfoExpanded)}
                       >
-                          <h3 className="text-lg font-bold text-slate-800">Case Information</h3>
-                          <button className="text-slate-400 hover:text-slate-600 transition-colors">
+                          <h3 className="text-lg font-bold text-stone-800">Case Information</h3>
+                          <button className="text-stone-400 hover:text-stone-600 transition-colors">
                               <svg className={`w-5 h-5 transition-transform duration-300 ${isCaseInfoExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                           </button>
                       </div>
@@ -826,18 +826,18 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                            {/* Row 1: Client & Incident */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                               <div>
-                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">Client Demographics</h4>
+                                  <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2 border-b border-stone-100">Client Demographics</h4>
                                   <div className="space-y-5">
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Name</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.clientName} onChange={e => setEditForm({...editForm, clientName: e.target.value})} /> : <p className="text-base font-medium text-slate-900">{caseData.clientName}</p>}
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Name</label>
+                                          {isEditing ? <input className={inputClass} value={editForm.clientName} onChange={e => setEditForm({...editForm, clientName: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientName}</p>}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">DOB</label>
-                                          {isEditing ? <input type="date" className={inputClass} value={editForm.clientDob} onChange={e => setEditForm({...editForm, clientDob: e.target.value})} /> : <p className="text-base font-medium text-slate-900">{caseData.clientDob || 'N/A'}</p>}
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">DOB</label>
+                                          {isEditing ? <input type="date" className={inputClass} value={editForm.clientDob} onChange={e => setEditForm({...editForm, clientDob: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientDob || 'N/A'}</p>}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Phone</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Phone</label>
                                           {isEditing ? (
                                               <input className={inputClass} value={editForm.clientPhone} onChange={e => setEditForm({...editForm, clientPhone: e.target.value})} />
                                           ) : (
@@ -851,24 +851,24 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                           )}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Email</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.clientEmail} onChange={e => setEditForm({...editForm, clientEmail: e.target.value})} /> : <p className="text-base font-medium text-slate-900">{caseData.clientEmail}</p>}
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Email</label>
+                                          {isEditing ? <input className={inputClass} value={editForm.clientEmail} onChange={e => setEditForm({...editForm, clientEmail: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientEmail}</p>}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Address</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.clientAddress} onChange={e => setEditForm({...editForm, clientAddress: e.target.value})} /> : <p className="text-base font-medium text-slate-900">{caseData.clientAddress}</p>}
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Address</label>
+                                          {isEditing ? <input className={inputClass} value={editForm.clientAddress} onChange={e => setEditForm({...editForm, clientAddress: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientAddress}</p>}
                                       </div>
                                   </div>
                               </div>
                               <div>
-                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6 pb-2 border-b border-slate-100">Incident Details</h4>
+                                  <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2 border-b border-stone-100">Incident Details</h4>
                                   <div className="space-y-5">
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Date of Loss</label>
-                                          {isEditing ? <input type="date" className={inputClass} value={editForm.accidentDate} onChange={e => setEditForm({...editForm, accidentDate: e.target.value})} /> : <p className="text-base font-medium text-slate-900">{caseData.accidentDate}</p>}
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Date of Loss</label>
+                                          {isEditing ? <input type="date" className={inputClass} value={editForm.accidentDate} onChange={e => setEditForm({...editForm, accidentDate: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.accidentDate}</p>}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1 flex items-center">
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1 flex items-center">
                                               Statute of Limitations
                                               <svg className="w-3 h-3 ml-1 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                                           </label>
@@ -900,7 +900,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                               <span className={`text-xs font-medium ${
                                                                   isCritical ? 'text-rose-600' :
                                                                   isUrgent ? 'text-amber-600' :
-                                                                  'text-slate-500'
+                                                                  'text-stone-500'
                                                               }`}>
                                                                   ({daysRemaining > 0 ? `${daysRemaining} days remaining` : 'EXPIRED'})
                                                               </span>
@@ -913,11 +913,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                           )}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Location</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.location} onChange={e => setEditForm({...editForm, location: e.target.value})} /> : <p className="text-base font-medium text-slate-900">{caseData.location || 'N/A'}</p>}
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Location</label>
+                                          {isEditing ? <input className={inputClass} value={editForm.location} onChange={e => setEditForm({...editForm, location: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.location || 'N/A'}</p>}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Impact Assessment</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Impact Assessment</label>
                                           {isEditing ? (
                                               <input 
                                                 className={inputClass} 
@@ -927,20 +927,20 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                               />
                                           ) : (
                                               caseData.impact ? (
-                                                  <span className="inline-block bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-bold">
+                                                  <span className="inline-block bg-stone-100 text-stone-700 px-3 py-1.5 rounded-lg border border-stone-200 text-sm font-bold">
                                                       {caseData.impact}
                                                   </span>
                                               ) : (
-                                                  <span className="text-slate-400 text-sm italic">Not Assessed</span>
+                                                  <span className="text-stone-400 text-sm italic">Not Assessed</span>
                                               )
                                           )}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Facts of Loss</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Facts of Loss</label>
                                           {isEditing ? (
                                               <textarea className={inputClass + " h-24"} value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} />
                                           ) : (
-                                              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700 leading-relaxed">
+                                              <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 text-sm text-stone-700 leading-relaxed">
                                                   {caseData.description}
                                               </div>
                                           )}
@@ -950,17 +950,17 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                           </div>
 
                           {/* Row 2: Insurance Information */}
-                          <div className="border-t border-slate-100 pt-8 mt-8">
-                              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6 pb-2">Insurance Information</h4>
+                          <div className="border-t border-stone-100 pt-8 mt-8">
+                              <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2">Insurance Information</h4>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                                   {/* Defendant Insurance */}
                                   <div className="space-y-5">
-                                      <h5 className="text-sm font-bold text-slate-700 flex items-center">
+                                      <h5 className="text-sm font-bold text-stone-700 flex items-center">
                                           Defendant Coverage
-                                          <span className="ml-2 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full uppercase">At-Fault</span>
+                                          <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">At-Fault</span>
                                       </h5>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Carrier</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Carrier</label>
                                           {isEditing ? (
                                               <input 
                                                   className={inputClass} 
@@ -969,11 +969,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                   placeholder="e.g. State Farm"
                                               />
                                           ) : (
-                                              <p className="text-base font-medium text-slate-900">{getIns('Defendant').provider || 'Unknown'}</p>
+                                              <p className="text-base font-medium text-stone-900">{getIns('Defendant').provider || 'Unknown'}</p>
                                           )}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Claim Number</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Claim Number</label>
                                           {isEditing ? (
                                               <input 
                                                   className={inputClass} 
@@ -982,11 +982,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                   placeholder="Claim #"
                                               />
                                           ) : (
-                                              <p className="text-base font-medium text-slate-900">{getIns('Defendant').claimNumber || 'Pending'}</p>
+                                              <p className="text-base font-medium text-stone-900">{getIns('Defendant').claimNumber || 'Pending'}</p>
                                           )}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Coverage Limits</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Coverage Limits</label>
                                           {isEditing ? (
                                               <input 
                                                   className={inputClass} 
@@ -1001,7 +1001,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                           {getIns('Defendant').coverageLimits}
                                                       </span>
                                                   ) : (
-                                                      <span className="text-slate-400 text-sm italic">Unknown Limits</span>
+                                                      <span className="text-stone-400 text-sm italic">Unknown Limits</span>
                                                   )}
                                               </div>
                                           )}
@@ -1010,12 +1010,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
                                   {/* Client Insurance */}
                                   <div className="space-y-5">
-                                      <h5 className="text-sm font-bold text-slate-700 flex items-center">
+                                      <h5 className="text-sm font-bold text-stone-700 flex items-center">
                                           Client Coverage
-                                          <span className="ml-2 bg-slate-100 text-slate-500 text-[10px] px-2 py-0.5 rounded-full uppercase">First Party</span>
+                                          <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">First Party</span>
                                       </h5>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Carrier</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Carrier</label>
                                           {isEditing ? (
                                               <input 
                                                   className={inputClass} 
@@ -1024,11 +1024,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                   placeholder="e.g. Geico"
                                               />
                                           ) : (
-                                              <p className="text-base font-medium text-slate-900">{getIns('Client').provider || 'Unknown'}</p>
+                                              <p className="text-base font-medium text-stone-900">{getIns('Client').provider || 'Unknown'}</p>
                                           )}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Claim Number</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Claim Number</label>
                                           {isEditing ? (
                                               <input 
                                                   className={inputClass} 
@@ -1037,11 +1037,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                   placeholder="Claim #"
                                               />
                                           ) : (
-                                              <p className="text-base font-medium text-slate-900">{getIns('Client').claimNumber || 'Pending'}</p>
+                                              <p className="text-base font-medium text-stone-900">{getIns('Client').claimNumber || 'Pending'}</p>
                                           )}
                                       </div>
                                       <div>
-                                          <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Coverage Limits</label>
+                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Coverage Limits</label>
                                           {isEditing ? (
                                               <input 
                                                   className={inputClass} 
@@ -1056,7 +1056,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                           {getIns('Client').coverageLimits}
                                                       </span>
                                                   ) : (
-                                                      <span className="text-slate-400 text-sm italic">Unknown Limits</span>
+                                                      <span className="text-stone-400 text-sm italic">Unknown Limits</span>
                                                   )}
                                               </div>
                                           )}
@@ -1070,19 +1070,19 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
                   {/* Documents Preview */}
                   <div
-                    className="bg-white rounded-2xl border border-slate-200 overflow-hidden"
+                    className="bg-white rounded-2xl border border-stone-200 overflow-hidden"
                     onDragOver={handleOverviewDocDragOver}
                     onDragLeave={handleOverviewDocDragLeave}
                     onDrop={handleOverviewDocDrop}
                   >
-                      <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                      <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center">
                           <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                              <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center">
+                                <svg className="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                               </div>
                               <div>
-                                <h3 className="text-sm font-bold text-slate-800">Documents</h3>
-                                <p className="text-[11px] text-slate-400">{(caseData.documents || []).length} {(caseData.documents || []).length === 1 ? 'file' : 'files'}</p>
+                                <h3 className="text-sm font-bold text-stone-800">Documents</h3>
+                                <p className="text-[11px] text-stone-400">{(caseData.documents || []).length} {(caseData.documents || []).length === 1 ? 'file' : 'files'}</p>
                               </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1103,7 +1103,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
                                 Upload
                               </button>
-                              <button onClick={() => setActiveTab('documents')} className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 hover:bg-slate-100 font-medium transition-colors rounded-lg">
+                              <button onClick={() => setActiveTab('documents')} className="px-3 py-1.5 text-xs text-stone-600 hover:text-stone-800 hover:bg-stone-100 font-medium transition-colors rounded-lg">
                                   View All
                               </button>
                           </div>
@@ -1128,9 +1128,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                   <div
                                     key={idx}
                                     onClick={() => setDocPreviewIndex(realIndex)}
-                                    className="group relative overflow-hidden rounded-xl cursor-pointer hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-200 hover:-translate-y-0.5"
+                                    className="group relative overflow-hidden rounded-xl cursor-pointer hover:shadow-lg hover:shadow-stone-200/60 transition-all duration-200 hover:-transtone-y-0.5"
                                   >
-                                    <div className={`h-[88px] flex items-center justify-center ${isImage && doc.storageUrl ? 'bg-slate-100' : style.bg} relative overflow-hidden`}>
+                                    <div className={`h-[88px] flex items-center justify-center ${isImage && doc.storageUrl ? 'bg-stone-100' : style.bg} relative overflow-hidden`}>
                                       {isImage && doc.storageUrl ? (
                                         <img src={doc.storageUrl} alt="" className="w-full h-full object-cover" />
                                       ) : (
@@ -1140,12 +1140,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                       )}
                                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
                                     </div>
-                                    <div className="bg-white border border-slate-200 border-t-0 rounded-b-xl px-2.5 py-2">
-                                      <p className="text-[11px] font-medium text-slate-700 truncate">{doc.fileName}</p>
+                                    <div className="bg-white border border-stone-200 border-t-0 rounded-b-xl px-2.5 py-2">
+                                      <p className="text-[11px] font-medium text-stone-700 truncate">{doc.fileName}</p>
                                       <div className="flex items-center justify-between mt-0.5">
                                         <span className={`text-[10px] font-medium ${style.text}`}>{style.label}</span>
                                         {doc.uploadedAt && (
-                                          <span className="text-[10px] text-slate-400">{new Date(doc.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                                          <span className="text-[10px] text-stone-400">{new Date(doc.uploadedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                                         )}
                                       </div>
                                     </div>
@@ -1164,12 +1164,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                               className={`mt-3 border-2 border-dashed rounded-xl py-4 flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer ${
                                 docDragOver
                                   ? 'border-blue-400 bg-blue-50'
-                                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                  : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
                               }`}
                               onClick={() => overviewFileInputRef.current?.click()}
                             >
-                              <svg className={`w-4 h-4 transition-colors ${docDragOver ? 'text-blue-500' : 'text-slate-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                              <p className={`text-xs font-medium transition-colors ${docDragOver ? 'text-blue-600' : 'text-slate-400'}`}>
+                              <svg className={`w-4 h-4 transition-colors ${docDragOver ? 'text-blue-500' : 'text-stone-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                              <p className={`text-xs font-medium transition-colors ${docDragOver ? 'text-blue-600' : 'text-stone-400'}`}>
                                 {docDragOver ? 'Drop files here' : 'Drag & drop files to upload'}
                               </p>
                             </div>
@@ -1179,32 +1179,32 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                             className={`border-2 border-dashed rounded-xl py-10 flex flex-col items-center justify-center transition-all duration-200 cursor-pointer ${
                               docDragOver
                                 ? 'border-blue-400 bg-blue-50'
-                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
                             }`}
                             onClick={() => overviewFileInputRef.current?.click()}
                           >
-                            <div className={`w-11 h-11 rounded-full flex items-center justify-center mb-3 transition-colors ${docDragOver ? 'bg-blue-100 text-blue-500' : 'bg-slate-100 text-slate-300'}`}>
+                            <div className={`w-11 h-11 rounded-full flex items-center justify-center mb-3 transition-colors ${docDragOver ? 'bg-blue-100 text-blue-500' : 'bg-stone-100 text-stone-300'}`}>
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                             </div>
-                            <p className={`text-sm font-medium mb-1 transition-colors ${docDragOver ? 'text-blue-600' : 'text-slate-500'}`}>
+                            <p className={`text-sm font-medium mb-1 transition-colors ${docDragOver ? 'text-blue-600' : 'text-stone-500'}`}>
                               {docDragOver ? 'Drop files here' : 'Drop files to upload'}
                             </p>
-                            <p className="text-xs text-slate-400">or click to browse</p>
+                            <p className="text-xs text-stone-400">or click to browse</p>
                           </div>
                         )}
                       </div>
                   </div>
 
                   {/* Communication Card (Unified with Threads) */}
-                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                      <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
-                          <h3 className="text-lg font-bold text-slate-800">Communication History</h3>
+                  <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+                      <div className="px-8 py-6 border-b border-stone-100 flex justify-between items-center">
+                          <h3 className="text-lg font-bold text-stone-800">Communication History</h3>
                           <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">{threadedCommunications.length} Groups</span>
                       </div>
-                      <div className="divide-y divide-slate-100">
+                      <div className="divide-y divide-stone-100">
                           {threadedCommunications.length > 0 ? (
                               threadedCommunications.map(comm => (
-                                  <div key={comm.id} className={`transition-colors group ${expandedItemId === comm.id ? 'bg-slate-50' : 'hover:bg-slate-50'}`}>
+                                  <div key={comm.id} className={`transition-colors group ${expandedItemId === comm.id ? 'bg-stone-50' : 'hover:bg-stone-50'}`}>
                                       <div 
                                         className="p-6 cursor-pointer"
                                         onClick={() => setExpandedItemId(expandedItemId === comm.id ? null : comm.id)}
@@ -1215,7 +1215,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                       <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 relative">
                                                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                                           {comm.count > 1 && (
-                                                              <span className="absolute -top-1 -right-1 bg-slate-800 text-white text-[9px] font-bold px-1 rounded-full border-2 border-white">{comm.count}</span>
+                                                              <span className="absolute -top-1 -right-1 bg-black text-white text-[9px] font-bold px-1 rounded-full border-2 border-white">{comm.count}</span>
                                                           )}
                                                       </div>
                                                   )}
@@ -1231,11 +1231,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                   )}
 
                                                   <div>
-                                                      <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors flex items-center">
+                                                      <h4 className="text-sm font-bold text-stone-900 group-hover:text-blue-600 transition-colors flex items-center">
                                                           {comm.type === 'email-thread' ? (
                                                               <>
                                                                   {comm.count > 1 ? 'Email Thread' : comm.contactName}
-                                                                  <span className="text-slate-400 font-normal ml-2 text-xs">
+                                                                  <span className="text-stone-400 font-normal ml-2 text-xs">
                                                                     {comm.count > 1 ? `(${comm.count} messages)` : ''}
                                                                   </span>
                                                               </>
@@ -1243,7 +1243,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                            comm.type === 'sms' ? (comm.direction === 'outbound' ? 'Sent SMS' : 'Received SMS') :
                                                            comm.contactName}
                                                       </h4>
-                                                      <p className="text-xs text-slate-500">
+                                                      <p className="text-xs text-stone-500">
                                                           {comm.type === 'email-thread' && `Latest: ${new Date(comm.timestamp).toLocaleString()}`}
                                                           {comm.type === 'call' && `Duration: ${comm.duration || '0:00'}`}
                                                           {comm.type === 'sms' && comm.contactPhone}
@@ -1251,26 +1251,26 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                   </div>
                                               </div>
                                               <div className="flex items-center gap-2">
-                                                  <span className="text-xs text-slate-400 whitespace-nowrap">
+                                                  <span className="text-xs text-stone-400 whitespace-nowrap">
                                                       {new Date(comm.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                   </span>
-                                                  {expandedItemId === comm.id ? <svg className="w-4 h-4 text-slate-400 transform rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg> : <svg className="w-4 h-4 text-slate-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>}
+                                                  {expandedItemId === comm.id ? <svg className="w-4 h-4 text-stone-400 transform rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg> : <svg className="w-4 h-4 text-stone-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>}
                                               </div>
                                           </div>
                                           
                                           {comm.type === 'email-thread' ? (
-                                              <h5 className={`text-sm font-medium mb-1 pl-11 ${expandedItemId === comm.id ? 'text-slate-900' : 'text-slate-800'}`}>{comm.content}</h5>
+                                              <h5 className={`text-sm font-medium mb-1 pl-11 ${expandedItemId === comm.id ? 'text-stone-900' : 'text-stone-800'}`}>{comm.content}</h5>
                                           ) : null}
                                           
                                           {expandedItemId !== comm.id && (
                                               <div className="pl-11 mb-2 flex items-center justify-between">
-                                                  <p className="text-sm text-slate-500 line-clamp-1">
+                                                  <p className="text-sm text-stone-500 line-clamp-1">
                                                       {comm.type === 'email-thread' 
                                                         ? comm.threadMessages[comm.threadMessages.length - 1].body 
                                                         : comm.content}
                                                   </p>
                                                   {comm.transcript && (
-                                                      <span className="flex items-center text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200 font-medium ml-4 whitespace-nowrap">
+                                                      <span className="flex items-center text-[10px] bg-stone-100 text-stone-500 px-2 py-0.5 rounded border border-stone-200 font-medium ml-4 whitespace-nowrap">
                                                           <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                                           Transcript
                                                       </span>
@@ -1280,14 +1280,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                       </div>
                                       
                                       {expandedItemId === comm.id && (
-                                          <div className="px-6 pb-6 pl-6 animate-fade-in cursor-auto border-t border-slate-100 bg-white" onClick={(e) => e.stopPropagation()}>
+                                          <div className="px-6 pb-6 pl-6 animate-fade-in cursor-auto border-t border-stone-100 bg-white" onClick={(e) => e.stopPropagation()}>
                                               {/* Expanded Item content omitted for brevity as it is unchanged */}
                                           </div>
                                       )}
                                   </div>
                               ))
                           ) : (
-                              <div className="p-8 text-center text-slate-400">No communications history found.</div>
+                              <div className="p-8 text-center text-stone-400">No communications history found.</div>
                           )}
                       </div>
                   </div>
@@ -1296,7 +1296,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
               {/* Right Column: Team, Adjusters, Chat */}
               <div className="col-span-12 lg:col-span-4 space-y-8">
                   {/* Case Team */}
-                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
+                  <div className="bg-white rounded-2xl border border-stone-200 px-5 py-4">
                     <CaseTeamPanel
                       team={caseData.caseTeam || []}
                       onChange={(newTeam: CaseTeamMember[]) => {
@@ -1306,7 +1306,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   </div>
 
                   {/* Insurance Adjusters */}
-                  <div className="bg-white rounded-2xl border border-slate-200 px-5 py-4">
+                  <div className="bg-white rounded-2xl border border-stone-200 px-5 py-4">
                     <AdjusterPanel
                       adjusters={caseData.adjusters || []}
                       insuranceEntries={(caseData.insurance || []).map(ins => ({ type: ins.type, provider: ins.provider }))}
@@ -1317,16 +1317,16 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   </div>
 
                   {/* Internal Team Chat */}
-                  <div className="bg-white rounded-2xl border border-slate-200 flex flex-col h-[600px]">
+                  <div className="bg-white rounded-2xl border border-stone-200 flex flex-col h-[600px]">
                       {/* Chat content omitted for brevity */}
-                      <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                      <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-stone-50 rounded-t-2xl">
                           <div className="flex items-center">
                               <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                              <h3 className="font-bold text-slate-800 text-sm">Team Chat</h3>
+                              <h3 className="font-bold text-stone-800 text-sm">Team Chat</h3>
                           </div>
-                          <span className="text-xs text-slate-500 font-medium">#{caseData.id}</span>
+                          <span className="text-xs text-stone-500 font-medium">#{caseData.id}</span>
                       </div>
-                      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
+                      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-stone-50/50">
                           {caseData.chatHistory?.map((msg) => (
                               <div key={msg.id} className={`group flex ${msg.isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                                   {!msg.isCurrentUser && (
@@ -1336,18 +1336,18 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                   )}
                                   <div className="relative">
                                       {msg.isCurrentUser && (
-                                          <div className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <div className="absolute -left-8 top-1/2 -transtone-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
                                               <button
                                                 onClick={() => setChatMenuId(chatMenuId === msg.id ? null : msg.id)}
-                                                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors"
+                                                className="p-1 text-stone-400 hover:text-stone-600 hover:bg-stone-200 rounded-full transition-colors"
                                               >
                                                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
                                               </button>
                                               {chatMenuId === msg.id && (
-                                                  <div className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 w-28">
+                                                  <div className="absolute right-0 top-full mt-1 bg-white border border-stone-200 rounded-lg shadow-lg py-1 z-20 w-28">
                                                       <button
                                                         onClick={() => handleStartEditChat(msg)}
-                                                        className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                                                        className="w-full text-left px-3 py-1.5 text-xs text-stone-700 hover:bg-stone-50 flex items-center gap-2"
                                                       >
                                                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                           Edit
@@ -1363,8 +1363,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                               )}
                                           </div>
                                       )}
-                                      <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.isCurrentUser ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-white border border-slate-200 text-slate-700 rounded-bl-none shadow-sm'}`}>
-                                          {!msg.isCurrentUser && <p className="text-[10px] font-bold text-slate-400 mb-1">{msg.sender}</p>}
+                                      <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.isCurrentUser ? 'bg-blue-600 text-white rounded-br-none shadow-md' : 'bg-white border border-stone-200 text-stone-700 rounded-bl-none shadow-sm'}`}>
+                                          {!msg.isCurrentUser && <p className="text-[10px] font-bold text-stone-400 mb-1">{msg.sender}</p>}
                                           {editingMsgId === msg.id ? (
                                               <div className="space-y-2">
                                                   <textarea
@@ -1392,7 +1392,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                                   <span className="text-xs truncate">{att.name}</span>
                                               </div>
                                           ))}
-                                          <p className={`text-[10px] mt-1 text-right ${msg.isCurrentUser ? 'text-blue-100' : 'text-slate-400'}`}>
+                                          <p className={`text-[10px] mt-1 text-right ${msg.isCurrentUser ? 'text-blue-100' : 'text-stone-400'}`}>
                                               {msg.edited && <span className="mr-1 italic">(edited)</span>}
                                               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                           </p>
@@ -1402,12 +1402,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                           ))}
                           <div ref={chatEndRef} />
                       </div>
-                      <div className="p-3 border-t border-slate-100 bg-white rounded-b-2xl">
+                      <div className="p-3 border-t border-stone-100 bg-white rounded-b-2xl">
                           <div className="relative flex items-end gap-2">
                               <textarea
                                   ref={chatTextareaRef}
                                   placeholder="Type a message..."
-                                  className="flex-1 pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden"
+                                  className="flex-1 pl-4 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden"
                                   rows={1}
                                   value={chatMessage}
                                   onChange={(e) => {
@@ -1423,7 +1423,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                   }}
                               />
                               <div className="flex items-center gap-1 flex-shrink-0 pb-1.5">
-                                  <button onClick={() => chatFileInputRef.current?.click()} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                                  <button onClick={() => chatFileInputRef.current?.click()} className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-200 rounded-lg transition-colors">
                                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                                   </button>
                                   <input type="file" ref={chatFileInputRef} className="hidden" onChange={handleChatFileUpload} />
@@ -1436,31 +1436,31 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   </div>
 
                   {/* Team Notes */}
-                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                      <div className="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
-                          <h3 className="font-bold text-slate-800 text-sm flex items-center">
-                              <svg className="w-4 h-4 mr-2 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+                      <div className="px-5 py-4 border-b border-stone-100 flex justify-between items-center">
+                          <h3 className="font-bold text-stone-800 text-sm flex items-center">
+                              <svg className="w-4 h-4 mr-2 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                               Team Notes
                           </h3>
-                          <span className="text-[10px] font-medium text-slate-400">{(caseData.teamNotes || []).length} {(caseData.teamNotes || []).length === 1 ? 'note' : 'notes'}</span>
+                          <span className="text-[10px] font-medium text-stone-400">{(caseData.teamNotes || []).length} {(caseData.teamNotes || []).length === 1 ? 'note' : 'notes'}</span>
                       </div>
                       <div className="max-h-[300px] overflow-y-auto">
                           {(caseData.teamNotes || []).length > 0 ? (
-                              <div className="divide-y divide-slate-100">
+                              <div className="divide-y divide-stone-100">
                                   {(caseData.teamNotes || []).map((note) => (
-                                      <div key={note.id} className="px-5 py-3 hover:bg-slate-50/50 transition-colors">
+                                      <div key={note.id} className="px-5 py-3 hover:bg-stone-50/50 transition-colors">
                                           <div className="flex items-start gap-2.5">
-                                              <div className="w-7 h-7 rounded-full bg-slate-700 text-white flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">
+                                              <div className="w-7 h-7 rounded-full bg-stone-700 text-white flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5">
                                                   {note.authorInitials}
                                               </div>
                                               <div className="flex-1 min-w-0">
                                                   <div className="flex items-center gap-2 mb-0.5">
-                                                      <span className="text-xs font-semibold text-slate-800">{note.authorName}</span>
-                                                      <span className="text-[10px] text-slate-400">
+                                                      <span className="text-xs font-semibold text-stone-800">{note.authorName}</span>
+                                                      <span className="text-[10px] text-stone-400">
                                                           {new Date(note.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                                       </span>
                                                   </div>
-                                                  <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+                                                  <p className="text-xs text-stone-700 leading-relaxed whitespace-pre-wrap">{note.content}</p>
                                               </div>
                                           </div>
                                       </div>
@@ -1468,19 +1468,19 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                   <div ref={notesEndRef} />
                               </div>
                           ) : (
-                              <div className="px-5 py-8 text-center text-slate-400 text-xs">
+                              <div className="px-5 py-8 text-center text-stone-400 text-xs">
                                   No notes yet. Add a note below.
                               </div>
                           )}
                       </div>
-                      <div className="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                      <div className="px-4 py-3 border-t border-stone-100 bg-stone-50/50">
                           <div className="flex items-start gap-2.5">
                               <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-1">
                                   {profile?.avatar_initials || '??'}
                               </div>
                               <div className="flex-1">
                                   <textarea
-                                      className="w-full p-2.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder-slate-400 transition-shadow"
+                                      className="w-full p-2.5 bg-white border border-stone-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none placeholder-stone-400 transition-shadow"
                                       rows={2}
                                       placeholder="Add a note..."
                                       value={newNote}
@@ -1490,11 +1490,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                       }}
                                   />
                                   <div className="flex items-center justify-between mt-1.5">
-                                      <span className="text-[10px] text-slate-400">Cmd+Enter to submit</span>
+                                      <span className="text-[10px] text-stone-400">Cmd+Enter to submit</span>
                                       <button
                                           onClick={handleAddNote}
                                           disabled={!newNote.trim()}
-                                          className="px-3 py-1 bg-slate-800 text-white text-[10px] font-semibold rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                          className="px-3 py-1 bg-black text-white text-[10px] font-semibold rounded-lg hover:bg-stone-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                       >
                                           Add Note
                                       </button>
@@ -1512,30 +1512,30 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
               <div className="bg-white w-96 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                   {/* RC Header */}
-                  <div className="bg-slate-900 text-white p-4 flex justify-between items-start">
+                  <div className="bg-black text-white p-4 flex justify-between items-start">
                       <div>
                           <div className="flex items-center space-x-2">
                               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">RingCentral Connected</span>
+                              <span className="text-xs font-bold uppercase tracking-wider text-stone-400">RingCentral Connected</span>
                           </div>
                           <h3 className="text-lg font-bold mt-1">{caseData.clientName}</h3>
-                          <p className="text-sm text-slate-400">{caseData.clientPhone}</p>
+                          <p className="text-sm text-stone-400">{caseData.clientPhone}</p>
                       </div>
-                      <button onClick={() => setPhoneModalOpen(false)} className="text-slate-400 hover:text-white">
+                      <button onClick={() => setPhoneModalOpen(false)} className="text-stone-400 hover:text-white">
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                   </div>
 
                   {/* Tabs */}
-                  <div className="flex border-b border-slate-200">
+                  <div className="flex border-b border-stone-200">
                       <button 
-                          className={`flex-1 py-3 text-sm font-bold transition-colors ${phoneAction === 'call' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                          className={`flex-1 py-3 text-sm font-bold transition-colors ${phoneAction === 'call' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-stone-500 hover:bg-stone-50'}`}
                           onClick={() => setPhoneAction('call')}
                       >
                           Phone Call
                       </button>
                       <button 
-                          className={`flex-1 py-3 text-sm font-bold transition-colors ${phoneAction === 'sms' ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50' : 'text-slate-500 hover:bg-slate-50'}`}
+                          className={`flex-1 py-3 text-sm font-bold transition-colors ${phoneAction === 'sms' ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50' : 'text-stone-500 hover:bg-stone-50'}`}
                           onClick={() => setPhoneAction('sms')}
                       >
                           SMS Message
@@ -1546,14 +1546,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   <div className="p-6 flex-1 overflow-y-auto">
                       {phoneAction === 'call' ? (
                           <div className="flex flex-col items-center">
-                              <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 transition-all duration-500 ${isCallActive ? 'bg-green-100 ring-8 ring-green-50' : 'bg-slate-100'}`}>
-                                  <svg className={`w-10 h-10 ${isCallActive ? 'text-green-600' : 'text-slate-400'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                              <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 transition-all duration-500 ${isCallActive ? 'bg-green-100 ring-8 ring-green-50' : 'bg-stone-100'}`}>
+                                  <svg className={`w-10 h-10 ${isCallActive ? 'text-green-600' : 'text-stone-400'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
                               </div>
                               
-                              <h4 className="text-2xl font-mono font-bold text-slate-800 mb-1">
+                              <h4 className="text-2xl font-mono font-bold text-stone-800 mb-1">
                                   {isCallActive ? formatTime(callTimer) : 'Ready to Call'}
                               </h4>
-                              <p className="text-sm text-slate-500 mb-8">{isCallActive ? 'Call in progress...' : 'Click start to dial'}</p>
+                              <p className="text-sm text-stone-500 mb-8">{isCallActive ? 'Call in progress...' : 'Click start to dial'}</p>
 
                               <div className="w-full space-y-4">
                                   {isCallActive ? (
@@ -1575,9 +1575,9 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                   )}
                                   
                                   <div>
-                                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Call Notes</label>
+                                      <label className="block text-xs font-bold text-stone-500 uppercase mb-2">Call Notes</label>
                                       <textarea 
-                                          className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                                          className="w-full h-24 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                                           placeholder="Enter call details here..."
                                           value={callNote}
                                           onChange={e => setCallNote(e.target.value)}
@@ -1587,7 +1587,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                   {!isCallActive && callTimer > 0 && (
                                       <button 
                                           onClick={handleSaveCall}
-                                          className="w-full py-2 bg-slate-800 text-white rounded-lg font-bold text-sm hover:bg-slate-700 transition-colors"
+                                          className="w-full py-2 bg-black text-white rounded-lg font-bold text-sm hover:bg-stone-800 transition-colors"
                                       >
                                           Save Call Log
                                       </button>
@@ -1596,14 +1596,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                           </div>
                       ) : (
                           <div className="flex flex-col h-full">
-                              <div className="flex-1 bg-slate-50 rounded-xl border border-slate-100 p-4 mb-4 overflow-y-auto">
+                              <div className="flex-1 bg-stone-50 rounded-xl border border-stone-100 p-4 mb-4 overflow-y-auto">
                                   {/* Simulated History for Context */}
                                   <div className="flex flex-col space-y-3">
                                       <div className="self-end bg-teal-100 text-teal-900 p-2 rounded-lg rounded-br-none text-xs max-w-[80%]">
                                           Hi {caseData.clientName.split(' ')[0]}, just checking in on your treatment.
                                           <div className="text-[9px] opacity-50 mt-1 text-right">Yesterday</div>
                                       </div>
-                                      <div className="self-start bg-white border border-slate-200 text-slate-700 p-2 rounded-lg rounded-bl-none text-xs max-w-[80%]">
+                                      <div className="self-start bg-white border border-stone-200 text-stone-700 p-2 rounded-lg rounded-bl-none text-xs max-w-[80%]">
                                           Going well, thanks for asking.
                                           <div className="text-[9px] opacity-50 mt-1">Yesterday</div>
                                       </div>
@@ -1611,7 +1611,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                               </div>
                               <div>
                                   <textarea 
-                                      className="w-full h-20 p-3 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-500 resize-none mb-3"
+                                      className="w-full h-20 p-3 bg-white border border-stone-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-500 resize-none mb-3"
                                       placeholder="Type SMS message..."
                                       value={smsMessage}
                                       onChange={e => setSmsMessage(e.target.value)}
@@ -1642,14 +1642,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       {isFormModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-              <h3 className="font-bold text-slate-800">Generate Legal Documents</h3>
-              <button onClick={() => setIsFormModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+            <div className="px-6 py-4 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+              <h3 className="font-bold text-stone-800">Generate Legal Documents</h3>
+              <button onClick={() => setIsFormModalOpen(false)} className="text-stone-400 hover:text-stone-600">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="p-6">
-              <p className="text-sm text-slate-600 mb-4">Select the document you wish to generate based on the current case data.</p>
+              <p className="text-sm text-stone-600 mb-4">Select the document you wish to generate based on the current case data.</p>
               <div className="space-y-3 mb-6">
                 {([
                   { key: 'rep_lien' as DocumentFormType, title: 'Letter of Representation + Lien', desc: 'Includes notification to insurance carrier and attorney lien notice.' },
@@ -1659,7 +1659,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   { key: 'boss_intake_form' as DocumentFormType, title: 'Boss Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },
                   { key: 'bill_request' as DocumentFormType, title: 'Medical Records & Bills Request', desc: 'Rush request for all medical records and itemized bills with HIPAA authorization attached.' },
                 ]).map(opt => (
-                  <label key={opt.key} className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === opt.key ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                  <label key={opt.key} className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === opt.key ? 'border-blue-500 bg-blue-50' : 'border-stone-200 hover:bg-stone-50'}`}>
                     <input
                       type="radio"
                       name="formType"
@@ -1673,19 +1673,19 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       className="w-5 h-5 text-blue-600 focus:ring-blue-500"
                     />
                     <div>
-                      <span className="text-sm font-bold text-slate-800 block">{opt.title}</span>
-                      <span className="text-xs text-slate-500">{opt.desc}</span>
+                      <span className="text-sm font-bold text-stone-800 block">{opt.title}</span>
+                      <span className="text-xs text-stone-500">{opt.desc}</span>
                     </div>
                   </label>
                 ))}
                 {selectedForm === 'bill_request' && (
                   <div className="ml-8 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <label className="block text-xs font-bold text-slate-700 mb-2">Select Medical Provider</label>
+                    <label className="block text-xs font-bold text-stone-700 mb-2">Select Medical Provider</label>
                     {(caseData.medicalProviders?.length || 0) > 0 ? (
                       <select
                         value={selectedProviderId}
                         onChange={(e) => setSelectedProviderId(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="">-- Choose a provider --</option>
                         {caseData.medicalProviders!.map(p => (
@@ -1698,8 +1698,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   </div>
                 )}
               </div>
-              <div className="flex justify-end pt-2 border-t border-slate-100">
-                <button onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg mr-2">Cancel</button>
+              <div className="flex justify-end pt-2 border-t border-stone-100">
+                <button onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg mr-2">Cancel</button>
                 <button
                   onClick={() => {
                     if (!selectedForm) return;

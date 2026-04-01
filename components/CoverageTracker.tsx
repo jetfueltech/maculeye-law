@@ -34,10 +34,10 @@ const STATUS_COLORS: Record<string, string> = {
   denied: 'bg-rose-50 text-rose-700 border-rose-200',
   under_investigation: 'bg-blue-50 text-blue-700 border-blue-200',
   disputed: 'bg-orange-50 text-orange-700 border-orange-200',
-  not_requested: 'bg-slate-50 text-slate-600 border-slate-200',
+  not_requested: 'bg-stone-50 text-stone-600 border-stone-200',
   requested: 'bg-blue-50 text-blue-700 border-blue-200',
   received: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  na: 'bg-slate-50 text-slate-400 border-slate-200',
+  na: 'bg-stone-50 text-stone-400 border-stone-200',
 };
 
 function addActivity(c: CaseFile, message: string, author?: string): CaseFile {
@@ -57,7 +57,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
 
   const defInsurance = (caseData.insurance || []).filter(i => i.type === 'Defendant');
-  const inputClass = "w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+  const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
 
   const updateInsurance = (idx: number, updates: Partial<Insurance>) => {
     const allIns = [...(caseData.insurance || [])];
@@ -115,12 +115,12 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
       )}
 
       {defInsurance.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+        <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
+          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-1">No Defendant Insurance</h3>
-          <p className="text-sm text-slate-500">Add defendant insurance info in the Overview tab to track coverage and liability.</p>
+          <h3 className="text-lg font-bold text-stone-800 mb-1">No Defendant Insurance</h3>
+          <p className="text-sm text-stone-500">Add defendant insurance info in the Overview tab to track coverage and liability.</p>
         </div>
       ) : (
         defInsurance.map((ins, idx) => {
@@ -130,18 +130,18 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
           const policyStatus = ins.policyLimitsStatus || 'not_requested';
 
           return (
-            <div key={idx} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+            <div key={idx} className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+              <div className="px-6 py-5 border-b border-stone-100 flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-slate-900 text-base">{ins.provider || 'Unknown Insurer'}</h4>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                  <h4 className="font-bold text-stone-900 text-base">{ins.provider || 'Unknown Insurer'}</h4>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-stone-500">
                     {ins.claimNumber && <span>Claim: {ins.claimNumber}</span>}
                     {ins.adjuster && <span>Adjuster: {ins.adjuster}</span>}
                   </div>
                 </div>
                 <button
                   onClick={() => setEditingIdx(isEditing ? null : idx)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors"
                 >
                   {isEditing ? 'Done' : 'Update'}
                 </button>
@@ -149,7 +149,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
 
               <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-3">
-                  <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Coverage</h5>
+                  <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider pb-1 border-b border-stone-100">Coverage</h5>
                   {isEditing ? (
                     <div className="space-y-3">
                       <select
@@ -162,7 +162,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                         ))}
                       </select>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Follow-up Date</label>
+                        <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Follow-up Date</label>
                         <input type="date" className={inputClass} value={ins.coverageFollowUpDate || ''} onChange={e => updateInsurance(idx, { coverageFollowUpDate: e.target.value })} />
                       </div>
                     </div>
@@ -172,7 +172,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                         {COVERAGE_LABELS[coverageStatus]}
                       </span>
                       {ins.coverageStatusDate && (
-                        <p className="text-[10px] text-slate-400 mt-2">Updated: {new Date(ins.coverageStatusDate).toLocaleDateString()}</p>
+                        <p className="text-[10px] text-stone-400 mt-2">Updated: {new Date(ins.coverageStatusDate).toLocaleDateString()}</p>
                       )}
                       {ins.coverageFollowUpDate && coverageStatus === 'pending' && (
                         <p className="text-[10px] text-amber-600 font-medium mt-1">Follow-up: {new Date(ins.coverageFollowUpDate).toLocaleDateString()}</p>
@@ -182,7 +182,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                 </div>
 
                 <div className="space-y-3">
-                  <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Liability</h5>
+                  <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider pb-1 border-b border-stone-100">Liability</h5>
                   {isEditing ? (
                     <div className="space-y-3">
                       <select
@@ -195,7 +195,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                         ))}
                       </select>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Follow-up Date</label>
+                        <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Follow-up Date</label>
                         <input type="date" className={inputClass} value={ins.liabilityFollowUpDate || ''} onChange={e => updateInsurance(idx, { liabilityFollowUpDate: e.target.value })} />
                       </div>
                     </div>
@@ -205,7 +205,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                         {LIABILITY_LABELS[liabilityStatus]}
                       </span>
                       {ins.liabilityStatusDate && (
-                        <p className="text-[10px] text-slate-400 mt-2">Updated: {new Date(ins.liabilityStatusDate).toLocaleDateString()}</p>
+                        <p className="text-[10px] text-stone-400 mt-2">Updated: {new Date(ins.liabilityStatusDate).toLocaleDateString()}</p>
                       )}
                       {ins.liabilityFollowUpDate && liabilityStatus === 'pending' && (
                         <p className="text-[10px] text-amber-600 font-medium mt-1">Follow-up: {new Date(ins.liabilityFollowUpDate).toLocaleDateString()}</p>
@@ -215,7 +215,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                 </div>
 
                 <div className="space-y-3">
-                  <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Policy Limits</h5>
+                  <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider pb-1 border-b border-stone-100">Policy Limits</h5>
                   {isEditing ? (
                     <div className="space-y-3">
                       <select
@@ -233,7 +233,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                         ))}
                       </select>
                       <div>
-                        <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Limits Amount</label>
+                        <label className="block text-[10px] font-bold text-stone-400 uppercase mb-1">Limits Amount</label>
                         <input className={inputClass} value={ins.policyLimitsAmount || ''} onChange={e => updateInsurance(idx, { policyLimitsAmount: e.target.value })} placeholder="e.g. 25/50" />
                       </div>
                     </div>
@@ -243,10 +243,10 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                         {POLICY_LIMITS_LABELS[policyStatus]}
                       </span>
                       {ins.policyLimitsAmount && (
-                        <p className="text-sm font-bold text-slate-900 mt-2">{ins.policyLimitsAmount}</p>
+                        <p className="text-sm font-bold text-stone-900 mt-2">{ins.policyLimitsAmount}</p>
                       )}
                       {ins.policyLimitsRequestDate && (
-                        <p className="text-[10px] text-slate-400 mt-1">Requested: {new Date(ins.policyLimitsRequestDate).toLocaleDateString()}</p>
+                        <p className="text-[10px] text-stone-400 mt-1">Requested: {new Date(ins.policyLimitsRequestDate).toLocaleDateString()}</p>
                       )}
                       {ins.policyLimitsReceivedDate && (
                         <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Received: {new Date(ins.policyLimitsReceivedDate).toLocaleDateString()}</p>
@@ -258,9 +258,9 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
 
               {ins.coverageLimits && (
                 <div className="px-6 pb-4">
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                    <span className="text-xs font-bold text-slate-400 uppercase">Existing Coverage Info: </span>
-                    <span className="text-sm font-medium text-slate-700">{ins.coverageLimits}</span>
+                  <div className="bg-stone-50 rounded-lg p-3 border border-stone-100">
+                    <span className="text-xs font-bold text-stone-400 uppercase">Existing Coverage Info: </span>
+                    <span className="text-sm font-medium text-stone-700">{ins.coverageLimits}</span>
                   </div>
                 </div>
               )}
@@ -269,9 +269,9 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
         })
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+      <div className="bg-white rounded-2xl border border-stone-200 p-6">
+        <h4 className="font-bold text-stone-800 mb-4 flex items-center gap-2">
+          <svg className="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
           MRI & Treatment Status
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -279,7 +279,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                className="w-4 h-4 text-blue-600 rounded border-stone-300 focus:ring-blue-500"
                 checked={caseData.mriCompleted || false}
                 onChange={e => {
                   let updated = { ...caseData, mriCompleted: e.target.checked };
@@ -290,22 +290,22 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
                   onUpdateCase(updated);
                 }}
               />
-              <span className="text-sm text-slate-700 font-medium">MRI Completed</span>
+              <span className="text-sm text-stone-700 font-medium">MRI Completed</span>
             </label>
             {caseData.mriCompleted && (
               <input
                 type="date"
-                className="mt-2 w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+                className="mt-2 w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm outline-none"
                 value={caseData.mriCompletedDate || ''}
                 onChange={e => onUpdateCase({ ...caseData, mriCompletedDate: e.target.value })}
               />
             )}
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Treatment End Date</label>
+            <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Treatment End Date</label>
             <input
               type="date"
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+              className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm outline-none"
               value={caseData.treatmentEndDate || ''}
               onChange={e => {
                 let updated = { ...caseData, treatmentEndDate: e.target.value };
@@ -317,9 +317,9 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Treatment Status</label>
+            <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Treatment Status</label>
             <input
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+              className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm outline-none"
               value={caseData.treatmentStatus || ''}
               onChange={e => onUpdateCase({ ...caseData, treatmentStatus: e.target.value })}
               placeholder="e.g. Currently treating, Discharged"

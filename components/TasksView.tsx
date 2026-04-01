@@ -52,12 +52,12 @@ const TYPE_COLORS: Record<TaskType, string> = {
   er_bills: 'bg-orange-50 text-orange-700 border-orange-200',
   medical_records: 'bg-teal-50 text-teal-700 border-teal-200',
   demand_prep: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  general: 'bg-slate-50 text-slate-700 border-slate-200',
+  general: 'bg-stone-50 text-stone-700 border-stone-200',
   retainer: 'bg-violet-50 text-violet-700 border-violet-200',
   lor_defendant: 'bg-sky-50 text-sky-700 border-sky-200',
   lor_client_ins: 'bg-sky-50 text-sky-700 border-sky-200',
-  crash_report_request: 'bg-slate-50 text-slate-700 border-slate-200',
-  crash_report_received: 'bg-slate-50 text-slate-700 border-slate-200',
+  crash_report_request: 'bg-stone-50 text-stone-700 border-stone-200',
+  crash_report_received: 'bg-stone-50 text-stone-700 border-stone-200',
   hipaa: 'bg-pink-50 text-pink-700 border-pink-200',
   treatment_followup: 'bg-green-50 text-green-700 border-green-200',
   bill_request: 'bg-orange-50 text-orange-700 border-orange-200',
@@ -66,10 +66,10 @@ const TYPE_COLORS: Record<TaskType, string> = {
   demand_review: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   contact_client: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   verify_insurance: 'bg-blue-50 text-blue-700 border-blue-200',
-  complete_intake_form: 'bg-slate-50 text-slate-700 border-slate-200',
-  create_cms_case: 'bg-slate-50 text-slate-700 border-slate-200',
-  upload_case_files: 'bg-slate-50 text-slate-700 border-slate-200',
-  upload_intake_form: 'bg-slate-50 text-slate-700 border-slate-200',
+  complete_intake_form: 'bg-stone-50 text-stone-700 border-stone-200',
+  create_cms_case: 'bg-stone-50 text-stone-700 border-stone-200',
+  upload_case_files: 'bg-stone-50 text-stone-700 border-stone-200',
+  upload_intake_form: 'bg-stone-50 text-stone-700 border-stone-200',
   send_hipaa_to_medical: 'bg-pink-50 text-pink-700 border-pink-200',
   send_demographics: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   check_er_ambulance: 'bg-red-50 text-red-700 border-red-200',
@@ -82,7 +82,7 @@ const TYPE_COLORS: Record<TaskType, string> = {
 const PRIORITY_COLORS: Record<string, string> = {
   high: 'text-rose-600',
   medium: 'text-amber-600',
-  low: 'text-slate-400',
+  low: 'text-stone-400',
 };
 
 function getDaysUntil(dateStr: string): number {
@@ -160,42 +160,42 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
   return (
     <div className="space-y-8 animate-fade-in pb-10">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Tasks & Reminders</h1>
-        <p className="text-slate-500 mt-2 text-lg">Track follow-ups, deadlines, and case action items.</p>
+        <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Tasks & Reminders</h1>
+        <p className="text-stone-500 mt-2 text-lg">Track follow-ups, deadlines, and case action items.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Open Tasks</div>
-          <div className="text-3xl font-bold text-slate-900">{openCount}</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-5">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Open Tasks</div>
+          <div className="text-3xl font-bold text-stone-900">{openCount}</div>
         </div>
         <div className="bg-white rounded-xl border border-rose-200 p-5">
           <div className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-1">Overdue</div>
           <div className="text-3xl font-bold text-rose-600">{overdueCount}</div>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Completed</div>
+        <div className="bg-white rounded-xl border border-stone-200 p-5">
+          <div className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">Completed</div>
           <div className="text-3xl font-bold text-emerald-600">{completedCount}</div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 items-center bg-white p-2 rounded-xl border border-slate-200 w-fit">
+      <div className="flex flex-wrap gap-4 items-center bg-white p-2 rounded-xl border border-stone-200 w-fit">
         <div className="px-2">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Filters:</span>
+          <span className="text-xs font-bold text-stone-400 uppercase tracking-wider">Filters:</span>
         </div>
         {(['all', 'overdue', 'today', 'upcoming'] as const).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
-              filter === f ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'
+              filter === f ? 'bg-black text-white' : 'text-stone-500 hover:bg-stone-100'
             }`}
           >
             {f === 'all' ? 'All' : f === 'overdue' ? `Overdue (${overdueCount})` : f === 'today' ? 'Due Today' : 'Upcoming'}
           </button>
         ))}
         <select
-          className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 outline-none cursor-pointer"
+          className="bg-stone-50 border border-stone-200 text-stone-700 text-sm rounded-lg p-2 outline-none cursor-pointer"
           value={typeFilter}
           onChange={e => setTypeFilter(e.target.value)}
         >
@@ -205,7 +205,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
           ))}
         </select>
         <select
-          className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2 outline-none cursor-pointer"
+          className="bg-stone-50 border border-stone-200 text-stone-700 text-sm rounded-lg p-2 outline-none cursor-pointer"
           value={memberFilter}
           onChange={e => setMemberFilter(e.target.value)}
         >
@@ -219,16 +219,16 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
         </select>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
         {filteredTasks.length === 0 ? (
-          <div className="p-16 text-center text-slate-400">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+          <div className="p-16 text-center text-stone-400">
+            <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
             </div>
-            <p className="text-lg font-medium text-slate-600">No tasks match your filters</p>
+            <p className="text-lg font-medium text-stone-600">No tasks match your filters</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-stone-100">
             {filteredTasks.map(task => {
               const days = getDaysUntil(task.dueDate);
               const isOverdue = task.status !== 'completed' && days < 0;
@@ -236,13 +236,13 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
               const isCompleted = task.status === 'completed';
 
               return (
-                <div key={task.id} className={`px-6 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors ${isCompleted ? 'opacity-50' : ''}`}>
+                <div key={task.id} className={`px-6 py-4 flex items-center gap-4 hover:bg-stone-50 transition-colors ${isCompleted ? 'opacity-50' : ''}`}>
                   <button
                     onClick={() => isCompleted ? handleReopen(task) : handleComplete(task)}
                     className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                       isCompleted
                         ? 'bg-emerald-500 border-emerald-500 text-white'
-                        : 'border-slate-300 hover:border-emerald-400'
+                        : 'border-stone-300 hover:border-emerald-400'
                     }`}
                   >
                     {isCompleted && (
@@ -252,7 +252,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-sm font-medium ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                      <span className={`text-sm font-medium ${isCompleted ? 'line-through text-stone-400' : 'text-stone-900'}`}>
                         {task.title}
                       </span>
                       <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full border ${TYPE_COLORS[task.type]}`}>
@@ -263,7 +263,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
                       )}
                     </div>
                     {task.description && (
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{task.description}</p>
+                      <p className="text-xs text-stone-500 mt-0.5 truncate">{task.description}</p>
                     )}
                     <div className="flex items-center gap-3 mt-1">
                       <button
@@ -286,7 +286,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
                         }}
                       />
                       {task.recurrence && task.recurrence !== 'one-time' && (
-                        <span className="text-[10px] text-slate-400 font-medium flex items-center gap-0.5">
+                        <span className="text-[10px] text-stone-400 font-medium flex items-center gap-0.5">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                           {task.recurrence}
                         </span>
@@ -299,7 +299,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
                       isCompleted ? 'text-emerald-500' :
                       isOverdue ? 'text-rose-600' :
                       isDueToday ? 'text-amber-600' :
-                      'text-slate-500'
+                      'text-stone-500'
                     }`}>
                       {isCompleted
                         ? 'Done'
@@ -309,7 +309,7 @@ export const TasksView: React.FC<TasksViewProps> = ({ cases, onSelectCase, onUpd
                         ? 'Due today'
                         : `${days}d left`}
                     </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
+                    <div className="text-[10px] text-stone-400 mt-0.5">
                       {new Date(task.dueDate).toLocaleDateString()}
                     </div>
                   </div>

@@ -28,8 +28,8 @@ const DOC_TYPE_COLORS: Record<string, string> = {
   authorization: 'bg-amber-50 text-amber-700 border-amber-200',
   insurance_card: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   medical_record: 'bg-rose-50 text-rose-700 border-rose-200',
-  photo: 'bg-slate-50 text-slate-700 border-slate-200',
-  other: 'bg-slate-50 text-slate-600 border-slate-200',
+  photo: 'bg-stone-50 text-stone-700 border-stone-200',
+  other: 'bg-stone-50 text-stone-600 border-stone-200',
 };
 
 const FIELD_LABELS: Record<string, { label: string; section: string }> = {
@@ -67,13 +67,13 @@ const FieldRow: React.FC<{ fieldKey: string; value: string | boolean; isNew: boo
 
   return (
     <div className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-500 ${
-      isNew ? 'bg-emerald-50 ring-1 ring-emerald-200 animate-field-in' : 'bg-slate-50'
+      isNew ? 'bg-emerald-50 ring-1 ring-emerald-200 animate-field-in' : 'bg-stone-50'
     }`}>
-      <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${isNew ? 'text-emerald-500' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-colors ${isNew ? 'text-emerald-500' : 'text-stone-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
       </svg>
-      <span className="text-[10px] font-bold text-slate-400 uppercase w-24 flex-shrink-0 tracking-wide">{info.label}</span>
-      <span className={`text-sm font-medium truncate transition-colors ${isNew ? 'text-emerald-700' : 'text-slate-700'}`}>
+      <span className="text-[10px] font-bold text-stone-400 uppercase w-24 flex-shrink-0 tracking-wide">{info.label}</span>
+      <span className={`text-sm font-medium truncate transition-colors ${isNew ? 'text-emerald-700' : 'text-stone-700'}`}>
         {displayValue}
       </span>
     </div>
@@ -145,8 +145,8 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
 
       <div className="flex gap-6">
         <div className="flex-1 min-w-0">
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+            <div className="px-4 py-3 border-b border-stone-100 bg-stone-50 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {!extractionPhase ? (
                   <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
@@ -162,7 +162,7 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                     </svg>
                   </div>
                 )}
-                <h4 className="text-sm font-bold text-slate-700">
+                <h4 className="text-sm font-bold text-stone-700">
                   {extractionPhase ? 'Extracting Data' : 'Scanning Documents'}
                 </h4>
               </div>
@@ -171,7 +171,7 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
 
             <div className="relative" style={{ minHeight: '340px' }}>
               {activeDoc && !extractionPhase ? (
-                <div className="relative w-full h-80 bg-slate-50 flex items-center justify-center overflow-hidden">
+                <div className="relative w-full h-80 bg-stone-50 flex items-center justify-center overflow-hidden">
                   {isImage && activeDoc.fileData ? (
                     <img
                       src={activeDoc.fileData}
@@ -180,12 +180,12 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-3 p-6">
-                      <svg className={`w-16 h-16 ${isPdf ? 'text-red-300' : 'text-slate-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-16 h-16 ${isPdf ? 'text-red-300' : 'text-stone-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                       <div className="space-y-1.5 w-48">
                         {[...Array(6)].map((_, i) => (
-                          <div key={i} className="h-1.5 rounded-full bg-slate-200" style={{ width: `${55 + Math.sin(i) * 35}%` }} />
+                          <div key={i} className="h-1.5 rounded-full bg-stone-200" style={{ width: `${55 + Math.sin(i) * 35}%` }} />
                         ))}
                       </div>
                     </div>
@@ -203,7 +203,7 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                   </div>
                 </div>
               ) : extractionPhase ? (
-                <div className="w-full h-80 bg-gradient-to-br from-slate-50 to-blue-50/30 flex flex-col items-center justify-center gap-4 p-6">
+                <div className="w-full h-80 bg-gradient-to-br from-stone-50 to-blue-50/30 flex flex-col items-center justify-center gap-4 p-6">
                   <div className="relative">
                     <svg className="w-16 h-16 text-blue-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -211,8 +211,8 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                     <div className="absolute inset-0 rounded-full" style={{ animation: 'pulse-glow 2s ease-in-out infinite' }} />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-slate-700 mb-1">Cross-referencing all documents</p>
-                    <p className="text-xs text-slate-400">AI is reading every document to extract case data</p>
+                    <p className="text-sm font-semibold text-stone-700 mb-1">Cross-referencing all documents</p>
+                    <p className="text-xs text-stone-400">AI is reading every document to extract case data</p>
                   </div>
                   {extractedEntries.length > 0 && (
                     <div className="mt-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-200">
@@ -221,7 +221,7 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                   )}
                 </div>
               ) : (
-                <div className="w-full h-80 bg-slate-50 flex items-center justify-center">
+                <div className="w-full h-80 bg-stone-50 flex items-center justify-center">
                   <div className="flex gap-1.5">
                     {[0, 1, 2].map(i => (
                       <div key={i} className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
@@ -231,11 +231,11 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
               )}
             </div>
 
-            <div className="px-4 py-3 border-t border-slate-100">
+            <div className="px-4 py-3 border-t border-stone-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-slate-500">{processingStatus}</span>
+                <span className="text-xs font-medium text-stone-500">{processingStatus}</span>
               </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-stone-100 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700 ease-out"
                   style={{ width: `${progress}%` }}
@@ -259,14 +259,14 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                       ? 'border-blue-400 bg-blue-50 shadow-md shadow-blue-100'
                       : isDone
                       ? 'border-emerald-300 bg-emerald-50/50'
-                      : 'border-slate-200 bg-white opacity-60'
+                      : 'border-stone-200 bg-white opacity-60'
                   }`}
                 >
-                  <div className="relative w-14 h-16 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center">
+                  <div className="relative w-14 h-16 rounded-lg overflow-hidden bg-stone-100 flex items-center justify-center">
                     {docIsImage && doc.fileData ? (
                       <img src={doc.fileData} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <svg className={`w-6 h-6 ${doc.mimeType.includes('pdf') ? 'text-red-300' : 'text-slate-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={`w-6 h-6 ${doc.mimeType.includes('pdf') ? 'text-red-300' : 'text-stone-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     )}
@@ -291,7 +291,7 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                         {DOC_TYPE_LABELS[identified.identifiedType]?.split(' ')[0] || 'Doc'}
                       </span>
                     ) : (
-                      <span className="text-[9px] font-medium text-slate-400 truncate block">
+                      <span className="text-[9px] font-medium text-stone-400 truncate block">
                         {isActive ? 'Scanning...' : 'Waiting'}
                       </span>
                     )}
@@ -303,9 +303,9 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
         </div>
 
         <div className="w-80 flex-shrink-0">
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden sticky top-4">
-            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Extracted Fields</h4>
+          <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden sticky top-4">
+            <div className="px-4 py-3 border-b border-stone-100 bg-stone-50 flex items-center justify-between">
+              <h4 className="text-xs font-bold text-stone-700 uppercase tracking-wider">Extracted Fields</h4>
               {extractedEntries.length > 0 && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
                   {extractedEntries.length}
@@ -316,10 +316,10 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
             <div className="p-3 max-h-[480px] overflow-y-auto space-y-1.5">
               {extractedEntries.length === 0 && !extractionPhase && (
                 <div className="py-12 text-center">
-                  <svg className="w-8 h-8 text-slate-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-8 h-8 text-stone-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <p className="text-xs text-slate-400">Fields will appear here as documents are analyzed</p>
+                  <p className="text-xs text-stone-400">Fields will appear here as documents are analyzed</p>
                 </div>
               )}
 
@@ -330,7 +330,7 @@ export const DocumentScanScreen: React.FC<DocumentScanScreenProps> = ({
                       <div key={i} className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />
                     ))}
                   </div>
-                  <p className="text-xs text-slate-400">Reading documents...</p>
+                  <p className="text-xs text-stone-400">Reading documents...</p>
                 </div>
               )}
 

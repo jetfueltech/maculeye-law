@@ -517,7 +517,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
     if (doc.mimeType?.startsWith('image/')) return 'bg-emerald-50 text-emerald-600';
     if (doc.mimeType?.includes('pdf')) return 'bg-red-50 text-red-500';
     if (doc.type === 'email') return 'bg-blue-100 text-blue-600';
-    return 'bg-slate-50 text-slate-500';
+    return 'bg-stone-50 text-stone-500';
   };
 
   const isScanning = pendingFiles.some(pf => pf.scanStatus === 'scanning');
@@ -551,20 +551,20 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
         className={`border-2 border-dashed rounded-2xl p-8 text-center transition-all ${
           isDragOver
             ? 'border-blue-400 bg-blue-50'
-            : 'border-slate-200 bg-white hover:border-slate-300'
+            : 'border-stone-200 bg-white hover:border-stone-300'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         <div className="flex flex-col items-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-            <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
-          <p className="text-sm font-medium text-slate-700 mb-1">Drag and drop files here</p>
-          <p className="text-xs text-slate-400 mb-4">Images, PDFs, and documents up to 50MB</p>
+          <p className="text-sm font-medium text-stone-700 mb-1">Drag and drop files here</p>
+          <p className="text-xs text-stone-400 mb-4">Images, PDFs, and documents up to 50MB</p>
           <button
             onClick={() => fileInputRef.current?.click()}
             className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-sm"
@@ -583,9 +583,9 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
       </div>
 
       {pendingFiles.length > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <div className="bg-white rounded-2xl border border-stone-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h4 className="font-bold text-slate-800 text-sm">
+            <h4 className="font-bold text-stone-800 text-sm">
               {pendingFiles.length} file{pendingFiles.length > 1 ? 's' : ''} ready to upload
             </h4>
             {isScanning && (
@@ -600,7 +600,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
           </div>
           <div className="space-y-3 mb-6">
             {pendingFiles.map((pf, idx) => (
-              <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div key={idx} className="p-3 bg-stone-50 rounded-xl border border-stone-100">
                 <div className="flex items-center gap-4">
                   {pf.preview ? (
                     <img src={pf.preview} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
@@ -612,9 +612,9 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-800 truncate">{pf.file.name}</p>
+                    <p className="text-sm font-medium text-stone-800 truncate">{pf.file.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-slate-400">{(pf.file.size / 1024).toFixed(0)} KB</p>
+                      <p className="text-xs text-stone-400">{(pf.file.size / 1024).toFixed(0)} KB</p>
                       {pf.scanStatus === 'scanning' && (
                         <span className="flex items-center gap-1 text-[10px] text-blue-500 font-medium">
                           <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
@@ -639,7 +639,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                     </div>
                   </div>
                   <select
-                    className="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
+                    className="text-xs bg-white border border-stone-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
                     value={pf.type}
                     onChange={(e) => updatePendingType(idx, e.target.value as DocumentType)}
                   >
@@ -649,7 +649,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                   </select>
                   {pf.type === 'photo' && (
                     <select
-                      className="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
+                      className="text-xs bg-white border border-stone-200 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-blue-500"
                       value={pf.photoCategory || ''}
                       onChange={(e) => updatePendingPhotoCategory(idx, e.target.value as PhotoCategory)}
                     >
@@ -661,7 +661,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                   )}
                   <button
                     onClick={() => removePendingFile(idx)}
-                    className="text-slate-400 hover:text-rose-500 transition-colors p-1"
+                    className="text-stone-400 hover:text-rose-500 transition-colors p-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -672,7 +672,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                   <div className="mt-2 pl-16">
                     <input
                       type="text"
-                      className="w-full text-xs bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-slate-400"
+                      className="w-full text-xs bg-white border border-stone-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 placeholder-stone-400"
                       placeholder="Describe this image (e.g., Front bumper damage, Left knee bruising, Intersection looking north)"
                       value={pf.description || ''}
                       onChange={(e) => updatePendingDescription(idx, e.target.value)}
@@ -718,7 +718,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                 pendingFiles.forEach(pf => { if (pf.preview) URL.revokeObjectURL(pf.preview); });
                 setPendingFiles([]);
               }}
-              className="px-4 py-2.5 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+              className="px-4 py-2.5 text-sm text-stone-500 hover:text-stone-700 transition-colors"
             >
               Cancel
             </button>
@@ -735,8 +735,8 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">AI is analyzing uploaded documents...</p>
-              <p className="text-xs text-slate-500">Reading all pages to extract actionable information</p>
+              <p className="text-sm font-semibold text-stone-800">AI is analyzing uploaded documents...</p>
+              <p className="text-xs text-stone-500">Reading all pages to extract actionable information</p>
             </div>
             <svg className="animate-spin w-5 h-5 text-blue-600 ml-auto" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -755,30 +755,30 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
         />
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
+      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-stone-100">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-slate-800 text-sm">
+            <h3 className="font-bold text-stone-800 text-sm">
               {caseData.documents.length} Document{caseData.documents.length !== 1 ? 's' : ''}
             </h3>
           </div>
           {caseData.documents.length > 0 && (
             <div className="flex items-center gap-3">
               <div className="relative flex-1 max-w-xs">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-3 top-1/2 -transtone-y-1/2 w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
                   type="text"
                   placeholder="Search documents..."
-                  className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-slate-400"
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-stone-50 border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-stone-400"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute right-2 top-1/2 -transtone-y-1/2 text-stone-400 hover:text-stone-600"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -789,8 +789,8 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                   onClick={() => setFilterType('all')}
                   className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                     filterType === 'all'
-                      ? 'bg-slate-800 text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-black text-white'
+                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                   }`}
                 >
                   All
@@ -801,8 +801,8 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                     onClick={() => setFilterType(filterType === opt.value ? 'all' : opt.value)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
                       filterType === opt.value
-                        ? 'bg-slate-800 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-black text-white'
+                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                     }`}
                   >
                     {opt.label}
@@ -815,35 +815,35 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
 
         {caseData.documents.length === 0 ? (
           <div className="p-12 text-center">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="text-sm text-slate-500">No documents uploaded yet</p>
-            <p className="text-xs text-slate-400 mt-1">Drag files above or click Browse to get started</p>
+            <p className="text-sm text-stone-500">No documents uploaded yet</p>
+            <p className="text-xs text-stone-400 mt-1">Drag files above or click Browse to get started</p>
           </div>
         ) : filteredDocs.length === 0 ? (
           <div className="p-12 text-center">
-            <p className="text-sm text-slate-500">No documents match your search</p>
+            <p className="text-sm text-stone-500">No documents match your search</p>
             <button onClick={() => { setSearchQuery(''); setFilterType('all'); }} className="text-xs text-blue-600 hover:text-blue-700 mt-2">
               Clear filters
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
+            <table className="min-w-full divide-y divide-stone-200">
+              <thead className="bg-stone-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Document</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Source</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Uploaded</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Document</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Source</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-stone-500 uppercase tracking-wider">Uploaded</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-stone-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-slate-100">
+              <tbody className="bg-white divide-y divide-stone-100">
                 {filteredDocs.map(({ doc, originalIndex: idx }) => (
                   <tr
                     key={idx}
@@ -888,10 +888,10 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                             />
                           ) : (
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-slate-900 group-hover/row:text-blue-700 transition-colors">{doc.fileName}</span>
+                              <span className="text-sm font-medium text-stone-900 group-hover/row:text-blue-700 transition-colors">{doc.fileName}</span>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleStartRename(idx, doc.fileName); }}
-                                className="opacity-0 group-hover/row:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity p-1"
+                                className="opacity-0 group-hover/row:opacity-100 text-stone-400 hover:text-blue-600 transition-opacity p-1"
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                               </button>
@@ -906,7 +906,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                             </div>
                           )}
                           {doc.description && (
-                            <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-xs">{doc.description}</p>
+                            <p className="text-[11px] text-stone-400 mt-0.5 truncate max-w-xs">{doc.description}</p>
                           )}
                           {doc.aiAnalysis?.summary && (
                             <p className="text-[11px] text-blue-400 mt-0.5 truncate max-w-xs">{doc.aiAnalysis.summary}</p>
@@ -930,7 +930,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                       ) : (
                         <button
                           onClick={() => setEditingTypeIndex(idx)}
-                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide bg-slate-100 text-slate-800 hover:bg-blue-50 hover:text-blue-700 transition-colors group/type"
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide bg-stone-100 text-stone-800 hover:bg-blue-50 hover:text-blue-700 transition-colors group/type"
                         >
                           {DOCUMENT_NAMING_RULES[doc.type] || doc.type}
                           <svg className="w-3 h-3 opacity-0 group-hover/type:opacity-100 transition-opacity text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
@@ -970,16 +970,16 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                       ) : (
                         <button
                           onClick={() => setEditingCategoryIndex(idx)}
-                          className="text-slate-400 hover:text-blue-600 text-xs transition-colors"
+                          className="text-stone-400 hover:text-blue-600 text-xs transition-colors"
                         >
                           + Add
                         </button>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-stone-500">
                       {doc.source || 'Manual Upload'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-xs text-slate-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-xs text-stone-500">
                       {formatDate(doc.uploadedAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
@@ -990,7 +990,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                             target="_blank"
                             rel="noopener noreferrer"
                             download={doc.fileName}
-                            className="text-slate-400 hover:text-blue-600 transition-colors"
+                            className="text-stone-400 hover:text-blue-600 transition-colors"
                             title="Download"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -998,7 +998,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                         )}
                         <button
                           onClick={() => handleDeleteDocument(idx)}
-                          className="text-slate-400 hover:text-rose-600 transition-colors"
+                          className="text-stone-400 hover:text-rose-600 transition-colors"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>

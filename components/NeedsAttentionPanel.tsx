@@ -10,7 +10,7 @@ interface NeedsAttentionPanelProps {
 const PRIORITY_CONFIG = {
   critical: { bg: 'bg-rose-50', border: 'border-rose-200', badge: 'bg-rose-100 text-rose-700', dot: 'bg-rose-500', text: 'text-rose-700' },
   high: { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500', text: 'text-amber-700' },
-  medium: { bg: 'bg-slate-50', border: 'border-slate-200', badge: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400', text: 'text-slate-600' },
+  medium: { bg: 'bg-stone-50', border: 'border-stone-200', badge: 'bg-stone-100 text-stone-600', dot: 'bg-stone-400', text: 'text-stone-600' },
 };
 
 const TYPE_ICONS: Record<ReminderAlert['type'], string> = {
@@ -53,14 +53,14 @@ export const NeedsAttentionPanel: React.FC<NeedsAttentionPanelProps> = ({ cases,
 
   if (alerts.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+      <div className="bg-white rounded-2xl border border-stone-200 p-6 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center">
             <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           </div>
           <div>
-            <p className="font-semibold text-slate-800 text-sm">All cases on track</p>
-            <p className="text-xs text-slate-500">No action items requiring attention</p>
+            <p className="font-semibold text-stone-800 text-sm">All cases on track</p>
+            <p className="text-xs text-stone-500">No action items requiring attention</p>
           </div>
         </div>
       </div>
@@ -68,9 +68,9 @@ export const NeedsAttentionPanel: React.FC<NeedsAttentionPanelProps> = ({ cases,
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+    <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden mb-6">
       <div
-        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors"
+        className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-stone-50 transition-colors"
         onClick={() => setCollapsed(!collapsed)}
       >
         <div className="flex items-center gap-3">
@@ -81,7 +81,7 @@ export const NeedsAttentionPanel: React.FC<NeedsAttentionPanelProps> = ({ cases,
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-bold text-slate-900">Needs Attention</p>
+              <p className="font-bold text-stone-900">Needs Attention</p>
               {criticalCount > 0 && (
                 <span className="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{criticalCount} critical</span>
               )}
@@ -89,7 +89,7 @@ export const NeedsAttentionPanel: React.FC<NeedsAttentionPanelProps> = ({ cases,
                 <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{highCount} high</span>
               )}
             </div>
-            <p className="text-xs text-slate-500">{alerts.length} item{alerts.length !== 1 ? 's' : ''} across {Object.keys(groupedByCaseId).length} case{Object.keys(groupedByCaseId).length !== 1 ? 's' : ''}</p>
+            <p className="text-xs text-stone-500">{alerts.length} item{alerts.length !== 1 ? 's' : ''} across {Object.keys(groupedByCaseId).length} case{Object.keys(groupedByCaseId).length !== 1 ? 's' : ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -98,32 +98,32 @@ export const NeedsAttentionPanel: React.FC<NeedsAttentionPanelProps> = ({ cases,
               <button
                 key={f}
                 onClick={e => { e.stopPropagation(); setFilter(f); }}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors capitalize ${filter === f ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors capitalize ${filter === f ? 'bg-black text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
               >
                 {f}
               </button>
             ))}
           </div>
-          <svg className={`w-4 h-4 text-slate-400 transition-transform ${collapsed ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          <svg className={`w-4 h-4 text-stone-400 transition-transform ${collapsed ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
         </div>
       </div>
 
       {!collapsed && (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-stone-100">
           {Object.entries(groupedByCaseId).map(([caseId, caseAlerts]) => {
             const topAlert = caseAlerts[0];
             const cfg = PRIORITY_CONFIG[topAlert.priority];
             return (
               <div
                 key={caseId}
-                className={`px-6 py-4 cursor-pointer hover:bg-slate-50 transition-colors ${cfg.bg}`}
+                className={`px-6 py-4 cursor-pointer hover:bg-stone-50 transition-colors ${cfg.bg}`}
                 onClick={() => onSelectCase(caseId)}
               >
                 <div className="flex items-start gap-3">
                   <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                      <span className="font-semibold text-slate-900 text-sm">{topAlert.caseName}</span>
+                      <span className="font-semibold text-stone-900 text-sm">{topAlert.caseName}</span>
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase ${cfg.badge}`}>{topAlert.priority}</span>
                     </div>
                     <div className="space-y-1">
@@ -132,17 +132,17 @@ export const NeedsAttentionPanel: React.FC<NeedsAttentionPanelProps> = ({ cases,
                           <svg className={`w-3.5 h-3.5 flex-shrink-0 ${cfg.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={TYPE_ICONS[alert.type]} />
                           </svg>
-                          <span className="text-xs text-slate-600">{alert.message}</span>
+                          <span className="text-xs text-stone-600">{alert.message}</span>
                           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${cfg.badge} flex-shrink-0`}>{TYPE_LABELS[alert.type]}</span>
                         </div>
                       ))}
                       {caseAlerts.length > 3 && (
-                        <p className="text-xs text-slate-400 pl-5">+{caseAlerts.length - 3} more item{caseAlerts.length - 3 > 1 ? 's' : ''}</p>
+                        <p className="text-xs text-stone-400 pl-5">+{caseAlerts.length - 3} more item{caseAlerts.length - 3 > 1 ? 's' : ''}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex-shrink-0">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    <svg className="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                   </div>
                 </div>
               </div>

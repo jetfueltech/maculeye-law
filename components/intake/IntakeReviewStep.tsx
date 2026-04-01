@@ -43,9 +43,9 @@ const DOC_TYPE_COLORS: Record<string, string> = {
   authorization: 'bg-amber-50 text-amber-700 border-amber-200',
   insurance_card: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   medical_record: 'bg-rose-50 text-rose-700 border-rose-200',
-  photo: 'bg-slate-50 text-slate-700 border-slate-200',
-  email: 'bg-slate-50 text-slate-600 border-slate-200',
-  other: 'bg-slate-50 text-slate-600 border-slate-200',
+  photo: 'bg-stone-50 text-stone-700 border-stone-200',
+  email: 'bg-stone-50 text-stone-600 border-stone-200',
+  other: 'bg-stone-50 text-stone-600 border-stone-200',
 };
 
 interface AnimatingField {
@@ -222,7 +222,7 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
   const renderScanStatus = () => {
     if (!isExtracting) return null;
     return (
-      <div className="mb-4 bg-slate-50 rounded-xl border border-slate-200 p-4">
+      <div className="mb-4 bg-stone-50 rounded-xl border border-stone-200 p-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="relative">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
@@ -236,9 +236,9 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">AI Agent Scanning</span>
-              <span className="text-[10px] text-slate-400">{progress}%</span>
+              <span className="text-[10px] text-stone-400">{progress}%</span>
             </div>
-            <p className="text-xs text-slate-500 truncate mt-0.5">{processingStatus}</p>
+            <p className="text-xs text-stone-500 truncate mt-0.5">{processingStatus}</p>
           </div>
           {totalFields > 0 && (
             <div className="px-2 py-1 bg-emerald-50 rounded-full border border-emerald-200">
@@ -246,7 +246,7 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
             </div>
           )}
         </div>
-        <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
+        <div className="h-1 bg-stone-200 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-700" style={{ width: `${progress}%` }} />
         </div>
       </div>
@@ -269,7 +269,7 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
 
   const renderDocumentsSection = () => (
     <div className="space-y-4 animate-fade-in">
-      <p className="text-sm text-slate-500">{identifiedDocs.length} document{identifiedDocs.length !== 1 ? 's' : ''} attached.</p>
+      <p className="text-sm text-stone-500">{identifiedDocs.length} document{identifiedDocs.length !== 1 ? 's' : ''} attached.</p>
       {(extractedData.retainerSigned || extractedData.hipaaSigned) && (
         <div className="flex gap-3 mb-4">
           {extractedData.retainerSigned && (
@@ -289,9 +289,9 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
       {identifiedDocs.map((doc, i) => {
         const isImage = doc.mimeType.includes('image');
         return (
-          <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors group/doc">
+          <div key={i} className="flex items-center gap-3 p-3 bg-stone-50 rounded-xl border border-stone-100 hover:border-stone-200 transition-colors group/doc">
             {isImage && doc.fileData ? (
-              <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200 bg-white">
+              <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200 bg-white">
                 <img src={doc.fileData} alt={doc.suggestedName} className="w-full h-full object-cover" />
               </div>
             ) : (
@@ -300,8 +300,8 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-800 truncate">{doc.suggestedName}</p>
-              <p className="text-[10px] text-slate-400">{doc.file.name}</p>
+              <p className="text-sm font-medium text-stone-800 truncate">{doc.suggestedName}</p>
+              <p className="text-[10px] text-stone-400">{doc.file.name}</p>
             </div>
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${DOC_TYPE_COLORS[doc.identifiedType] || DOC_TYPE_COLORS.other}`}>
               {DOC_TYPE_LABELS[doc.identifiedType] || 'Other'}
@@ -316,7 +316,7 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
       {isExtracting && identifiedDocs.length === 0 && (
         <div className="py-8 text-center">
           <div className="flex gap-1.5 justify-center mb-3">{[0, 1, 2].map(i => (<div key={i} className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />))}</div>
-          <p className="text-xs text-slate-400">Documents being identified...</p>
+          <p className="text-xs text-stone-400">Documents being identified...</p>
         </div>
       )}
     </div>
@@ -334,8 +334,8 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
 
       {!isExtracting && (
         <div className="text-center max-w-2xl mx-auto mb-2">
-          <h4 className="text-xl font-bold text-slate-800 mb-2">Review & Complete Intake</h4>
-          <p className="text-sm text-slate-500 leading-relaxed">
+          <h4 className="text-xl font-bold text-stone-800 mb-2">Review & Complete Intake</h4>
+          <p className="text-sm text-stone-500 leading-relaxed">
             {totalFields > 0
               ? `Extracted ${totalFields} fields from your documents. Review, complete any missing information, and submit.`
               : 'Fill in the client intake information below.'}
@@ -345,8 +345,8 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
 
       {isExtracting && (
         <div className="text-center max-w-2xl mx-auto mb-2">
-          <h4 className="text-xl font-bold text-slate-800 mb-2">AI Agent Extracting Data</h4>
-          <p className="text-sm text-slate-500 leading-relaxed">
+          <h4 className="text-xl font-bold text-stone-800 mb-2">AI Agent Extracting Data</h4>
+          <p className="text-sm text-stone-500 leading-relaxed">
             Watch as the AI scans your documents and fills in the intake form fields in real time.
           </p>
         </div>
@@ -363,7 +363,7 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
                   activeSection === s.key
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={s.icon} /></svg>
@@ -380,7 +380,7 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
           <button
             onClick={() => previewOpen ? closePreview() : openPreview()}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
-              previewOpen ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+              previewOpen ? 'bg-blue-600 text-white shadow-md shadow-blue-200' : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
@@ -392,7 +392,7 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
       <div className="flex gap-6 transition-all">
         <div className={`transition-all ${previewOpen ? 'w-1/2 flex-shrink-0' : 'w-full'}`}>
           {renderScanStatus()}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 max-h-[calc(100vh-320px)] overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-stone-200 p-6 max-h-[calc(100vh-320px)] overflow-y-auto">
             {renderFormContent()}
           </div>
         </div>
@@ -402,36 +402,36 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
             {identifiedDocs.length > 0 ? (
               <DocumentPreviewPanel documents={identifiedDocs} activeDoc={previewDoc} onSelectDoc={setPreviewDoc} onClose={closePreview} />
             ) : isExtracting && pendingDocs && pendingDocs.length > 0 ? (
-              <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50 flex-shrink-0">
+              <div className="flex flex-col h-full bg-white rounded-2xl border border-stone-200 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 bg-stone-50 flex-shrink-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <svg className="w-4 h-4 text-blue-500 animate-pulse flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Scanning Documents</h3>
+                    <h3 className="text-xs font-bold text-stone-700 uppercase tracking-wider">Scanning Documents</h3>
                   </div>
-                  <button onClick={closePreview} className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors">
+                  <button onClick={closePreview} className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
 
-                <div className="flex gap-1.5 px-3 py-2 border-b border-slate-100 overflow-x-auto flex-shrink-0">
+                <div className="flex gap-1.5 px-3 py-2 border-b border-stone-100 overflow-x-auto flex-shrink-0">
                   {pendingDocs.map((doc, i) => {
                     const identified = identifiedDocs[i];
                     const isDone = !!identified;
                     const isActive = i === scanningIndex;
                     return (
                       <div key={i} className={`flex-shrink-0 flex flex-col items-center gap-1 p-1.5 rounded-lg transition-all ${isActive ? 'bg-blue-50 ring-2 ring-blue-300' : isDone ? 'bg-emerald-50 ring-1 ring-emerald-200' : 'opacity-50'}`}>
-                        <div className="relative w-10 h-12 rounded overflow-hidden bg-slate-100 flex items-center justify-center border border-slate-200">
+                        <div className="relative w-10 h-12 rounded overflow-hidden bg-stone-100 flex items-center justify-center border border-stone-200">
                           {doc.mimeType.includes('image') && doc.fileData ? (
                             <img src={doc.fileData} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <svg className={`w-4 h-4 ${doc.mimeType.includes('pdf') ? 'text-red-400' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                            <svg className={`w-4 h-4 ${doc.mimeType.includes('pdf') ? 'text-red-400' : 'text-stone-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                           )}
                           {isDone && (
                             <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center"><div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center"><svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg></div></div>
                           )}
                           {isActive && <div className="absolute inset-0 border-2 border-blue-400 rounded animate-pulse" />}
                         </div>
-                        <span className="text-[9px] font-medium text-slate-500 max-w-[48px] truncate">
+                        <span className="text-[9px] font-medium text-stone-500 max-w-[48px] truncate">
                           {isDone ? (DOC_TYPE_LABELS[identified!.identifiedType]?.split(' ')[0] || 'Doc') : isActive ? 'Scanning' : 'Waiting'}
                         </span>
                       </div>
@@ -439,17 +439,17 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
                   })}
                 </div>
 
-                <div className="flex-1 overflow-auto bg-slate-100 flex items-center justify-center p-3">
+                <div className="flex-1 overflow-auto bg-stone-100 flex items-center justify-center p-3">
                   {activeDocForScan ? (
                     <div className="relative w-full h-full flex items-center justify-center">
                       {activeDocForScan.mimeType.includes('image') && activeDocForScan.fileData ? (
                         <img src={activeDocForScan.fileData} alt="" className="max-w-full max-h-full object-contain rounded-lg shadow-md" />
                       ) : activeDocForScan.mimeType.includes('pdf') && activeDocForScan.fileData ? (
-                        <iframe src={activeDocForScan.fileData} className="w-full h-full min-h-[300px] rounded-lg border border-slate-200 bg-white" title="Scanning document" />
+                        <iframe src={activeDocForScan.fileData} className="w-full h-full min-h-[300px] rounded-lg border border-stone-200 bg-white" title="Scanning document" />
                       ) : (
                         <div className="flex flex-col items-center gap-3 p-6">
-                          <svg className="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                          <p className="text-xs text-slate-400">{activeDocForScan.file.name}</p>
+                          <svg className="w-16 h-16 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                          <p className="text-xs text-stone-400">{activeDocForScan.file.name}</p>
                         </div>
                       )}
                       <div className="absolute inset-x-0 top-0 h-full pointer-events-none overflow-hidden rounded-lg z-10">
@@ -459,8 +459,8 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
                   ) : extractionPhase ? (
                     <div className="text-center py-8">
                       <svg className="w-12 h-12 text-blue-400 animate-pulse mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                      <p className="text-sm font-medium text-slate-600">Cross-referencing documents</p>
-                      <p className="text-xs text-slate-400 mt-1">Extracting case information...</p>
+                      <p className="text-sm font-medium text-stone-600">Cross-referencing documents</p>
+                      <p className="text-xs text-stone-400 mt-1">Extracting case information...</p>
                     </div>
                   ) : (
                     <div className="flex gap-1.5">{[0, 1, 2].map(i => (<div key={i} className="w-2 h-2 rounded-full bg-blue-400 animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />))}</div>
@@ -468,9 +468,9 @@ export const IntakeReviewStep: React.FC<IntakeReviewStepProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full bg-white rounded-2xl border border-slate-200 p-12">
-                <svg className="w-12 h-12 text-slate-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                <p className="text-sm text-slate-400">No documents to preview</p>
+              <div className="flex flex-col items-center justify-center h-full bg-white rounded-2xl border border-stone-200 p-12">
+                <svg className="w-12 h-12 text-stone-200 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <p className="text-sm text-stone-400">No documents to preview</p>
               </div>
             )}
           </div>
