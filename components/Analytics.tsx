@@ -45,6 +45,13 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
   ];
   const maxFunnelVal = funnelStages[0].val || 1;
 
+  const avgCaseAgeDays = activeCases.length > 0
+    ? Math.round(activeCases.reduce((sum, c) => {
+        const created = c.accidentDate ? new Date(c.accidentDate).getTime() : Date.now();
+        return sum + Math.max(0, (Date.now() - created) / (1000 * 60 * 60 * 24));
+      }, 0) / activeCases.length)
+    : 0;
+
   const { firmMembers } = useFirm();
   const memberCaseloads = firmMembers.map(m => ({
     id: m.user_id,
@@ -127,7 +134,7 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
             <span className="text-4xl font-bold text-slate-900">{completeCount}</span>
             <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+8%</span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Signed retainers this month</p>
+          <p className="text-xs text-slate-400 mt-2">Intakes finalized this month</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Active Cases</h3>
@@ -138,12 +145,11 @@ export const Analytics: React.FC<AnalyticsProps> = ({ cases }) => {
           <p className="text-xs text-slate-400 mt-2">Across all active stages</p>
         </div>
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Retainer Sign-up Rate</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Avg. Case Age</h3>
           <div className="flex items-end justify-between">
-            <span className="text-4xl font-bold text-slate-900">32.4%</span>
-            <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+2.1%</span>
+            <span className="text-4xl font-bold text-slate-900">{avgCaseAgeDays}<span className="text-lg font-semibold text-slate-500 ml-1">days</span></span>
           </div>
-          <p className="text-xs text-slate-400 mt-2">Leads converted to clients</p>
+          <p className="text-xs text-slate-400 mt-2">Average age of active cases</p>
         </div>
       </div>
 
