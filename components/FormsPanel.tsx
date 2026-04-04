@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CaseFile } from '../types';
+import { CaseFile, DocumentAttachment } from '../types';
 import { useFirm } from '../contexts/FirmContext';
 import {
   FormTemplate,
@@ -12,6 +12,7 @@ import {
 import { FormTemplateEditor } from './forms/FormTemplateEditor';
 import { FormTemplateCard } from './forms/FormTemplateCard';
 import { FormNamingConfig } from './forms/FormNamingConfig';
+import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 
 interface FormsPanelProps {
   cases: CaseFile[];
@@ -19,6 +20,13 @@ interface FormsPanelProps {
 }
 
 type ManagerTab = 'templates' | 'naming';
+
+const KNOWN_FORM_KEYS: DocumentFormType[] = [
+  'rep_lien', 'foia', 'intake_summary', 'boss_intake_form',
+  'bill_request', 'records_request', 'hipaa_auth',
+  'er_bill_request', 'er_records_request', 'distribution_sheet',
+  'preservation_of_evidence', 'medical_bill_request',
+];
 
 export const FormsPanel: React.FC<FormsPanelProps> = ({ cases, onUpdateCase }) => {
   const { activeFirm } = useFirm();
@@ -30,6 +38,12 @@ export const FormsPanel: React.FC<FormsPanelProps> = ({ cases, onUpdateCase }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const seededRef = useRef(false);
+
+  const [previewTemplate, setPreviewTemplate] = useState<FormTemplate | null>(null);
+  const [showCasePicker, setShowCasePicker] = useState(false);
+  const [previewCase, setPreviewCase] = useState<CaseFile | null>(null);
+  const [showDocGenerator, setShowDocGenerator] = useState(false);
+  const [caseSearch, setCaseSearch] = useState('');
 
   useEffect(() => {
     if (!activeFirm?.id) return;
@@ -113,6 +127,54 @@ export const FormsPanel: React.FC<FormsPanelProps> = ({ cases, onUpdateCase }) =
     acc[t.category].push(t);
     return acc;
   }, {});
+
+  const handlePreview = (template: FormTemplate) => {
+    setPreviewTemplate(template);
+    if (cases.length === 1) {
+      setPreviewCase(cases[0]);
+      setShowDocGenerator(true);
+    } else if (cases.length > 0) {
+      setCaseSearch('');
+      setShowCasePicker(true);
+    }
+  };
+
+  const handleSelectCaseForPreview = (c: CaseFile) => {
+    setPreviewCase(c);
+    setShowCasePicker(false);
+    setShowDocGenerator(true);
+  };
+
+  const closePreview = () => {
+    setShowDocGenerator(false);
+    setPreviewCase(null);
+    setPreviewTemplate(null);
+  };
+
+  const handleSaveToDocuments = (docName: string, docFormType: DocumentFormType) => {
+    if (!previewCase) return;
+    const newDoc: DocumentAttachment = {
+      type: 'other',
+      fileData: null,
+      fileName: `${docName} — ${previewCase.clientName} — ${new Date().toISOString().split('T')[0]}.pdf`,
+      mimeType: 'application/pdf',
+      source: 'Generated',
+      category: 'intake',
+      generatedFormType: docFormType,
+      uploadedAt: new Date().toISOString(),
+    };
+    onUpdateCase({ ...previewCase, documents: [...previewCase.documents, newDoc] });
+  };
+
+  const previewFormType: DocumentFormType | null = previewTemplate && KNOWN_FORM_KEYS.includes(previewTemplate.form_key as DocumentFormType)
+    ? previewTemplate.form_key as DocumentFormType
+    : null;
+
+  const filteredCases = cases.filter(c =>
+    caseSearch === '' ||
+    c.clientName.toLowerCase().includes(caseSearch.toLowerCase()) ||
+    (c.caseNumber || '').toLowerCase().includes(caseSearch.toLowerCase())
+  );
 
   const activeCount = templates.filter(t => t.is_active).length;
   const totalCount = templates.length;
@@ -234,6 +296,7 @@ export const FormsPanel: React.FC<FormsPanelProps> = ({ cases, onUpdateCase }) =
                         onToggleActive={handleToggleActive}
                         onEdit={setEditingTemplate}
                         onDelete={handleDeleteTemplate}
+                        onPreview={handlePreview}
                       />
                     ))}
                   </div>
@@ -242,6 +305,80 @@ export const FormsPanel: React.FC<FormsPanelProps> = ({ cases, onUpdateCase }) =
             </div>
           )}
         </>
+      )}
+
+      {showCasePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-stone-900">Select a Case</h3>
+                <p className="text-xs text-stone-500 mt-0.5">Choose a case to preview "{previewTemplate?.name}"</p>
+              </div>
+              <button
+                onClick={() => { setShowCasePicker(false); setPreviewTemplate(null); }}
+                className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-6 py-3 border-b border-stone-100">
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search by name or case number..."
+                  value={caseSearch}
+                  onChange={e => setCaseSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-stone-200 text-sm focus:outline-none focus:border-stone-400 focus:ring-1 focus:ring-stone-200"
+                  autoFocus
+                />
+              </div>
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              {filteredCases.length === 0 ? (
+                <div className="px-6 py-8 text-center text-sm text-stone-400">No cases found</div>
+              ) : (
+                filteredCases.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => handleSelectCaseForPreview(c)}
+                    className="w-full text-left px-6 py-3 hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-0 flex items-center gap-3"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-stone-500">
+                        {c.clientName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-stone-800 truncate">{c.clientName}</p>
+                      <p className="text-xs text-stone-400 truncate">
+                        {c.caseNumber || 'No case #'} {c.accidentDate ? `- DOL: ${c.accidentDate}` : ''}
+                      </p>
+                    </div>
+                    <svg className="w-4 h-4 text-stone-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDocGenerator && previewCase && previewFormType && (
+        <DocumentGenerator
+          isOpen={true}
+          onClose={closePreview}
+          caseData={previewCase}
+          formType={previewFormType}
+          onSaveToDocuments={handleSaveToDocuments}
+        />
       )}
     </div>
   );

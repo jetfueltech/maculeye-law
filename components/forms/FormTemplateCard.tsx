@@ -6,6 +6,7 @@ interface FormTemplateCardProps {
   onToggleActive: (template: FormTemplate) => void;
   onEdit: (template: FormTemplate) => void;
   onDelete: (template: FormTemplate) => void;
+  onPreview: (template: FormTemplate) => void;
 }
 
 export const FormTemplateCard: React.FC<FormTemplateCardProps> = ({
@@ -13,6 +14,7 @@ export const FormTemplateCard: React.FC<FormTemplateCardProps> = ({
   onToggleActive,
   onEdit,
   onDelete,
+  onPreview,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -98,7 +100,7 @@ export const FormTemplateCard: React.FC<FormTemplateCardProps> = ({
       <h5 className="text-sm font-bold text-stone-800 mb-1">{template.name}</h5>
       <p className="text-xs text-stone-500 leading-relaxed mb-3">{template.description}</p>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-mono text-stone-400 bg-stone-50 px-2 py-0.5 rounded border border-stone-100 truncate max-w-[180px]">
           {template.form_key}
         </span>
@@ -115,6 +117,19 @@ export const FormTemplateCard: React.FC<FormTemplateCardProps> = ({
           />
         </button>
       </div>
+
+      {template.is_active && (
+        <button
+          onClick={() => onPreview(template)}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-stone-600 bg-stone-50 border border-stone-200 rounded-lg hover:bg-stone-100 hover:border-stone-300 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          Preview Form
+        </button>
+      )}
     </div>
   );
 };
