@@ -1371,13 +1371,11 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                         Saved to case
                       </div>
                     )}
-                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-stone-300 hover:text-white hover:bg-stone-800 rounded-lg transition-colors">Cancel</button>
                     {onSaveToDocuments && !saved && (
                       <button
                         onClick={() => {
                           onSaveToDocuments(FORM_TITLES[formType], formType);
                           setSaved(true);
-                          setTimeout(() => setSaved(false), 3000);
                         }}
                         className="px-4 py-2 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 shadow-lg flex items-center"
                       >
@@ -1388,6 +1386,9 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                     <button onClick={() => window.print()} className="px-5 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-500 shadow-lg flex items-center">
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         Print / Save PDF
+                    </button>
+                    <button onClick={onClose} className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
             </div>
