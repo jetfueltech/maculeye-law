@@ -1,35 +1,36 @@
 
 import React, { useState, useEffect } from 'react';
-import { CaseFile, ExtendedIntakeData, ClientDetails } from '../types';
+import { CaseFile, ExtendedIntakeData, ClientDetails, Insurance } from '../types';
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { DocumentAttachment } from '../types';
+import { CoverageFieldGroup } from './CoverageFieldGroup';
 
 interface ExtendedIntakeFormProps {
   caseData: CaseFile;
   onSave: (data: ExtendedIntakeData) => void;
   onUpdateCase?: (c: CaseFile) => void;
+  initialSection?: string;
 }
 
-export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData, onSave, onUpdateCase }) => {
+export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData, onSave, onUpdateCase, initialSection }) => {
   const [formData, setFormData] = useState<ExtendedIntakeData>(() => {
     const existing = caseData.extendedIntake || {};
-    // Deep merge or ensure defaults for critical sections
     return {
         ...existing,
-        intake_admin: { 
-            total_clients: 1, 
-            primary_language: 'English', 
+        intake_admin: {
+            total_clients: 1,
+            primary_language: 'English',
             referral_source: 'Internet',
             ...existing.intake_admin
         },
-        accident: { 
-            date_of_loss: caseData.accidentDate, 
+        accident: {
+            date_of_loss: caseData.accidentDate,
             accident_facts: caseData.description,
             ...existing.accident
         },
-        client: { 
-            full_name: caseData.clientName, 
-            email: caseData.clientEmail, 
+        client: {
+            full_name: caseData.clientName,
+            email: caseData.clientEmail,
             phones: { cell: caseData.clientPhone },
             date_of_birth: caseData.clientDob,
             address: { street: caseData.clientAddress || '' },
@@ -37,8 +38,8 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
         },
         additional_clients: existing.additional_clients || [],
         employment: existing.employment || {},
-        medical: { 
-            injuries_detail: '', 
+        medical: {
+            injuries_detail: '',
             providers: [],
             ...existing.medical
         },
@@ -51,22 +52,21 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
             ...existing.vehicle_property_damage
         },
         defendant: existing.defendant || {},
-        auto_insurance: existing.auto_insurance || {},
         health_insurance: existing.health_insurance || {},
-        first_party_insurance: existing.first_party_insurance || {}
     };
   });
 
-  const [activeSection, setActiveSection] = useState<string>('admin');
+  const [activeSection, setActiveSection] = useState<string>(initialSection || 'admin');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [newProvider, setNewProvider] = useState({ name: '', address: '', phone: '' });
 
-  // Form Generation State
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedForm, setSelectedForm] = useState<'rep_lien' | 'foia' | 'intake_summary' | 'boss_intake_form' | null>(null);
-  
-  // Document Generator State
   const [showDocPreview, setShowDocPreview] = useState(false);
+
+  useEffect(() => {
+    if (initialSection) setActiveSection(initialSection);
+  }, [initialSection]);
 
   useEffect(() => {
     if (saveStatus === 'saved') {
@@ -75,6 +75,21 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
     }
   }, [saveStatus]);
 
+  const getIns = (type: 'Defendant' | 'Client') =>
+    caseData.insurance?.find(i => i.type === type) || { provider: '', claimNumber: '', coverageLimits: '', insuredStatus: undefined, coverageType: undefined, policyNumber: '' } as Insurance;
+
+  const handleInsuranceFieldChange = (type: 'Defendant' | 'Client', fields: Partial<Insurance>) => {
+    if (!onUpdateCase) return;
+    const currentIns = caseData.insurance || [];
+    const index = currentIns.findIndex(i => i.type === type);
+    let newIns = [...currentIns];
+    if (index >= 0) {
+      newIns[index] = { ...newIns[index], ...fields };
+    } else {
+      newIns.push({ type, provider: '', ...fields } as Insurance);
+    }
+    onUpdateCase({ ...caseData, insurance: newIns });
+  };
 
   const handleChange = (section: keyof ExtendedIntakeData, field: string, value: any, subField?: string, subSubField?: string) => {
     setFormData(prev => {
@@ -118,7 +133,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
     });
   };
 
-  // Handler specifically for additional clients array
   const handleAdditionalClientChange = (index: number, field: string, value: any, subField?: string, subSubField?: string) => {
     setFormData(prev => {
         const clients = [...(prev.additional_clients || [])];
@@ -161,7 +175,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
           ...prev,
           additional_clients: [
               ...(prev.additional_clients || []),
-              { full_name: '', address: {} } // New empty client
+              { full_name: '', address: {} }
           ],
           intake_admin: {
               ...prev.intake_admin,
@@ -246,7 +260,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
       const isAddl = !isPrimary && index !== undefined;
       const getValue = (field: keyof ClientDetails) => client[field] || '';
       const getAddr = (field: string) => client.address ? (client.address as any)[field] || '' : '';
-      
+
       const onChange = (field: string, val: any, sub?: string) => {
           if (isAddl) {
               handleAdditionalClientChange(index, field, val, sub);
@@ -258,8 +272,8 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
       return (
           <div className={`grid grid-cols-2 gap-4 ${isAddl ? 'bg-stone-50 p-4 rounded-xl border border-stone-200 mt-6 relative' : ''}`}>
                {isAddl && (
-                   <button 
-                        onClick={() => handleRemoveClient(index)} 
+                   <button
+                        onClick={() => handleRemoveClient(index)}
                         className="absolute top-4 right-4 text-red-500 hover:text-red-700 font-bold text-xs flex items-center bg-white px-2 py-1 rounded border border-red-100 shadow-sm"
                    >
                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -267,7 +281,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    </button>
                )}
                {isAddl && <h4 className="col-span-2 font-bold text-stone-700 border-b pb-2 mb-2">Additional Client #{index + 1}</h4>}
-               
+
                <div>
                    <label className={labelClass}>Full Name</label>
                    <input type="text" className={inputClass} value={getValue('full_name')} onChange={e => onChange('full_name', e.target.value)} />
@@ -288,7 +302,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                        <option value="Married">Married</option>
                    </select>
                </div>
-               
+
                <div className="col-span-2 border-t pt-2 mt-2">
                    <label className={labelClass}>Address</label>
                    <div className="grid grid-cols-6 gap-2">
@@ -318,6 +332,9 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
       );
   };
 
+  const defIns = getIns('Defendant');
+  const clientIns = getIns('Client');
+
   return (
     <div className="space-y-6">
        {/* Section Navigation & Tools */}
@@ -337,7 +354,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        </div>
 
-       {/* Form Sections (omitted unchanged parts) */}
        {activeSection === 'admin' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Intake Administration</h3>
@@ -387,25 +403,19 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {/* Client Section */}
        {activeSection === 'client' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Client Details</h3>
-               
-               {/* Primary Client */}
                <div className="mb-8">
                    <h4 className="font-bold text-blue-800 uppercase text-xs tracking-wider mb-4 bg-blue-50 p-2 rounded">Primary Client</h4>
                    {renderClientFields(formData.client || {}, true)}
                </div>
-
-               {/* Additional Clients */}
                {formData.additional_clients && formData.additional_clients.map((client, idx) => (
                    <div key={idx} className="mb-6">
                        {renderClientFields(client, false, idx)}
                    </div>
                ))}
-
-               <button 
+               <button
                   onClick={handleAddClient}
                   className="w-full py-3 border-2 border-dashed border-stone-300 rounded-xl text-stone-500 font-bold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center"
                >
@@ -415,7 +425,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {/* Accident Section */}
        {activeSection === 'accident' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Accident Details</h3>
@@ -483,7 +492,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {/* Defendant Section */}
        {activeSection === 'defendant' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Defendant Information</h3>
@@ -511,71 +519,43 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                             </div>
                         </div>
                     </div>
-                    <div className="col-span-2 border-t pt-4 mt-2">
-                        <h4 className="font-bold text-stone-700 mb-3 text-sm">Defendant Insurance</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Insurance Company</label>
-                                <input className={inputClass} value={formData.defendant?.insurance?.company || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'company')} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Insurance Status</label>
-                                <select className={selectClass} value={formData.defendant?.insurance?.insured_status || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'insured_status')}>
-                                    <option value="">Select...</option>
-                                    <option value="insured">Insured</option>
-                                    <option value="uninsured">Uninsured</option>
-                                </select>
-                            </div>
-                            {formData.defendant?.insurance?.insured_status === 'insured' && (
-                                <div>
-                                    <label className={labelClass}>Coverage Type</label>
-                                    <select className={selectClass} value={formData.defendant?.insurance?.coverage_type || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'coverage_type')}>
-                                        <option value="">Select...</option>
-                                        <option value="liability">Liability</option>
-                                        <option value="full_coverage">Full Coverage</option>
-                                    </select>
-                                </div>
-                            )}
-                            {formData.defendant?.insurance?.insured_status === 'insured' && formData.defendant?.insurance?.coverage_type && (
-                                <div>
-                                    <label className={labelClass}>Coverage Limits</label>
-                                    <input className={inputClass} placeholder="e.g. 100/300/100" value={formData.defendant?.insurance?.coverage_limits || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'coverage_limits')} />
-                                </div>
-                            )}
-                            {formData.defendant?.insurance?.insured_status === 'uninsured' && (
-                                <div className="col-span-2">
-                                    <div className="px-3 py-2 rounded-lg border bg-amber-50 border-amber-200">
-                                        <span className="text-xs font-semibold text-amber-700">Uninsured Motorist</span>
-                                    </div>
-                                </div>
-                            )}
-                            <div>
-                                <label className={labelClass}>Policy #</label>
-                                <input className={inputClass} value={formData.defendant?.insurance?.policy_number || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'policy_number')} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Claim #</label>
-                                <input className={inputClass} value={formData.defendant?.insurance?.claim_number || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'claim_number')} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Adjuster Name</label>
-                                <input className={inputClass} value={formData.defendant?.insurance?.claims_adjuster?.name || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'claims_adjuster', 'name')} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Adjuster Phone</label>
-                                <input className={inputClass} value={formData.defendant?.insurance?.claims_adjuster?.phone || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'claims_adjuster', 'phone')} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Adjuster Email</label>
-                                <input className={inputClass} type="email" value={formData.defendant?.insurance?.claims_adjuster?.email || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'claims_adjuster', 'email')} />
-                            </div>
+
+                    {defIns.provider && (
+                      <div className="col-span-2 border-t pt-4 mt-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <h4 className="font-bold text-stone-700 text-sm">Defendant Insurance</h4>
+                          <button
+                            onClick={() => setActiveSection('insurance')}
+                            className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                          >
+                            Edit in Insurance tab
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                          </button>
                         </div>
-                    </div>
+                        <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span className="text-xs text-stone-400 uppercase font-bold block">Carrier</span>
+                            <span className="text-stone-800 font-medium">{defIns.provider || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-stone-400 uppercase font-bold block">Claim #</span>
+                            <span className="text-stone-800 font-medium">{defIns.claimNumber || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-stone-400 uppercase font-bold block">Status</span>
+                            <span className="text-stone-800 font-medium capitalize">{defIns.insuredStatus || 'N/A'}</span>
+                          </div>
+                          <div>
+                            <span className="text-xs text-stone-400 uppercase font-bold block">Limits</span>
+                            <span className="text-stone-800 font-medium">{defIns.coverageLimits || 'N/A'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                </div>
            </div>
        )}
 
-       {/* Employment Section */}
        {activeSection === 'employment' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Employment & Lost Wages</h3>
@@ -584,7 +564,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                        <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.employment?.time_lost_from_work || false} onChange={e => handleChange('employment', 'time_lost_from_work', e.target.checked)} />
                        <span className="text-sm font-medium text-stone-700">Time lost from work?</span>
                    </div>
-                   
+
                    {formData.employment?.time_lost_from_work && (
                        <>
                            <div>
@@ -621,7 +601,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {/* Medical Section */}
        {activeSection === 'medical' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Medical Treatment</h3>
@@ -649,15 +628,14 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
 
                    <div className="col-span-2 border-t pt-4 mt-4">
                         <h4 className="font-semibold text-stone-700 mb-3 text-sm">Additional Treatment Providers</h4>
-                        
-                        {/* List Existing */}
+
                         {formData.medical?.providers && formData.medical.providers.length > 0 && (
                             <div className="space-y-3 mb-4">
                                 {formData.medical.providers.map((p, idx) => (
                                     <div key={idx} className="flex justify-between items-center bg-stone-50 p-3 rounded border border-stone-200 text-sm">
                                         <div>
                                             <div className="font-bold text-stone-800">{p.name}</div>
-                                            <div className="text-stone-500 text-xs">{p.address} • {p.phone}</div>
+                                            <div className="text-stone-500 text-xs">{p.address} {p.phone ? `\u2022 ${p.phone}` : ''}</div>
                                         </div>
                                         <button onClick={() => handleDeleteProvider(idx)} className="text-red-500 hover:text-red-700">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -667,33 +645,32 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                             </div>
                         )}
 
-                        {/* Add New */}
                         <div className="grid grid-cols-2 gap-3 bg-stone-50 p-3 rounded border border-stone-200">
                             <div className="col-span-2">
-                                <input 
-                                    placeholder="Provider Name (e.g. Dr. Smith)" 
-                                    className={inputClass} 
-                                    value={newProvider.name} 
-                                    onChange={e => setNewProvider({...newProvider, name: e.target.value})} 
+                                <input
+                                    placeholder="Provider Name (e.g. Dr. Smith)"
+                                    className={inputClass}
+                                    value={newProvider.name}
+                                    onChange={e => setNewProvider({...newProvider, name: e.target.value})}
                                 />
                             </div>
-                            <input 
-                                placeholder="Address" 
-                                className={inputClass} 
-                                value={newProvider.address} 
-                                onChange={e => setNewProvider({...newProvider, address: e.target.value})} 
+                            <input
+                                placeholder="Address"
+                                className={inputClass}
+                                value={newProvider.address}
+                                onChange={e => setNewProvider({...newProvider, address: e.target.value})}
                             />
-                            <input 
-                                placeholder="Phone" 
-                                className={inputClass} 
-                                value={newProvider.phone} 
-                                onChange={e => setNewProvider({...newProvider, phone: e.target.value})} 
+                            <input
+                                placeholder="Phone"
+                                className={inputClass}
+                                value={newProvider.phone}
+                                onChange={e => setNewProvider({...newProvider, phone: e.target.value})}
                             />
                             <div className="col-span-2 text-right">
-                                <button 
+                                <button
                                     onClick={handleAddProvider}
                                     disabled={!newProvider.name}
-                                    className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 disabled:opacity-50 font-medium"
+                                    className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 disabled:opacity-50 font-medium"
                                 >
                                     + Add Provider
                                 </button>
@@ -704,63 +681,86 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {/* Insurance Section (New) */}
        {activeSection === 'insurance' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Other Insurance (Health & 1st Party)</h3>
-               <div className="space-y-6">
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Insurance</h3>
+               <div className="space-y-8">
                    <div>
-                       <h4 className="font-semibold text-stone-700 mb-2 text-sm">Health Insurance</h4>
-                       <div className="grid grid-cols-2 gap-4">
-                            <input className={inputClass} placeholder="Company (e.g. AETNA)" value={formData.health_insurance?.company || ''} onChange={e => handleChange('health_insurance', 'company', e.target.value)} />
-                            <input className={inputClass} placeholder="Member ID" value={formData.health_insurance?.member_number || ''} onChange={e => handleChange('health_insurance', 'member_number', e.target.value)} />
-                       </div>
-                   </div>
-                   <div>
-                       <h4 className="font-semibold text-stone-700 mb-2 text-sm">First Party Insurance (Client Auto)</h4>
+                       <h4 className="font-bold text-stone-700 mb-3 text-sm flex items-center">
+                         Defendant Insurance
+                         <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">3rd Party</span>
+                       </h4>
                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className={labelClass}>Company</label>
-                                <input className={inputClass} placeholder="Company" value={formData.first_party_insurance?.company || ''} onChange={e => handleChange('first_party_insurance', 'company', e.target.value)} />
+                                <label className={labelClass}>Carrier</label>
+                                <input className={inputClass} placeholder="e.g. State Farm" value={defIns.provider || ''} onChange={e => handleInsuranceFieldChange('Defendant', { provider: e.target.value })} />
                             </div>
-                            <div>
-                                <label className={labelClass}>Insurance Status</label>
-                                <select className={selectClass} value={formData.first_party_insurance?.insured_status || ''} onChange={e => handleChange('first_party_insurance', 'insured_status', e.target.value)}>
-                                    <option value="">Select...</option>
-                                    <option value="insured">Insured</option>
-                                    <option value="uninsured">Uninsured</option>
-                                </select>
-                            </div>
-                            {formData.first_party_insurance?.insured_status === 'insured' && (
-                                <div>
-                                    <label className={labelClass}>Coverage Type</label>
-                                    <select className={selectClass} value={formData.first_party_insurance?.coverage_type || ''} onChange={e => handleChange('first_party_insurance', 'coverage_type', e.target.value)}>
-                                        <option value="">Select...</option>
-                                        <option value="liability">Liability</option>
-                                        <option value="full_coverage">Full Coverage</option>
-                                    </select>
-                                </div>
-                            )}
-                            {formData.first_party_insurance?.insured_status === 'insured' && formData.first_party_insurance?.coverage_type && (
-                                <div>
-                                    <label className={labelClass}>Coverage Limits</label>
-                                    <input className={inputClass} placeholder="e.g. 50/100" value={formData.first_party_insurance?.coverage_limits || ''} onChange={e => handleChange('first_party_insurance', 'coverage_limits', e.target.value)} />
-                                </div>
-                            )}
-                            {formData.first_party_insurance?.insured_status === 'uninsured' && (
-                                <div className="col-span-2">
-                                    <div className="px-3 py-2 rounded-lg border bg-amber-50 border-amber-200">
-                                        <span className="text-xs font-semibold text-amber-700">Uninsured Motorist</span>
-                                    </div>
-                                </div>
-                            )}
                             <div>
                                 <label className={labelClass}>Claim #</label>
-                                <input className={inputClass} placeholder="Claim #" value={formData.first_party_insurance?.claim_number || ''} onChange={e => handleChange('first_party_insurance', 'claim_number', e.target.value)} />
+                                <input className={inputClass} placeholder="Claim #" value={defIns.claimNumber || ''} onChange={e => handleInsuranceFieldChange('Defendant', { claimNumber: e.target.value })} />
                             </div>
                             <div>
                                 <label className={labelClass}>Policy #</label>
-                                <input className={inputClass} placeholder="Policy #" value={formData.first_party_insurance?.policy_number || ''} onChange={e => handleChange('first_party_insurance', 'policy_number', e.target.value)} />
+                                <input className={inputClass} placeholder="Policy #" value={defIns.policyNumber || ''} onChange={e => handleInsuranceFieldChange('Defendant', { policyNumber: e.target.value })} />
+                            </div>
+                            <div className="col-span-2">
+                                <CoverageFieldGroup
+                                  insuredStatus={defIns.insuredStatus}
+                                  coverageType={defIns.coverageType}
+                                  coverageLimits={defIns.coverageLimits || ''}
+                                  onChange={(field, value) => handleInsuranceFieldChange('Defendant', { [field]: value } as Partial<Insurance>)}
+                                  onBatchChange={fields => handleInsuranceFieldChange('Defendant', fields as Partial<Insurance>)}
+                                  accentColor="stone"
+                                />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Adjuster Name</label>
+                                <input className={inputClass} value={defIns.adjuster || ''} onChange={e => handleInsuranceFieldChange('Defendant', { adjuster: e.target.value })} />
+                            </div>
+                       </div>
+                   </div>
+
+                   <div className="border-t border-stone-200 pt-6">
+                       <h4 className="font-bold text-stone-700 mb-3 text-sm flex items-center">
+                         Client Insurance
+                         <span className="ml-2 bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full uppercase">1st Party</span>
+                       </h4>
+                       <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Carrier</label>
+                                <input className={inputClass} placeholder="e.g. Geico" value={clientIns.provider || ''} onChange={e => handleInsuranceFieldChange('Client', { provider: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Claim #</label>
+                                <input className={inputClass} placeholder="Claim #" value={clientIns.claimNumber || ''} onChange={e => handleInsuranceFieldChange('Client', { claimNumber: e.target.value })} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Policy #</label>
+                                <input className={inputClass} placeholder="Policy #" value={clientIns.policyNumber || ''} onChange={e => handleInsuranceFieldChange('Client', { policyNumber: e.target.value })} />
+                            </div>
+                            <div className="col-span-2">
+                                <CoverageFieldGroup
+                                  insuredStatus={clientIns.insuredStatus}
+                                  coverageType={clientIns.coverageType}
+                                  coverageLimits={clientIns.coverageLimits || ''}
+                                  onChange={(field, value) => handleInsuranceFieldChange('Client', { [field]: value } as Partial<Insurance>)}
+                                  onBatchChange={fields => handleInsuranceFieldChange('Client', fields as Partial<Insurance>)}
+                                  accentColor="emerald"
+                                />
+                            </div>
+                       </div>
+                   </div>
+
+                   <div className="border-t border-stone-200 pt-6">
+                       <h4 className="font-bold text-stone-700 mb-3 text-sm">Health Insurance</h4>
+                       <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Company</label>
+                                <input className={inputClass} placeholder="e.g. AETNA" value={formData.health_insurance?.company || ''} onChange={e => handleChange('health_insurance', 'company', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Member ID</label>
+                                <input className={inputClass} placeholder="Member ID" value={formData.health_insurance?.member_number || ''} onChange={e => handleChange('health_insurance', 'member_number', e.target.value)} />
                             </div>
                        </div>
                    </div>
@@ -768,7 +768,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {/* Vehicle Section */}
        {activeSection === 'vehicle' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Vehicle Property Damage</h3>
@@ -795,7 +794,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                            <span className="text-sm text-stone-700">Seatbelt Worn</span>
                        </label>
                    </div>
-                   
+
                    <div className="col-span-2 mt-4 border-t pt-4">
                         <h4 className="font-semibold text-stone-700 mb-2 text-sm">Body Shop Information</h4>
                         <div className="grid grid-cols-2 gap-4">
@@ -817,14 +816,13 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {/* Actions */}
        <div className="flex justify-end pt-4 border-t border-stone-200">
-           <button 
+           <button
              onClick={handleSave}
              disabled={saveStatus === 'saving' || saveStatus === 'saved'}
              className={`px-6 py-2 rounded-lg font-medium shadow-sm flex items-center transition-all ${
-                 saveStatus === 'saved' ? 'bg-emerald-600 text-white' : 
-                 saveStatus === 'saving' ? 'bg-blue-400 text-white cursor-wait' : 
+                 saveStatus === 'saved' ? 'bg-emerald-600 text-white' :
+                 saveStatus === 'saving' ? 'bg-blue-400 text-white cursor-wait' :
                  'bg-blue-600 text-white hover:bg-blue-700'
              }`}
            >
@@ -847,7 +845,6 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </button>
        </div>
 
-       {/* Form Generation Modal */}
        {isFormModalOpen && (
            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden">
@@ -860,69 +857,27 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    <div className="p-6">
                        <p className="text-sm text-stone-600 mb-4">Select the documents you wish to generate based on the current intake data.</p>
                        <div className="space-y-3 mb-6">
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'rep_lien' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
-                               <input 
-                                   type="radio" 
-                                   name="formType"
-                                   checked={selectedForm === 'rep_lien'}
-                                   onChange={() => setSelectedForm('rep_lien')}
-                                   className="w-5 h-5 text-indigo-600 focus:ring-indigo-500" 
-                               />
+                           {[
+                             { id: 'rep_lien' as const, label: 'Letter of Representation + Lien', desc: 'Includes notification to insurance carrier and attorney lien notice.' },
+                             { id: 'foia' as const, label: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
+                             { id: 'intake_summary' as const, label: 'Client Intake Summary', desc: 'Detailed form including Accident, Client, Medical, and Insurance info.' },
+                             { id: 'boss_intake_form' as const, label: 'Boss Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },
+                           ].map(form => (
+                             <label key={form.id} className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === form.id ? 'border-blue-500 bg-blue-50' : 'border-stone-200 hover:bg-stone-50'}`}>
+                               <input type="radio" name="formType" checked={selectedForm === form.id} onChange={() => setSelectedForm(form.id)} className="w-5 h-5 text-blue-600 focus:ring-blue-500" />
                                <div>
-                                   <span className="text-sm font-bold text-stone-800 block">Letter of Representation + Lien</span>
-                                   <span className="text-xs text-stone-500">Includes notification to insurance carrier and attorney lien notice.</span>
+                                 <span className="text-sm font-bold text-stone-800 block">{form.label}</span>
+                                 <span className="text-xs text-stone-500">{form.desc}</span>
                                </div>
-                           </label>
-
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'foia' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
-                               <input 
-                                   type="radio" 
-                                   name="formType"
-                                   checked={selectedForm === 'foia'}
-                                   onChange={() => setSelectedForm('foia')}
-                                   className="w-5 h-5 text-indigo-600 focus:ring-indigo-500" 
-                               />
-                               <div>
-                                   <span className="text-sm font-bold text-stone-800 block">Chicago FOIA Package</span>
-                                   <span className="text-xs text-stone-500">Request letter, CPD form, and crash report attachment placeholder.</span>
-                               </div>
-                           </label>
-
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'intake_summary' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
-                               <input
-                                   type="radio"
-                                   name="formType"
-                                   checked={selectedForm === 'intake_summary'}
-                                   onChange={() => setSelectedForm('intake_summary')}
-                                   className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
-                               />
-                               <div>
-                                   <span className="text-sm font-bold text-stone-800 block">Client Intake Summary</span>
-                                   <span className="text-xs text-stone-500">Detailed form including Accident, Client, Medical, and Insurance info.</span>
-                               </div>
-                           </label>
-
-                           <label className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === 'boss_intake_form' ? 'border-indigo-500 bg-indigo-50' : 'border-stone-200 hover:bg-stone-50'}`}>
-                               <input
-                                   type="radio"
-                                   name="formType"
-                                   checked={selectedForm === 'boss_intake_form'}
-                                   onChange={() => setSelectedForm('boss_intake_form')}
-                                   className="w-5 h-5 text-indigo-600 focus:ring-indigo-500"
-                               />
-                               <div>
-                                   <span className="text-sm font-bold text-stone-800 block">Boss Intake Form</span>
-                                   <span className="text-xs text-stone-500">Auto-populated intake spreadsheet with all case data, providers, and insurance.</span>
-                               </div>
-                           </label>
+                             </label>
+                           ))}
                        </div>
-                       
                        <div className="flex justify-end pt-2 border-t border-stone-100">
                            <button onClick={() => setIsFormModalOpen(false)} className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg mr-2">Cancel</button>
-                           <button 
+                           <button
                                onClick={handleGenerateClick}
                                disabled={!selectedForm}
-                               className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow-md hover:bg-indigo-700 transition-all flex items-center disabled:opacity-50"
+                               className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold shadow-md hover:bg-blue-700 transition-all flex items-center disabled:opacity-50"
                            >
                                Preview & Print
                            </button>

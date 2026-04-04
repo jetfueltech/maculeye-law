@@ -1,12 +1,11 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { CaseFile, CaseStatus, Insurance, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote, CaseTeamMember, Adjuster, DocumentAttachment } from '../types';
+import { CaseFile, CaseStatus, ActivityLog, ExtendedIntakeData, Email, CommunicationLog, ChatMessage, Assignee, TeamNote, CaseTeamMember, Adjuster, DocumentAttachment, Insurance } from '../types';
 import { analyzeIntakeCase } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { ExtendedIntakeForm } from './ExtendedIntakeForm';
 import { MedicalTreatment } from './MedicalTreatment';
 import { CoverageTracker } from './CoverageTracker';
-import { CoverageFieldGroup } from './CoverageFieldGroup';
 import { CaseTasksPanel } from './CaseTasksPanel';
 import { DocumentsPanel } from './DocumentsPanel';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
@@ -52,11 +51,59 @@ interface CaseDetailProps {
   defaultTab?: CaseDetailTab;
 }
 
+function migrateExtendedInsurance(c: CaseFile): CaseFile {
+  const ext = c.extendedIntake;
+  if (!ext) return c;
+  const ins = [...(c.insurance || [])];
+  let changed = false;
+
+  const defExt = ext.defendant?.insurance;
+  if (defExt?.company && !ins.find(i => i.type === 'Defendant')?.provider) {
+    const existing = ins.findIndex(i => i.type === 'Defendant');
+    const merged: Insurance = {
+      type: 'Defendant',
+      provider: defExt.company || '',
+      claimNumber: defExt.claim_number || '',
+      policyNumber: defExt.policy_number || '',
+      insuredStatus: defExt.insured_status,
+      coverageType: defExt.coverage_type,
+      coverageLimits: defExt.coverage_limits || '',
+    };
+    if (existing >= 0) { ins[existing] = { ...ins[existing], ...merged }; } else { ins.push(merged); }
+    changed = true;
+  }
+
+  const fpExt = ext.first_party_insurance;
+  if (fpExt?.company && !ins.find(i => i.type === 'Client')?.provider) {
+    const existing = ins.findIndex(i => i.type === 'Client');
+    const merged: Insurance = {
+      type: 'Client',
+      provider: fpExt.company || '',
+      claimNumber: fpExt.claim_number || '',
+      policyNumber: fpExt.policy_number || '',
+      insuredStatus: fpExt.insured_status,
+      coverageType: fpExt.coverage_type,
+      coverageLimits: fpExt.coverage_limits || '',
+    };
+    if (existing >= 0) { ins[existing] = { ...ins[existing], ...merged }; } else { ins.push(merged); }
+    changed = true;
+  }
+
+  if (!changed) return c;
+  return { ...c, insurance: ins };
+}
+
 export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase, defaultTab }) => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<CaseDetailTab>(defaultTab || 'overview');
   const [analyzing, setAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [intakeSection, setIntakeSection] = useState<string | undefined>(undefined);
+
+  const navigateToIntake = (section: string) => {
+    setIntakeSection(section);
+    setActiveTab('extended');
+  };
   
   // Collapse States
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(true);
@@ -69,6 +116,14 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       extendedIntake: caseData.extendedIntake || { accident: {} },
       insurance: caseData.insurance && caseData.insurance.length > 0 ? caseData.insurance : []
   }));
+
+  useEffect(() => {
+      const migrated = migrateExtendedInsurance(caseData);
+      if (migrated !== caseData) {
+        onUpdateCase(migrated);
+      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
       setEditForm({
@@ -501,82 +556,35 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
     onUpdateCase(updated);
   };
 
-  const handleInlineInsuranceSave = (type: 'Defendant' | 'Client', field: keyof Insurance, value: string) => {
-    handleInsuranceBatchUpdate(type, { [field]: value });
-  };
-
-  const handleInsuranceBatchUpdate = (type: 'Defendant' | 'Client', fields: Partial<Insurance>) => {
-    const currentIns = caseData.insurance || [];
-    const index = currentIns.findIndex(i => i.type === type);
-    let newIns = [...currentIns];
-    if (index >= 0) {
-      newIns[index] = { ...newIns[index], ...fields };
-    } else {
-      newIns.push({ type, provider: '', ...fields } as Insurance);
-    }
-    setEditForm(prev => {
-      const prevIns = prev.insurance || [];
-      const prevIndex = prevIns.findIndex(i => i.type === type);
-      let updatedIns = [...prevIns];
-      if (prevIndex >= 0) {
-        updatedIns[prevIndex] = { ...updatedIns[prevIndex], ...fields };
-      } else {
-        updatedIns.push({ type, provider: '', ...fields } as Insurance);
-      }
-      return { ...prev, insurance: updatedIns };
-    });
-    const fieldNames = Object.keys(fields).join(', ');
-    let updated = { ...caseData, insurance: newIns };
-    updated = addActivity(updated, `Updated ${type} insurance ${fieldNames}.`, 'user');
-    onUpdateCase(updated);
-  };
-
-  const handleInsuranceChange = (type: 'Defendant' | 'Client', field: keyof Insurance, value: string) => {
-      setEditForm(prev => {
-          const currentIns = prev.insurance || [];
-          const index = currentIns.findIndex(i => i.type === type);
-          let newIns = [...currentIns];
-          if (index >= 0) {
-              newIns[index] = { ...newIns[index], [field]: value };
-          } else {
-              newIns.push({ type, provider: '', [field]: value } as Insurance);
-          }
-          return { ...prev, insurance: newIns };
-      });
-  };
-
-  const syncAdjustersFromIntake = (data: ExtendedIntakeData, existingAdjusters: Adjuster[]): Adjuster[] => {
-    const adjuster = data.defendant?.insurance?.claims_adjuster;
-    if (!adjuster?.name) {
-      return existingAdjusters.filter(a => a.insuranceType !== 'Defendant' || !a._fromIntake);
-    }
-    const existing = existingAdjusters.find(a => a.insuranceType === 'Defendant' && a._fromIntake);
-    if (existing) {
-      return existingAdjusters.map(a =>
-        a.id === existing.id
-          ? { ...a, name: adjuster.name || '', phone: adjuster.phone || '', email: adjuster.email || '', insuranceProvider: data.defendant?.insurance?.company || a.insuranceProvider }
-          : a
-      );
-    }
-    return [
-      ...existingAdjusters,
-      {
-        id: Math.random().toString(36).substr(2, 9),
-        name: adjuster.name || '',
-        phone: adjuster.phone || '',
-        email: adjuster.email || '',
-        isPrimary: existingAdjusters.length === 0,
-        insuranceType: 'Defendant' as const,
-        insuranceProvider: data.defendant?.insurance?.company || '',
-        addedDate: new Date().toISOString(),
-        _fromIntake: true,
-      },
-    ];
-  };
 
   const handleExtendedIntakeSave = (data: ExtendedIntakeData) => {
-      const syncedAdjusters = syncAdjustersFromIntake(data, caseData.adjusters || []);
-      let updatedCase = { ...caseData, extendedIntake: data, adjusters: syncedAdjusters };
+      const clientAddr = data.client?.address;
+      const addressParts = [clientAddr?.street, clientAddr?.city, clientAddr?.state, clientAddr?.zip].filter(Boolean);
+      const accidentLocParts = [data.accident?.accident_location, data.accident?.city, data.accident?.state].filter(Boolean);
+
+      let updatedCase: CaseFile = {
+        ...caseData,
+        extendedIntake: data,
+        clientName: data.client?.full_name || caseData.clientName,
+        clientDob: data.client?.date_of_birth || caseData.clientDob,
+        clientPhone: data.client?.phones?.cell || caseData.clientPhone,
+        clientEmail: data.client?.email || caseData.clientEmail,
+        clientAddress: addressParts.length > 0 ? addressParts.join(', ') : caseData.clientAddress,
+        accidentDate: data.accident?.date_of_loss || caseData.accidentDate,
+        description: data.accident?.accident_facts || caseData.description,
+        location: accidentLocParts.length > 0 ? accidentLocParts.join(', ') : caseData.location,
+      };
+
+      const vpd = data.vehicle_property_damage?.damaged_vehicle;
+      if (vpd?.make || vpd?.model) {
+        updatedCase.vehicleInfo = {
+          year: vpd?.year?.toString() || caseData.vehicleInfo?.year || '',
+          make: vpd?.make || caseData.vehicleInfo?.make || '',
+          model: vpd?.model || caseData.vehicleInfo?.model || '',
+          damage: caseData.vehicleInfo?.damage,
+        };
+      }
+
       updatedCase = addActivity(updatedCase, 'Extended Intake Form updated.', 'user');
       onUpdateCase(updatedCase);
   };
@@ -768,7 +776,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       {activeTab === 'financials' ? (
           <FinancialsTab caseData={caseData} onUpdateCase={onUpdateCase} />
       ) : activeTab === 'extended' ? (
-          <div className="animate-fade-in"><ExtendedIntakeForm caseData={caseData} onSave={handleExtendedIntakeSave} onUpdateCase={onUpdateCase} /></div>
+          <div className="animate-fade-in"><ExtendedIntakeForm caseData={caseData} onSave={handleExtendedIntakeSave} onUpdateCase={onUpdateCase} initialSection={intakeSection} /></div>
       ) : activeTab === 'coverage' ? (
           <div className="animate-fade-in"><CoverageTracker caseData={caseData} onUpdateCase={onUpdateCase} /></div>
       ) : activeTab === 'tasks' ? (
@@ -882,62 +890,93 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                            {/* Row 1: Client & Incident */}
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                               <div>
-                                  <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2 border-b border-stone-100">Client Demographics</h4>
-                                  <div className="space-y-5">
-                                      <InlineEditField label="Name" value={caseData.clientName || ''} onSave={v => handleInlineFieldSave('clientName', v)} />
-                                      <InlineEditField label="DOB" value={caseData.clientDob || ''} type="date" onSave={v => handleInlineFieldSave('clientDob', v)} />
-                                      <InlineEditField
-                                        label="Phone"
-                                        value={caseData.clientPhone || ''}
-                                        onSave={v => handleInlineFieldSave('clientPhone', v)}
-                                        displayValue={
-                                          caseData.clientPhone ? (
-                                            <button onClick={handlePhoneClick} className="text-base font-medium text-stone-700 hover:text-black flex items-center hover:underline">
-                                              {caseData.clientPhone}
-                                              <svg className="w-4 h-4 ml-2 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                                            </button>
-                                          ) : undefined
-                                        }
-                                      />
-                                      <InlineEditField label="Email" value={caseData.clientEmail || ''} onSave={v => handleInlineFieldSave('clientEmail', v)} />
-                                      <InlineEditField label="Address" value={caseData.clientAddress || ''} onSave={v => handleInlineFieldSave('clientAddress', v)} />
+                                  <div className="flex items-center justify-between mb-6 pb-2 border-b border-stone-100">
+                                    <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Client Demographics</h4>
+                                    <button onClick={() => navigateToIntake('client')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                                      Edit
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+                                  </div>
+                                  <div className="space-y-4">
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Name</label>
+                                        <p className="text-base font-medium text-stone-900">{caseData.clientName || <span className="text-stone-400 italic text-sm">N/A</span>}</p>
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">DOB</label>
+                                        <p className="text-base font-medium text-stone-900">{caseData.clientDob ? new Date(caseData.clientDob + 'T00:00:00').toLocaleDateString() : <span className="text-stone-400 italic text-sm">N/A</span>}</p>
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Phone</label>
+                                        {caseData.clientPhone ? (
+                                          <button onClick={handlePhoneClick} className="text-base font-medium text-stone-700 hover:text-black flex items-center hover:underline">
+                                            {caseData.clientPhone}
+                                            <svg className="w-4 h-4 ml-2 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                                          </button>
+                                        ) : <p className="text-stone-400 italic text-sm">N/A</p>}
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Email</label>
+                                        <p className="text-base font-medium text-stone-900">{caseData.clientEmail || <span className="text-stone-400 italic text-sm">N/A</span>}</p>
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Address</label>
+                                        <p className="text-base font-medium text-stone-900">{caseData.clientAddress || <span className="text-stone-400 italic text-sm">N/A</span>}</p>
+                                      </div>
                                   </div>
                               </div>
                               <div>
-                                  <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2 border-b border-stone-100">Incident Details</h4>
-                                  <div className="space-y-5">
-                                      <InlineEditField label="Date of Loss" value={caseData.accidentDate || ''} type="date" onSave={v => handleInlineFieldSave('accidentDate', v)} />
-                                      <InlineEditField
-                                        label="Statute of Limitations"
-                                        value={caseData.statuteOfLimitationsDate || ''}
-                                        type="date"
-                                        onSave={v => handleInlineFieldSave('statuteOfLimitationsDate', v)}
-                                        labelExtra={<svg className="w-3 h-3 ml-1 text-rose-500 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>}
-                                        displayValue={
-                                          caseData.statuteOfLimitationsDate ? (
-                                            (() => {
-                                              const solDate = new Date(caseData.statuteOfLimitationsDate);
-                                              const today = new Date();
-                                              const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                                              const isUrgent = daysRemaining < 90;
-                                              const isCritical = daysRemaining < 30;
-                                              return (
-                                                <div className="flex items-center gap-2">
-                                                  <span className={`inline-block px-3 py-1.5 rounded-lg border text-sm font-bold ${isCritical ? 'bg-rose-50 text-rose-700 border-rose-200' : isUrgent ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                                                    {solDate.toLocaleDateString()}
-                                                  </span>
-                                                  <span className={`text-xs font-medium ${isCritical ? 'text-rose-600' : isUrgent ? 'text-amber-600' : 'text-stone-500'}`}>
-                                                    ({daysRemaining > 0 ? `${daysRemaining} days remaining` : 'EXPIRED'})
-                                                  </span>
-                                                </div>
-                                              );
-                                            })()
-                                          ) : (
-                                            <span className="text-rose-500 text-sm italic font-medium">Not Set - Set Immediately</span>
-                                          )
-                                        }
-                                      />
-                                      <InlineEditField label="Location" value={caseData.location || ''} onSave={v => handleInlineFieldSave('location', v)} />
+                                  <div className="flex items-center justify-between mb-6 pb-2 border-b border-stone-100">
+                                    <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Incident Details</h4>
+                                    <button onClick={() => navigateToIntake('accident')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                                      Edit
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+                                  </div>
+                                  <div className="space-y-4">
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Date of Loss</label>
+                                        <p className="text-base font-medium text-stone-900">{caseData.accidentDate ? new Date(caseData.accidentDate + 'T00:00:00').toLocaleDateString() : <span className="text-stone-400 italic text-sm">N/A</span>}</p>
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">
+                                          Statute of Limitations
+                                          <svg className="w-3 h-3 ml-1 text-rose-500 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                                        </label>
+                                        <InlineEditField
+                                          label=""
+                                          value={caseData.statuteOfLimitationsDate || ''}
+                                          type="date"
+                                          onSave={v => handleInlineFieldSave('statuteOfLimitationsDate', v)}
+                                          displayValue={
+                                            caseData.statuteOfLimitationsDate ? (
+                                              (() => {
+                                                const solDate = new Date(caseData.statuteOfLimitationsDate);
+                                                const today = new Date();
+                                                const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                                const isUrgent = daysRemaining < 90;
+                                                const isCritical = daysRemaining < 30;
+                                                return (
+                                                  <div className="flex items-center gap-2">
+                                                    <span className={`inline-block px-3 py-1.5 rounded-lg border text-sm font-bold ${isCritical ? 'bg-rose-50 text-rose-700 border-rose-200' : isUrgent ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                                                      {solDate.toLocaleDateString()}
+                                                    </span>
+                                                    <span className={`text-xs font-medium ${isCritical ? 'text-rose-600' : isUrgent ? 'text-amber-600' : 'text-stone-500'}`}>
+                                                      ({daysRemaining > 0 ? `${daysRemaining} days remaining` : 'EXPIRED'})
+                                                    </span>
+                                                  </div>
+                                                );
+                                              })()
+                                            ) : (
+                                              <span className="text-rose-500 text-sm italic font-medium">Not Set - Set Immediately</span>
+                                            )
+                                          }
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Location</label>
+                                        <p className="text-base font-medium text-stone-900">{caseData.location || <span className="text-stone-400 italic text-sm">N/A</span>}</p>
+                                      </div>
                                       <InlineEditField
                                         label="Impact Assessment"
                                         value={caseData.impact || ''}
@@ -949,56 +988,83 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                           ) : undefined
                                         }
                                       />
-                                      <InlineEditField
-                                        label="Facts of Loss"
-                                        value={caseData.description || ''}
-                                        type="textarea"
-                                        onSave={v => handleInlineFieldSave('description', v)}
-                                        displayValue={
-                                          <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 text-sm text-stone-700 leading-relaxed">
-                                            {caseData.description || <span className="text-stone-400 italic">N/A</span>}
-                                          </div>
-                                        }
-                                      />
+                                      <div>
+                                        <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Facts of Loss</label>
+                                        <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 text-sm text-stone-700 leading-relaxed">
+                                          {caseData.description || <span className="text-stone-400 italic">N/A</span>}
+                                        </div>
+                                      </div>
                                   </div>
                               </div>
                           </div>
 
                           {/* Row 2: Insurance Information */}
                           <div className="border-t border-stone-100 pt-8 mt-8">
-                              <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2">Insurance Information</h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                                  {/* Defendant Insurance */}
-                                  <div className="space-y-5">
+                              <div className="flex items-center justify-between mb-6 pb-2">
+                                <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Insurance Information</h4>
+                                <button onClick={() => navigateToIntake('insurance')} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                                  Edit
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                </button>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                                  <div className="space-y-3">
                                       <h5 className="text-sm font-bold text-stone-700">Defendant Coverage</h5>
-                                      <InlineEditField label="Carrier" value={getIns('Defendant').provider || ''} placeholder="e.g. State Farm" onSave={v => handleInlineInsuranceSave('Defendant', 'provider', v)} />
-                                      <InlineEditField label="Claim Number" value={getIns('Defendant').claimNumber || ''} placeholder="Claim #" onSave={v => handleInlineInsuranceSave('Defendant', 'claimNumber', v)} />
-                                      <CoverageFieldGroup
-                                        insuredStatus={getIns('Defendant').insuredStatus}
-                                        coverageType={getIns('Defendant').coverageType}
-                                        coverageLimits={getIns('Defendant').coverageLimits || ''}
-                                        onChange={(field, value) => handleInlineInsuranceSave('Defendant', field as keyof Insurance, value)}
-                                        onBatchChange={fields => handleInsuranceBatchUpdate('Defendant', fields as Partial<Insurance>)}
-                                        accentColor="stone"
-                                      />
+                                      <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Carrier</span>
+                                            <span className="text-sm text-stone-800 font-medium">{getIns('Defendant').provider || <span className="text-stone-400 italic">N/A</span>}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Claim #</span>
+                                            <span className="text-sm text-stone-800 font-medium">{getIns('Defendant').claimNumber || <span className="text-stone-400 italic">N/A</span>}</span>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Status</span>
+                                            <span className="text-sm text-stone-800 font-medium capitalize">{getIns('Defendant').insuredStatus || <span className="text-stone-400 italic">N/A</span>}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Limits</span>
+                                            {getIns('Defendant').coverageLimits ? (
+                                              <span className="bg-stone-100 text-stone-700 px-2 py-0.5 rounded font-mono text-sm font-bold border border-stone-200 inline-block">{getIns('Defendant').coverageLimits}</span>
+                                            ) : <span className="text-sm text-stone-400 italic">N/A</span>}
+                                          </div>
+                                        </div>
+                                      </div>
                                   </div>
 
-                                  {/* Client Insurance */}
-                                  <div className="space-y-5">
+                                  <div className="space-y-3">
                                       <h5 className="text-sm font-bold text-stone-700 flex items-center">
                                           Client Coverage
-                                          <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">First Party</span>
+                                          <span className="ml-2 bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full uppercase border border-emerald-100">1st Party</span>
                                       </h5>
-                                      <InlineEditField label="Carrier" value={getIns('Client').provider || ''} placeholder="e.g. Geico" onSave={v => handleInlineInsuranceSave('Client', 'provider', v)} />
-                                      <InlineEditField label="Claim Number" value={getIns('Client').claimNumber || ''} placeholder="Claim #" onSave={v => handleInlineInsuranceSave('Client', 'claimNumber', v)} />
-                                      <CoverageFieldGroup
-                                        insuredStatus={getIns('Client').insuredStatus}
-                                        coverageType={getIns('Client').coverageType}
-                                        coverageLimits={getIns('Client').coverageLimits || ''}
-                                        onChange={(field, value) => handleInlineInsuranceSave('Client', field as keyof Insurance, value)}
-                                        onBatchChange={fields => handleInsuranceBatchUpdate('Client', fields as Partial<Insurance>)}
-                                        accentColor="emerald"
-                                      />
+                                      <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Carrier</span>
+                                            <span className="text-sm text-stone-800 font-medium">{getIns('Client').provider || <span className="text-stone-400 italic">N/A</span>}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Claim #</span>
+                                            <span className="text-sm text-stone-800 font-medium">{getIns('Client').claimNumber || <span className="text-stone-400 italic">N/A</span>}</span>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Status</span>
+                                            <span className="text-sm text-stone-800 font-medium capitalize">{getIns('Client').insuredStatus || <span className="text-stone-400 italic">N/A</span>}</span>
+                                          </div>
+                                          <div>
+                                            <span className="text-xs text-stone-400 uppercase font-bold block">Limits</span>
+                                            {getIns('Client').coverageLimits ? (
+                                              <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-mono text-sm font-bold border border-emerald-100 inline-block">{getIns('Client').coverageLimits}</span>
+                                            ) : <span className="text-sm text-stone-400 italic">N/A</span>}
+                                          </div>
+                                        </div>
+                                      </div>
                                   </div>
                               </div>
                           </div>
