@@ -533,6 +533,14 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                 <label className={labelClass}>Adjuster Name</label>
                                 <input className={inputClass} value={formData.defendant?.insurance?.claims_adjuster?.name || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'claims_adjuster', 'name')} />
                             </div>
+                            <div>
+                                <label className={labelClass}>Adjuster Phone</label>
+                                <input className={inputClass} value={formData.defendant?.insurance?.claims_adjuster?.phone || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'claims_adjuster', 'phone')} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Adjuster Email</label>
+                                <input className={inputClass} type="email" value={formData.defendant?.insurance?.claims_adjuster?.email || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'claims_adjuster', 'email')} />
+                            </div>
                         </div>
                     </div>
                </div>

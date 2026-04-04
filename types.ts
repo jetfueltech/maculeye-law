@@ -364,6 +364,7 @@ export interface Adjuster {
   insuranceType?: 'Client' | 'Defendant' | 'Other';
   insuranceProvider?: string;
   addedDate: string;
+  _fromIntake?: boolean;
 }
 
 export interface DirectoryContactEntry {
@@ -501,7 +502,7 @@ export interface ExtendedIntakeData {
   auto_insurance?: {
     driver_or_passenger_insurance_company?: string;
     vehicle_owner_insurance_company?: string;
-    claims_adjuster?: { name?: string; phone?: string; ext?: string };
+    claims_adjuster?: { name?: string; phone?: string; ext?: string; email?: string };
     insured_name?: string;
     auto_insurance_type?: 'Personal' | 'Commercial';
     claim_number?: string;
@@ -538,7 +539,7 @@ export interface ExtendedIntakeData {
       type?: 'Personal' | 'Commercial';
       claim_number?: string;
       policy_number?: string;
-      claims_adjuster?: { name?: string; phone?: string; ext?: string };
+      claims_adjuster?: { name?: string; phone?: string; ext?: string; email?: string };
       coverage_limits?: string;
     };
   };

@@ -528,8 +528,38 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       });
   };
 
+  const syncAdjustersFromIntake = (data: ExtendedIntakeData, existingAdjusters: Adjuster[]): Adjuster[] => {
+    const adjuster = data.defendant?.insurance?.claims_adjuster;
+    if (!adjuster?.name) {
+      return existingAdjusters.filter(a => a.insuranceType !== 'Defendant' || !a._fromIntake);
+    }
+    const existing = existingAdjusters.find(a => a.insuranceType === 'Defendant' && a._fromIntake);
+    if (existing) {
+      return existingAdjusters.map(a =>
+        a.id === existing.id
+          ? { ...a, name: adjuster.name || '', phone: adjuster.phone || '', email: adjuster.email || '', insuranceProvider: data.defendant?.insurance?.company || a.insuranceProvider }
+          : a
+      );
+    }
+    return [
+      ...existingAdjusters,
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        name: adjuster.name || '',
+        phone: adjuster.phone || '',
+        email: adjuster.email || '',
+        isPrimary: existingAdjusters.length === 0,
+        insuranceType: 'Defendant' as const,
+        insuranceProvider: data.defendant?.insurance?.company || '',
+        addedDate: new Date().toISOString(),
+        _fromIntake: true,
+      },
+    ];
+  };
+
   const handleExtendedIntakeSave = (data: ExtendedIntakeData) => {
-      let updatedCase = { ...caseData, extendedIntake: data };
+      const syncedAdjusters = syncAdjustersFromIntake(data, caseData.adjusters || []);
+      let updatedCase = { ...caseData, extendedIntake: data, adjusters: syncedAdjusters };
       updatedCase = addActivity(updatedCase, 'Extended Intake Form updated.', 'user');
       onUpdateCase(updatedCase);
   };
@@ -1211,7 +1241,21 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       adjusters={caseData.adjusters || []}
                       insuranceEntries={(caseData.insurance || []).map(ins => ({ type: ins.type, provider: ins.provider }))}
                       onChange={(newAdj: Adjuster[]) => {
-                        onUpdateCase({ ...caseData, adjusters: newAdj });
+                        const defAdj = newAdj.find(a => a.insuranceType === 'Defendant');
+                        const currentIntake = caseData.extendedIntake || {};
+                        const updatedIntake = {
+                          ...currentIntake,
+                          defendant: {
+                            ...currentIntake.defendant,
+                            insurance: {
+                              ...currentIntake.defendant?.insurance,
+                              claims_adjuster: defAdj
+                                ? { name: defAdj.name, phone: defAdj.phone || '', email: defAdj.email || '' }
+                                : currentIntake.defendant?.insurance?.claims_adjuster,
+                            },
+                          },
+                        };
+                        onUpdateCase({ ...caseData, adjusters: newAdj, extendedIntake: updatedIntake as ExtendedIntakeData });
                       }}
                     />
                   </div>
