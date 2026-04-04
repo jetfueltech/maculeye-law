@@ -15,6 +15,7 @@ import { FinancialsTab } from './FinancialsTab';
 import { AdjusterPanel } from './AdjusterPanel';
 import { DocumentGenerator, DocumentFormType, DocumentContext } from './DocumentGenerator';
 import { PreservationOfEvidencePanel } from './PreservationOfEvidencePanel';
+import { InlineEditField } from './InlineEditField';
 import { uploadDocument } from '../services/documentStorageService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 
@@ -493,6 +494,26 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
     setIsEditing(false);
   };
 
+  const handleInlineFieldSave = (field: string, value: string) => {
+    let updated = { ...caseData, [field]: value };
+    updated = addActivity(updated, `Updated ${field}.`, 'user');
+    onUpdateCase(updated);
+  };
+
+  const handleInlineInsuranceSave = (type: 'Defendant' | 'Client', field: keyof Insurance, value: string) => {
+    const currentIns = caseData.insurance || [];
+    const index = currentIns.findIndex(i => i.type === type);
+    let newIns = [...currentIns];
+    if (index >= 0) {
+      newIns[index] = { ...newIns[index], [field]: value };
+    } else {
+      newIns.push({ type, provider: '', [field]: value } as Insurance);
+    }
+    let updated = { ...caseData, insurance: newIns };
+    updated = addActivity(updated, `Updated ${type} insurance ${field}.`, 'user');
+    onUpdateCase(updated);
+  };
+
   const handleInsuranceChange = (type: 'Defendant' | 'Client', field: keyof Insurance, value: string) => {
       setEditForm(prev => {
           const currentIns = prev.insurance || [];
@@ -620,16 +641,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
              </div>
 
              <div className="flex items-center gap-3 mt-4 md:mt-0">
-                 {isEditing ? (
-                     <>
-                        <button onClick={handleCancel} className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50 rounded-lg">Cancel</button>
-                        <button onClick={handleSave} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm shadow-blue-200">Save Changes</button>
-                     </>
-                 ) : (
-                     <>
-                        <button onClick={() => setIsEditing(true)} className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors shadow-sm">
-                            Edit Details
-                        </button>
                         <button
                           onClick={() => setIsFormModalOpen(true)}
                           className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors shadow-sm flex items-center gap-1.5"
@@ -646,8 +657,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                 Run AI Analysis
                             </button>
                         )}
-                     </>
-                 )}
              </div>
          </div>
 
@@ -828,123 +837,82 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                               <div>
                                   <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2 border-b border-stone-100">Client Demographics</h4>
                                   <div className="space-y-5">
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Name</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.clientName} onChange={e => setEditForm({...editForm, clientName: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientName}</p>}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">DOB</label>
-                                          {isEditing ? <input type="date" className={inputClass} value={editForm.clientDob} onChange={e => setEditForm({...editForm, clientDob: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientDob || 'N/A'}</p>}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Phone</label>
-                                          {isEditing ? (
-                                              <input className={inputClass} value={editForm.clientPhone} onChange={e => setEditForm({...editForm, clientPhone: e.target.value})} />
-                                          ) : (
-                                              <button 
-                                                onClick={handlePhoneClick}
-                                                className="text-base font-medium text-blue-600 hover:text-blue-800 flex items-center hover:underline"
-                                              >
-                                                  {caseData.clientPhone}
-                                                  <svg className="w-4 h-4 ml-2 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                                              </button>
-                                          )}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Email</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.clientEmail} onChange={e => setEditForm({...editForm, clientEmail: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientEmail}</p>}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Address</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.clientAddress} onChange={e => setEditForm({...editForm, clientAddress: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.clientAddress}</p>}
-                                      </div>
+                                      <InlineEditField label="Name" value={caseData.clientName || ''} onSave={v => handleInlineFieldSave('clientName', v)} />
+                                      <InlineEditField label="DOB" value={caseData.clientDob || ''} type="date" onSave={v => handleInlineFieldSave('clientDob', v)} />
+                                      <InlineEditField
+                                        label="Phone"
+                                        value={caseData.clientPhone || ''}
+                                        onSave={v => handleInlineFieldSave('clientPhone', v)}
+                                        displayValue={
+                                          caseData.clientPhone ? (
+                                            <button onClick={handlePhoneClick} className="text-base font-medium text-stone-700 hover:text-black flex items-center hover:underline">
+                                              {caseData.clientPhone}
+                                              <svg className="w-4 h-4 ml-2 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                                            </button>
+                                          ) : undefined
+                                        }
+                                      />
+                                      <InlineEditField label="Email" value={caseData.clientEmail || ''} onSave={v => handleInlineFieldSave('clientEmail', v)} />
+                                      <InlineEditField label="Address" value={caseData.clientAddress || ''} onSave={v => handleInlineFieldSave('clientAddress', v)} />
                                   </div>
                               </div>
                               <div>
                                   <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-6 pb-2 border-b border-stone-100">Incident Details</h4>
                                   <div className="space-y-5">
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Date of Loss</label>
-                                          {isEditing ? <input type="date" className={inputClass} value={editForm.accidentDate} onChange={e => setEditForm({...editForm, accidentDate: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.accidentDate}</p>}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1 flex items-center">
-                                              Statute of Limitations
-                                              <svg className="w-3 h-3 ml-1 text-rose-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                                          </label>
-                                          {isEditing ? (
-                                              <input
-                                                  type="date"
-                                                  className={inputClass}
-                                                  value={editForm.statuteOfLimitationsDate || ''}
-                                                  onChange={e => setEditForm({...editForm, statuteOfLimitationsDate: e.target.value})}
-                                              />
-                                          ) : (
-                                              caseData.statuteOfLimitationsDate ? (
-                                                  (() => {
-                                                      const solDate = new Date(caseData.statuteOfLimitationsDate);
-                                                      const today = new Date();
-                                                      const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                                                      const isUrgent = daysRemaining < 90;
-                                                      const isCritical = daysRemaining < 30;
-
-                                                      return (
-                                                          <div className="flex items-center gap-2">
-                                                              <span className={`inline-block px-3 py-1.5 rounded-lg border text-sm font-bold ${
-                                                                  isCritical ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                                                                  isUrgent ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                                                  'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                              }`}>
-                                                                  {new Date(caseData.statuteOfLimitationsDate).toLocaleDateString()}
-                                                              </span>
-                                                              <span className={`text-xs font-medium ${
-                                                                  isCritical ? 'text-rose-600' :
-                                                                  isUrgent ? 'text-amber-600' :
-                                                                  'text-stone-500'
-                                                              }`}>
-                                                                  ({daysRemaining > 0 ? `${daysRemaining} days remaining` : 'EXPIRED'})
-                                                              </span>
-                                                          </div>
-                                                      );
-                                                  })()
-                                              ) : (
-                                                  <span className="text-rose-500 text-sm italic font-medium">Not Set - Set Immediately</span>
-                                              )
-                                          )}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Location</label>
-                                          {isEditing ? <input className={inputClass} value={editForm.location} onChange={e => setEditForm({...editForm, location: e.target.value})} /> : <p className="text-base font-medium text-stone-900">{caseData.location || 'N/A'}</p>}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Impact Assessment</label>
-                                          {isEditing ? (
-                                              <input 
-                                                className={inputClass} 
-                                                value={editForm.impact || ''} 
-                                                onChange={e => setEditForm({...editForm, impact: e.target.value})} 
-                                                placeholder="e.g. High PD - Hospital"
-                                              />
-                                          ) : (
-                                              caseData.impact ? (
-                                                  <span className="inline-block bg-stone-100 text-stone-700 px-3 py-1.5 rounded-lg border border-stone-200 text-sm font-bold">
-                                                      {caseData.impact}
+                                      <InlineEditField label="Date of Loss" value={caseData.accidentDate || ''} type="date" onSave={v => handleInlineFieldSave('accidentDate', v)} />
+                                      <InlineEditField
+                                        label="Statute of Limitations"
+                                        value={caseData.statuteOfLimitationsDate || ''}
+                                        type="date"
+                                        onSave={v => handleInlineFieldSave('statuteOfLimitationsDate', v)}
+                                        labelExtra={<svg className="w-3 h-3 ml-1 text-rose-500 inline" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>}
+                                        displayValue={
+                                          caseData.statuteOfLimitationsDate ? (
+                                            (() => {
+                                              const solDate = new Date(caseData.statuteOfLimitationsDate);
+                                              const today = new Date();
+                                              const daysRemaining = Math.floor((solDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                                              const isUrgent = daysRemaining < 90;
+                                              const isCritical = daysRemaining < 30;
+                                              return (
+                                                <div className="flex items-center gap-2">
+                                                  <span className={`inline-block px-3 py-1.5 rounded-lg border text-sm font-bold ${isCritical ? 'bg-rose-50 text-rose-700 border-rose-200' : isUrgent ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                                                    {solDate.toLocaleDateString()}
                                                   </span>
-                                              ) : (
-                                                  <span className="text-stone-400 text-sm italic">Not Assessed</span>
-                                              )
-                                          )}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Facts of Loss</label>
-                                          {isEditing ? (
-                                              <textarea className={inputClass + " h-24"} value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} />
+                                                  <span className={`text-xs font-medium ${isCritical ? 'text-rose-600' : isUrgent ? 'text-amber-600' : 'text-stone-500'}`}>
+                                                    ({daysRemaining > 0 ? `${daysRemaining} days remaining` : 'EXPIRED'})
+                                                  </span>
+                                                </div>
+                                              );
+                                            })()
                                           ) : (
-                                              <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 text-sm text-stone-700 leading-relaxed">
-                                                  {caseData.description}
-                                              </div>
-                                          )}
-                                      </div>
+                                            <span className="text-rose-500 text-sm italic font-medium">Not Set - Set Immediately</span>
+                                          )
+                                        }
+                                      />
+                                      <InlineEditField label="Location" value={caseData.location || ''} onSave={v => handleInlineFieldSave('location', v)} />
+                                      <InlineEditField
+                                        label="Impact Assessment"
+                                        value={caseData.impact || ''}
+                                        onSave={v => handleInlineFieldSave('impact', v)}
+                                        placeholder="e.g. High PD - Hospital"
+                                        displayValue={
+                                          caseData.impact ? (
+                                            <span className="inline-block bg-stone-100 text-stone-700 px-3 py-1.5 rounded-lg border border-stone-200 text-sm font-bold">{caseData.impact}</span>
+                                          ) : undefined
+                                        }
+                                      />
+                                      <InlineEditField
+                                        label="Facts of Loss"
+                                        value={caseData.description || ''}
+                                        type="textarea"
+                                        onSave={v => handleInlineFieldSave('description', v)}
+                                        displayValue={
+                                          <div className="bg-stone-50 p-4 rounded-lg border border-stone-100 text-sm text-stone-700 leading-relaxed">
+                                            {caseData.description || <span className="text-stone-400 italic">N/A</span>}
+                                          </div>
+                                        }
+                                      />
                                   </div>
                               </div>
                           </div>
@@ -959,53 +927,19 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                           Defendant Coverage
                                           <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">At-Fault</span>
                                       </h5>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Carrier</label>
-                                          {isEditing ? (
-                                              <input 
-                                                  className={inputClass} 
-                                                  value={getIns('Defendant').provider} 
-                                                  onChange={e => handleInsuranceChange('Defendant', 'provider', e.target.value)}
-                                                  placeholder="e.g. State Farm"
-                                              />
-                                          ) : (
-                                              <p className="text-base font-medium text-stone-900">{getIns('Defendant').provider || 'Unknown'}</p>
-                                          )}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Claim Number</label>
-                                          {isEditing ? (
-                                              <input 
-                                                  className={inputClass} 
-                                                  value={getIns('Defendant').claimNumber || ''} 
-                                                  onChange={e => handleInsuranceChange('Defendant', 'claimNumber', e.target.value)}
-                                                  placeholder="Claim #"
-                                              />
-                                          ) : (
-                                              <p className="text-base font-medium text-stone-900">{getIns('Defendant').claimNumber || 'Pending'}</p>
-                                          )}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Coverage Limits</label>
-                                          {isEditing ? (
-                                              <input 
-                                                  className={inputClass} 
-                                                  value={getIns('Defendant').coverageLimits || ''} 
-                                                  onChange={e => handleInsuranceChange('Defendant', 'coverageLimits', e.target.value)}
-                                                  placeholder="e.g. 100/300/50"
-                                              />
-                                          ) : (
-                                              <div className="flex items-center">
-                                                  {getIns('Defendant').coverageLimits ? (
-                                                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded font-mono text-sm font-bold border border-blue-100">
-                                                          {getIns('Defendant').coverageLimits}
-                                                      </span>
-                                                  ) : (
-                                                      <span className="text-stone-400 text-sm italic">Unknown Limits</span>
-                                                  )}
-                                              </div>
-                                          )}
-                                      </div>
+                                      <InlineEditField label="Carrier" value={getIns('Defendant').provider || ''} placeholder="e.g. State Farm" onSave={v => handleInlineInsuranceSave('Defendant', 'provider', v)} />
+                                      <InlineEditField label="Claim Number" value={getIns('Defendant').claimNumber || ''} placeholder="Claim #" onSave={v => handleInlineInsuranceSave('Defendant', 'claimNumber', v)} />
+                                      <InlineEditField
+                                        label="Coverage Limits"
+                                        value={getIns('Defendant').coverageLimits || ''}
+                                        placeholder="e.g. 100/300/50"
+                                        onSave={v => handleInlineInsuranceSave('Defendant', 'coverageLimits', v)}
+                                        displayValue={
+                                          getIns('Defendant').coverageLimits ? (
+                                            <span className="bg-stone-50 text-stone-700 px-2 py-1 rounded font-mono text-sm font-bold border border-stone-200">{getIns('Defendant').coverageLimits}</span>
+                                          ) : undefined
+                                        }
+                                      />
                                   </div>
 
                                   {/* Client Insurance */}
@@ -1014,53 +948,19 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                           Client Coverage
                                           <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">First Party</span>
                                       </h5>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Carrier</label>
-                                          {isEditing ? (
-                                              <input 
-                                                  className={inputClass} 
-                                                  value={getIns('Client').provider} 
-                                                  onChange={e => handleInsuranceChange('Client', 'provider', e.target.value)}
-                                                  placeholder="e.g. Geico"
-                                              />
-                                          ) : (
-                                              <p className="text-base font-medium text-stone-900">{getIns('Client').provider || 'Unknown'}</p>
-                                          )}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Claim Number</label>
-                                          {isEditing ? (
-                                              <input 
-                                                  className={inputClass} 
-                                                  value={getIns('Client').claimNumber || ''} 
-                                                  onChange={e => handleInsuranceChange('Client', 'claimNumber', e.target.value)}
-                                                  placeholder="Claim #"
-                                              />
-                                          ) : (
-                                              <p className="text-base font-medium text-stone-900">{getIns('Client').claimNumber || 'Pending'}</p>
-                                          )}
-                                      </div>
-                                      <div>
-                                          <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Coverage Limits</label>
-                                          {isEditing ? (
-                                              <input 
-                                                  className={inputClass} 
-                                                  value={getIns('Client').coverageLimits || ''} 
-                                                  onChange={e => handleInsuranceChange('Client', 'coverageLimits', e.target.value)}
-                                                  placeholder="e.g. 50/100 UIM"
-                                              />
-                                          ) : (
-                                              <div className="flex items-center">
-                                                  {getIns('Client').coverageLimits ? (
-                                                      <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-mono text-sm font-bold border border-emerald-100">
-                                                          {getIns('Client').coverageLimits}
-                                                      </span>
-                                                  ) : (
-                                                      <span className="text-stone-400 text-sm italic">Unknown Limits</span>
-                                                  )}
-                                              </div>
-                                          )}
-                                      </div>
+                                      <InlineEditField label="Carrier" value={getIns('Client').provider || ''} placeholder="e.g. Geico" onSave={v => handleInlineInsuranceSave('Client', 'provider', v)} />
+                                      <InlineEditField label="Claim Number" value={getIns('Client').claimNumber || ''} placeholder="Claim #" onSave={v => handleInlineInsuranceSave('Client', 'claimNumber', v)} />
+                                      <InlineEditField
+                                        label="Coverage Limits"
+                                        value={getIns('Client').coverageLimits || ''}
+                                        placeholder="e.g. 50/100 UIM"
+                                        onSave={v => handleInlineInsuranceSave('Client', 'coverageLimits', v)}
+                                        displayValue={
+                                          getIns('Client').coverageLimits ? (
+                                            <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-mono text-sm font-bold border border-emerald-100">{getIns('Client').coverageLimits}</span>
+                                          ) : undefined
+                                        }
+                                      />
                                   </div>
                               </div>
                           </div>
