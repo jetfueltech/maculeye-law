@@ -532,6 +532,13 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                        <input type="date" className={inputClass} value={formData.accident?.date_of_loss || ''} onChange={e => handleChange('accident', 'date_of_loss', e.target.value)} />
                    </div>
                    <div>
+                       <label className={labelClass}>Day of Week</label>
+                       <select className={inputClass} value={formData.accident?.day_of_week || ''} onChange={e => handleChange('accident', 'day_of_week', e.target.value)}>
+                           <option value="">Select...</option>
+                           <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+                       </select>
+                   </div>
+                   <div>
                        <label className={labelClass}>Time of Accident</label>
                        <input type="time" className={inputClass} value={formData.accident?.time_of_accident || ''} onChange={e => handleChange('accident', 'time_of_accident', e.target.value)} />
                    </div>
@@ -570,6 +577,32 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    <div className="col-span-2">
                        <label className={labelClass}>Narrative / Accident Facts</label>
                        <textarea className={inputClass + " h-32"} value={formData.accident?.accident_facts || ''} onChange={e => handleChange('accident', 'accident_facts', e.target.value)} />
+                   </div>
+                   <div className="col-span-2 border-t pt-3 mt-1">
+                     <h4 className="font-semibold text-stone-700 mb-2 text-sm">Plaintiff</h4>
+                     <div className="grid grid-cols-2 gap-3">
+                       <div>
+                         <label className={labelClass}>Plaintiff Direction</label>
+                         <input type="text" className={inputClass} placeholder="e.g. Northbound" value={formData.accident?.plaintiff_direction || ''} onChange={e => handleChange('accident', 'plaintiff_direction', e.target.value)} />
+                       </div>
+                       <div>
+                         <label className={labelClass}>On</label>
+                         <input type="text" className={inputClass} placeholder="e.g. Main Street" value={formData.accident?.plaintiff_on || ''} onChange={e => handleChange('accident', 'plaintiff_on', e.target.value)} />
+                       </div>
+                     </div>
+                   </div>
+                   <div className="col-span-2 border-t pt-3 mt-1">
+                     <h4 className="font-semibold text-stone-700 mb-2 text-sm">Defendant</h4>
+                     <div className="grid grid-cols-2 gap-3">
+                       <div>
+                         <label className={labelClass}>Defendant Direction</label>
+                         <input type="text" className={inputClass} placeholder="e.g. Westbound" value={formData.accident?.defendant_direction || ''} onChange={e => handleChange('accident', 'defendant_direction', e.target.value)} />
+                       </div>
+                       <div>
+                         <label className={labelClass}>On</label>
+                         <input type="text" className={inputClass} placeholder="e.g. 5th Avenue" value={formData.accident?.defendant_on || ''} onChange={e => handleChange('accident', 'defendant_on', e.target.value)} />
+                       </div>
+                     </div>
                    </div>
                </div>
            </div>
@@ -909,7 +942,14 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                        </div>
                        <div className="col-span-2 grid grid-cols-2 gap-3 border-t pt-3 mt-1">
                            <div className="col-span-2">
-                             <h4 className="font-semibold text-stone-700 mb-2 text-sm">Vehicle Location / Body Shop</h4>
+                             <h4 className="font-semibold text-stone-700 mb-2 text-sm">Vehicle Location</h4>
+                           </div>
+                           <div className="col-span-2">
+                               <label className={labelClass}>Current Location</label>
+                               <input type="text" className={inputClass} placeholder="e.g. At client's home, parked at friend's house, at body shop..." value={formData.vehicle_property_damage?.vehicle_location || ''} onChange={e => handleChange('vehicle_property_damage', 'vehicle_location', e.target.value)} />
+                           </div>
+                           <div className="col-span-2">
+                             <h4 className="font-semibold text-stone-700 mb-2 text-sm mt-2">Body Shop</h4>
                            </div>
                            <div className="col-span-2">
                                <label className={labelClass}>Shop Name</label>
@@ -924,11 +964,15 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                <input type="text" className={inputClass} value={formData.vehicle_property_damage?.body_shop?.phone || ''} onChange={e => handleChange('vehicle_property_damage', 'body_shop', e.target.value, 'phone')} />
                            </div>
                        </div>
-                       <div className="col-span-2 flex flex-wrap gap-x-6 gap-y-2 mt-1 border-t pt-3">
-                           <label className="flex items-center space-x-2">
-                               <input type="checkbox" checked={formData.vehicle_property_damage?.vehicle_drivable || false} onChange={e => handleChange('vehicle_property_damage', 'vehicle_drivable', e.target.checked)} />
-                               <span className="text-sm text-stone-700">Vehicle Drivable</span>
-                           </label>
+                       <div className="col-span-2 grid grid-cols-2 gap-3 mt-1 border-t pt-3">
+                           <div>
+                               <label className={labelClass}>Vehicle Drivable</label>
+                               <select className={inputClass} value={formData.vehicle_property_damage?.vehicle_drivable === true ? 'yes' : formData.vehicle_property_damage?.vehicle_drivable === false ? 'no' : ''} onChange={e => handleChange('vehicle_property_damage', 'vehicle_drivable', e.target.value === 'yes' ? true : e.target.value === 'no' ? false : undefined)}>
+                                   <option value="">Select...</option>
+                                   <option value="yes">Yes</option>
+                                   <option value="no">No</option>
+                               </select>
+                           </div>
                            <label className="flex items-center space-x-2">
                                <input type="checkbox" checked={formData.vehicle_property_damage?.airbags_deployed || false} onChange={e => handleChange('vehicle_property_damage', 'airbags_deployed', e.target.checked)} />
                                <span className="text-sm text-stone-700">Airbags Deployed</span>

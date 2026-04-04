@@ -683,6 +683,8 @@ export interface CaseFile {
   clientAddress?: string;
   clientEmail: string;
   clientPhone: string;
+  contactPhones?: { value: string; type: string }[];
+  contactEmails?: { value: string; type: string }[];
 
   accidentDate: string;
   location?: string;

@@ -926,7 +926,84 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                           ) : undefined
                                         }
                                       />
+                                      {(caseData.contactPhones || []).map((p, i) => (
+                                        <div key={`ph-${i}`} className="flex items-center gap-2">
+                                          <select
+                                            value={p.type}
+                                            onChange={e => {
+                                              const updated = [...(caseData.contactPhones || [])];
+                                              updated[i] = { ...updated[i], type: e.target.value };
+                                              onUpdateCase({ ...caseData, contactPhones: updated });
+                                            }}
+                                            className="text-[10px] font-bold text-stone-500 uppercase bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded outline-none cursor-pointer"
+                                          >
+                                            <option value="Cell">Cell</option>
+                                            <option value="Home">Home</option>
+                                            <option value="Work">Work</option>
+                                            <option value="Other">Other</option>
+                                          </select>
+                                          <InlineEditField
+                                            label=""
+                                            value={p.value}
+                                            onSave={v => {
+                                              const updated = [...(caseData.contactPhones || [])];
+                                              updated[i] = { ...updated[i], value: v };
+                                              onUpdateCase({ ...caseData, contactPhones: updated });
+                                            }}
+                                          />
+                                          <button onClick={() => {
+                                            const updated = (caseData.contactPhones || []).filter((_, idx) => idx !== i);
+                                            onUpdateCase({ ...caseData, contactPhones: updated });
+                                          }} className="text-stone-300 hover:text-red-500 transition-colors">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                          </button>
+                                        </div>
+                                      ))}
+                                      <button
+                                        onClick={() => onUpdateCase({ ...caseData, contactPhones: [...(caseData.contactPhones || []), { value: '', type: 'Cell' }] })}
+                                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                      >
+                                        + Add Phone
+                                      </button>
                                       <InlineEditField label="Email" value={caseData.clientEmail || ''} onSave={v => handleInlineFieldSave('clientEmail', v)} />
+                                      {(caseData.contactEmails || []).map((em, i) => (
+                                        <div key={`em-${i}`} className="flex items-center gap-2">
+                                          <select
+                                            value={em.type}
+                                            onChange={e => {
+                                              const updated = [...(caseData.contactEmails || [])];
+                                              updated[i] = { ...updated[i], type: e.target.value };
+                                              onUpdateCase({ ...caseData, contactEmails: updated });
+                                            }}
+                                            className="text-[10px] font-bold text-stone-500 uppercase bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded outline-none cursor-pointer"
+                                          >
+                                            <option value="Personal">Personal</option>
+                                            <option value="Work">Work</option>
+                                            <option value="Other">Other</option>
+                                          </select>
+                                          <InlineEditField
+                                            label=""
+                                            value={em.value}
+                                            onSave={v => {
+                                              const updated = [...(caseData.contactEmails || [])];
+                                              updated[i] = { ...updated[i], value: v };
+                                              onUpdateCase({ ...caseData, contactEmails: updated });
+                                            }}
+                                          />
+                                          <button onClick={() => {
+                                            const updated = (caseData.contactEmails || []).filter((_, idx) => idx !== i);
+                                            onUpdateCase({ ...caseData, contactEmails: updated });
+                                          }} className="text-stone-300 hover:text-red-500 transition-colors">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                          </button>
+                                        </div>
+                                      ))}
+                                      <button
+                                        onClick={() => onUpdateCase({ ...caseData, contactEmails: [...(caseData.contactEmails || []), { value: '', type: 'Personal' }] })}
+                                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                      >
+                                        + Add Email
+                                      </button>
                                       <InlineEditField label="Address" value={caseData.clientAddress || ''} onSave={v => handleInlineFieldSave('clientAddress', v)} />
                                   </div>
                               </div>
