@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CaseFile, ExtendedIntakeData, ClientDetails, Insurance, InsuranceAdjuster } from '../types';
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { DocumentAttachment } from '../types';
 import { CoverageFieldGroup } from './CoverageFieldGroup';
 import { StateSelect } from './StateSelect';
+import { searchInsuranceCompanies, DirectoryInsuranceCompany } from '../services/insuranceCompanyService';
 
 interface InsuranceBlockProps {
   label: string;
@@ -18,10 +19,56 @@ interface InsuranceBlockProps {
 
 const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColor, ins, onFieldChange, inputClass, labelClass }) => {
   const [newAdj, setNewAdj] = useState({ name: '', phone: '', email: '' });
+  const [carrierSearch, setCarrierSearch] = useState('');
+  const [suggestions, setSuggestions] = useState<DirectoryInsuranceCompany[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const adjusters = ins.adjusters || [];
   const badgeStyles = badgeColor === 'emerald'
     ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
     : 'bg-stone-100 text-stone-500 border-stone-200';
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleCarrierChange = (value: string) => {
+    onFieldChange({ provider: value });
+    setCarrierSearch(value);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    if (value.length >= 2) {
+      searchTimerRef.current = setTimeout(async () => {
+        const results = await searchInsuranceCompanies(value);
+        setSuggestions(results);
+        setShowSuggestions(results.length > 0);
+      }, 250);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectCompany = (company: DirectoryInsuranceCompany) => {
+    onFieldChange({
+      provider: company.name,
+      claimsEmail: company.claims_email || undefined,
+      claimsPhone: company.claims_phone || undefined,
+      claimsFax: company.fax || undefined,
+      address: company.mailing_address || company.address || undefined,
+      city: company.mailing_city || company.city || undefined,
+      state: company.mailing_state || company.state || undefined,
+      zip: company.mailing_zip || company.zip || undefined,
+    });
+    setShowSuggestions(false);
+    setCarrierSearch('');
+  };
 
   const handleAddAdjuster = () => {
     if (!newAdj.name.trim()) return;
@@ -66,9 +113,32 @@ const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColo
         </h4>
       )}
       <div className="grid grid-cols-2 gap-3">
-        <div>
+        <div className="relative" ref={wrapperRef}>
           <label className={labelClass}>Carrier</label>
-          <input className={inputClass} placeholder="e.g. State Farm" value={ins.provider || ''} onChange={e => onFieldChange({ provider: e.target.value })} />
+          <input
+            className={inputClass}
+            placeholder="e.g. State Farm"
+            value={ins.provider || ''}
+            onChange={e => handleCarrierChange(e.target.value)}
+            onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+          />
+          {showSuggestions && (
+            <div className="absolute z-30 left-0 right-0 top-full mt-1 bg-white border border-stone-200 rounded-xl shadow-xl max-h-52 overflow-y-auto">
+              {suggestions.map(c => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => handleSelectCompany(c)}
+                  className="w-full text-left px-3 py-2.5 hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-0"
+                >
+                  <span className="text-sm font-medium text-stone-800 block">{c.name}</span>
+                  <span className="text-xs text-stone-400">
+                    {[c.claims_phone, c.claims_email, c.city, c.state].filter(Boolean).join(' | ') || 'No details'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <label className={labelClass}>Claim #</label>
@@ -77,6 +147,33 @@ const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColo
         <div>
           <label className={labelClass}>Policy #</label>
           <input className={inputClass} placeholder="Policy #" value={ins.policyNumber || ''} onChange={e => onFieldChange({ policyNumber: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Claims Email</label>
+          <input className={inputClass} type="email" placeholder="claims@insurer.com" value={ins.claimsEmail || ''} onChange={e => onFieldChange({ claimsEmail: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Claims Phone</label>
+          <input className={inputClass} placeholder="(800) 555-0001" value={ins.claimsPhone || ''} onChange={e => onFieldChange({ claimsPhone: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Fax</label>
+          <input className={inputClass} placeholder="(800) 555-0002" value={ins.claimsFax || ''} onChange={e => onFieldChange({ claimsFax: e.target.value })} />
+        </div>
+        <div className="col-span-2">
+          <label className={labelClass}>Address</label>
+          <input className={inputClass} placeholder="Street address" value={ins.address || ''} onChange={e => onFieldChange({ address: e.target.value })} />
+          <div className="grid grid-cols-6 gap-2 mt-2">
+            <div className="col-span-3">
+              <input className={inputClass} placeholder="City" value={ins.city || ''} onChange={e => onFieldChange({ city: e.target.value })} />
+            </div>
+            <div className="col-span-1">
+              <input className={inputClass} placeholder="State" value={ins.state || ''} onChange={e => onFieldChange({ state: e.target.value })} />
+            </div>
+            <div className="col-span-2">
+              <input className={inputClass} placeholder="Zip" value={ins.zip || ''} onChange={e => onFieldChange({ zip: e.target.value })} />
+            </div>
+          </div>
         </div>
         <div className="col-span-2">
           <CoverageFieldGroup

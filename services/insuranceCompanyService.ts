@@ -17,6 +17,7 @@ export interface DirectoryInsuranceCompany {
   phone: string;
   fax: string;
   claims_phone: string;
+  claims_email: string;
   website: string;
   notes: string;
   created_at: string;

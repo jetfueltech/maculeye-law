@@ -36,6 +36,7 @@ interface FormData {
   phone: string;
   fax: string;
   claims_phone: string;
+  claims_email: string;
   website: string;
   notes: string;
 }
@@ -43,7 +44,7 @@ interface FormData {
 const emptyForm: FormData = {
   name: '', type: 'auto', address: '', city: '', state: '',
   zip: '', mailing_address: '', mailing_city: '', mailing_state: '', mailing_zip: '',
-  phone: '', fax: '', claims_phone: '', website: '', notes: '',
+  phone: '', fax: '', claims_phone: '', claims_email: '', website: '', notes: '',
 };
 
 export const DirectoryInsurance: React.FC = () => {
@@ -94,7 +95,7 @@ export const DirectoryInsurance: React.FC = () => {
       state: c.state, zip: c.zip, mailing_address: c.mailing_address,
       mailing_city: c.mailing_city, mailing_state: c.mailing_state,
       mailing_zip: c.mailing_zip, phone: c.phone, fax: c.fax,
-      claims_phone: c.claims_phone, website: c.website, notes: c.notes,
+      claims_phone: c.claims_phone, claims_email: c.claims_email || '', website: c.website, notes: c.notes,
     });
     setShowForm(true);
     setExpandedId(null);
@@ -205,7 +206,7 @@ export const DirectoryInsurance: React.FC = () => {
               <input className={inputClass} value={form.mailing_zip} onChange={e => setForm({ ...form, mailing_zip: e.target.value })} />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Main Phone</label>
               <input className={inputClass} value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="(800) 555-0000" />
@@ -213,6 +214,10 @@ export const DirectoryInsurance: React.FC = () => {
             <div>
               <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Claims Phone</label>
               <input className={inputClass} value={form.claims_phone} onChange={e => setForm({ ...form, claims_phone: e.target.value })} placeholder="(800) 555-0001" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Claims Email</label>
+              <input className={inputClass} type="email" value={form.claims_email} onChange={e => setForm({ ...form, claims_email: e.target.value })} placeholder="claims@insurer.com" />
             </div>
             <div>
               <label className="block text-xs font-bold text-stone-400 uppercase mb-1">Fax</label>
@@ -270,6 +275,7 @@ export const DirectoryInsurance: React.FC = () => {
                       <p className="text-xs text-stone-500 mt-0.5 truncate">
                         {c.phone ? c.phone : 'No phone'}
                         {c.claims_phone ? ` | Claims: ${c.claims_phone}` : ''}
+                        {c.claims_email ? ` | ${c.claims_email}` : ''}
                       </p>
                     </div>
                   </div>
@@ -280,6 +286,7 @@ export const DirectoryInsurance: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 py-4">
                       <div><span className="text-[11px] font-bold text-stone-400 uppercase block">Main Phone</span><span className="text-sm text-stone-800">{c.phone || '--'}</span></div>
                       <div><span className="text-[11px] font-bold text-stone-400 uppercase block">Claims Phone</span><span className="text-sm text-stone-800">{c.claims_phone || '--'}</span></div>
+                      <div><span className="text-[11px] font-bold text-stone-400 uppercase block">Claims Email</span><span className="text-sm text-stone-800">{c.claims_email || '--'}</span></div>
                       <div><span className="text-[11px] font-bold text-stone-400 uppercase block">Fax</span><span className="text-sm text-stone-800">{c.fax || '--'}</span></div>
                       <div><span className="text-[11px] font-bold text-stone-400 uppercase block">Address</span><span className="text-sm text-stone-800">{[c.address, c.city, c.state, c.zip].filter(Boolean).join(', ') || '--'}</span></div>
                       <div><span className="text-[11px] font-bold text-stone-400 uppercase block">Mailing Address</span><span className="text-sm text-stone-800">{[c.mailing_address, c.mailing_city, c.mailing_state, c.mailing_zip].filter(Boolean).join(', ') || '--'}</span></div>

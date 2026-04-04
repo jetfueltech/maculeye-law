@@ -402,6 +402,13 @@ export interface Insurance {
   adjuster?: string;
   adjusters?: InsuranceAdjuster[];
   coverageLimits?: string;
+  claimsEmail?: string;
+  claimsPhone?: string;
+  claimsFax?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   insuredStatus?: InsuredStatus;
   coverageType?: CoverageType;
   isUninsured?: boolean;

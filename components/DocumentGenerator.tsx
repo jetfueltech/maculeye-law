@@ -63,9 +63,20 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   const claimNo = intake.defendant?.insurance?.claim_number || caseData.insurance?.find(i => i.type === 'Defendant')?.claimNumber || '[CLAIM #]';
   const crashReportNo = intake.accident?.crash_report_number || '[CRASH REPORT #]';
 
-  const clientInsurer = intake.first_party_insurance?.company || intake.auto_insurance?.driver_or_passenger_insurance_company || caseData.insurance?.find(i => i.type === 'Client')?.provider || '[INSURANCE CO]';
-  const clientClaimNo = intake.first_party_insurance?.claim_number || intake.auto_insurance?.claim_number || caseData.insurance?.find(i => i.type === 'Client')?.claimNumber || '[CLAIM #]';
-  const clientPolicyNo = intake.first_party_insurance?.policy_number || intake.auto_insurance?.policy_number || caseData.insurance?.find(i => i.type === 'Client')?.policyNumber || '[POLICY #]';
+  const defInsObj = caseData.insurance?.find(i => i.type === 'Defendant');
+  const defClaimsEmail = defInsObj?.claimsEmail || '';
+  const defClaimsPhone = defInsObj?.claimsPhone || '';
+  const defClaimsFax = defInsObj?.claimsFax || '';
+  const defInsAddress = [defInsObj?.address, defInsObj?.city, defInsObj?.state, defInsObj?.zip].filter(Boolean).join(', ');
+
+  const clientInsObj = caseData.insurance?.find(i => i.type === 'Client');
+  const clientInsurer = intake.first_party_insurance?.company || intake.auto_insurance?.driver_or_passenger_insurance_company || clientInsObj?.provider || '[INSURANCE CO]';
+  const clientClaimNo = intake.first_party_insurance?.claim_number || intake.auto_insurance?.claim_number || clientInsObj?.claimNumber || '[CLAIM #]';
+  const clientPolicyNo = intake.first_party_insurance?.policy_number || intake.auto_insurance?.policy_number || clientInsObj?.policyNumber || '[POLICY #]';
+  const clientClaimsEmail = clientInsObj?.claimsEmail || '';
+  const clientClaimsPhone = clientInsObj?.claimsPhone || '';
+  const clientClaimsFax = clientInsObj?.claimsFax || '';
+  const clientInsAddress = [clientInsObj?.address, clientInsObj?.city, clientInsObj?.state, clientInsObj?.zip].filter(Boolean).join(', ');
   
   // Static Attorney Info (Simulated "SAP LAW")
   const attorneyName = "Steve Pisman, Esq.";
@@ -97,8 +108,11 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
             <div className="mb-6">
                 <p className="font-bold">Via Facsimile/Email</p>
-                <p className="font-bold">{defInsurer}</p>
+                <p className="font-bold bg-yellow-50 inline-block px-1">{defInsurer}</p>
                 <p>Claims Department</p>
+                {defInsAddress && <p className="bg-yellow-50 px-1">{defInsAddress}</p>}
+                {defClaimsEmail && <p className="bg-yellow-50 px-1">{defClaimsEmail}</p>}
+                {defClaimsFax && <p className="text-sm">Fax: <span className="bg-yellow-50 px-1">{defClaimsFax}</span></p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-6 font-bold">
@@ -106,13 +120,13 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 <div className="grid grid-cols-[100px_1fr] gap-y-1">
                     <span>Our Client:</span>
                     <span className="bg-yellow-100 px-1">{clientName}</span>
-                    
+
                     <span>Your Insured:</span>
                     <span className="bg-yellow-100 px-1">{defName}</span>
-                    
+
                     <span>Date of Loss:</span>
                     <span className="bg-yellow-100 px-1">{dol}</span>
-                    
+
                     <span>Claim No.:</span>
                     <span className="bg-yellow-100 px-1">{claimNo}</span>
                 </div>
@@ -121,8 +135,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
             <p className="mb-4">To Whom It May Concern:</p>
 
             <p className="mb-4 text-justify">
-                Please be advised our office represents <span className="bg-yellow-100 font-bold">{clientName}</span> in a claim for personal injuries arising from the above-referenced accident. 
-                SAP Law has an attorney’s lien on our client’s claim and any recovery. This lien is attached hereto. 
+                Please be advised our office represents <span className="bg-yellow-100 font-bold">{clientName}</span> in a claim for personal injuries arising from the above-referenced accident.
+                SAP Law has an attorney's lien on our client's claim and any recovery. This lien is attached hereto.
                 Please include SAP Law as payee on all settlement drafts, unless notified in writing, that our office no longer represents said client.
             </p>
 
@@ -167,6 +181,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 <p className="underline mb-2">Via Facsimile/Email</p>
                 <p>{defInsurer}</p>
                 <p>Claims Department</p>
+                {defInsAddress && <p className="font-normal bg-yellow-50 px-1">{defInsAddress}</p>}
+                {defClaimsEmail && <p className="font-normal bg-yellow-50 px-1">{defClaimsEmail}</p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-8 font-bold">
@@ -174,13 +190,13 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 <div className="grid grid-cols-[100px_1fr] gap-y-1">
                     <span>Our Client:</span>
                     <span className="bg-yellow-100 px-1">{clientName}</span>
-                    
+
                     <span>Your Insured:</span>
                     <span className="bg-yellow-100 px-1">{defName}</span>
-                    
+
                     <span>Date of Loss:</span>
                     <span className="bg-yellow-100 px-1">{dol}</span>
-                    
+
                     <span>Claim No.:</span>
                     <span className="bg-yellow-100 px-1">{claimNo}</span>
                 </div>
@@ -225,8 +241,11 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
             <div className="mb-6">
                 <p className="font-bold">Via Facsimile/Email</p>
-                <p className="font-bold">{clientInsurer}</p>
+                <p className="font-bold bg-yellow-50 inline-block px-1">{clientInsurer}</p>
                 <p>Claims Department</p>
+                {clientInsAddress && <p className="bg-yellow-50 px-1">{clientInsAddress}</p>}
+                {clientClaimsEmail && <p className="bg-yellow-50 px-1">{clientClaimsEmail}</p>}
+                {clientClaimsFax && <p className="text-sm">Fax: <span className="bg-yellow-50 px-1">{clientClaimsFax}</span></p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-6 font-bold">
@@ -294,6 +313,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 <p className="underline mb-2">Via Facsimile/Email</p>
                 <p>{clientInsurer}</p>
                 <p>Claims Department</p>
+                {clientInsAddress && <p className="font-normal bg-yellow-50 px-1">{clientInsAddress}</p>}
+                {clientClaimsEmail && <p className="font-normal bg-yellow-50 px-1">{clientClaimsEmail}</p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-8 font-bold">
