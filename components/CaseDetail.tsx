@@ -502,16 +502,32 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   };
 
   const handleInlineInsuranceSave = (type: 'Defendant' | 'Client', field: keyof Insurance, value: string) => {
+    handleInsuranceBatchUpdate(type, { [field]: value });
+  };
+
+  const handleInsuranceBatchUpdate = (type: 'Defendant' | 'Client', fields: Partial<Insurance>) => {
     const currentIns = caseData.insurance || [];
     const index = currentIns.findIndex(i => i.type === type);
     let newIns = [...currentIns];
     if (index >= 0) {
-      newIns[index] = { ...newIns[index], [field]: value };
+      newIns[index] = { ...newIns[index], ...fields };
     } else {
-      newIns.push({ type, provider: '', [field]: value } as Insurance);
+      newIns.push({ type, provider: '', ...fields } as Insurance);
     }
+    setEditForm(prev => {
+      const prevIns = prev.insurance || [];
+      const prevIndex = prevIns.findIndex(i => i.type === type);
+      let updatedIns = [...prevIns];
+      if (prevIndex >= 0) {
+        updatedIns[prevIndex] = { ...updatedIns[prevIndex], ...fields };
+      } else {
+        updatedIns.push({ type, provider: '', ...fields } as Insurance);
+      }
+      return { ...prev, insurance: updatedIns };
+    });
+    const fieldNames = Object.keys(fields).join(', ');
     let updated = { ...caseData, insurance: newIns };
-    updated = addActivity(updated, `Updated ${type} insurance ${field}.`, 'user');
+    updated = addActivity(updated, `Updated ${type} insurance ${fieldNames}.`, 'user');
     onUpdateCase(updated);
   };
 
@@ -962,6 +978,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                         coverageType={getIns('Defendant').coverageType}
                                         coverageLimits={getIns('Defendant').coverageLimits || ''}
                                         onChange={(field, value) => handleInlineInsuranceSave('Defendant', field as keyof Insurance, value)}
+                                        onBatchChange={fields => handleInsuranceBatchUpdate('Defendant', fields as Partial<Insurance>)}
                                         accentColor="stone"
                                       />
                                   </div>
@@ -979,6 +996,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                         coverageType={getIns('Client').coverageType}
                                         coverageLimits={getIns('Client').coverageLimits || ''}
                                         onChange={(field, value) => handleInlineInsuranceSave('Client', field as keyof Insurance, value)}
+                                        onBatchChange={fields => handleInsuranceBatchUpdate('Client', fields as Partial<Insurance>)}
                                         accentColor="emerald"
                                       />
                                   </div>
