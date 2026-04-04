@@ -16,7 +16,6 @@ import { FinancialsTab } from './FinancialsTab';
 import { AdjusterPanel } from './AdjusterPanel';
 import { DocumentGenerator, DocumentFormType, DocumentContext } from './DocumentGenerator';
 import { PreservationOfEvidencePanel } from './PreservationOfEvidencePanel';
-import { FormsPanel } from './FormsPanel';
 import { InlineEditField } from './InlineEditField';
 import { uploadDocument } from '../services/documentStorageService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
@@ -44,7 +43,7 @@ function inferDocTypeFromName(filename: string): DocumentAttachment['type'] {
   return 'other';
 }
 
-type CaseDetailTab = 'overview' | 'extended' | 'medical' | 'documents' | 'forms' | 'evidence' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials';
+type CaseDetailTab = 'overview' | 'extended' | 'medical' | 'documents' | 'evidence' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials';
 
 interface CaseDetailProps {
   caseData: CaseFile;
@@ -751,13 +750,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                  Documents ({caseData.documents.length})
                  {activeTab === 'documents' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
-             <button onClick={() => setActiveTab('forms')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'forms' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
-                 Forms
-                 {caseData.documents.filter(d => d.generatedFormType).length > 0 && (
-                   <span className="ml-1.5 text-[10px] font-bold bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded-full">{caseData.documents.filter(d => d.generatedFormType).length}</span>
-                 )}
-                 {activeTab === 'forms' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
-             </button>
              <button onClick={() => setActiveTab('evidence')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'evidence' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Evidence
                  {(caseData.preservationRecipients?.length || 0) > 0 && (
@@ -807,8 +799,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           <div className="animate-fade-in"><MedicalTreatment caseData={caseData} onUpdateCase={onUpdateCase} /></div>
       ) : activeTab === 'documents' ? (
         <DocumentsPanel caseData={caseData} onUpdateCase={onUpdateCase} />
-      ) : activeTab === 'forms' ? (
-        <FormsPanel caseData={caseData} onUpdateCase={onUpdateCase} />
       ) : activeTab === 'evidence' ? (
         <PreservationOfEvidencePanel caseData={caseData} onUpdateCase={onUpdateCase} />
       ) : activeTab === 'ai_analysis' ? (

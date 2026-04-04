@@ -16,6 +16,7 @@ import { CaseFile, CaseStatus, Email, DocumentAttachment } from './types';
 import { TasksView } from './components/TasksView';
 import { Workspace } from './components/Workspace';
 import { ActivityFeed } from './components/ActivityFeed';
+import { FormsPanel } from './components/FormsPanel';
 import { classifyAttachmentType } from './services/geminiService';
 import { applyWorkflowToCase } from './services/workflowEngine';
 import { getCasesByFirm, upsertCase, generateCaseNumber, deleteCase } from './services/caseService';
@@ -380,6 +381,13 @@ function AppContent() {
               onSelectCase={(c) => {
                 setSelectedCase(c);
               }}
+              onUpdateCase={handleCaseUpdate}
+            />
+          )}
+
+           {!casesLoading && currentView === 'forms' && !selectedCase && (
+            <FormsPanel
+              cases={cases}
               onUpdateCase={handleCaseUpdate}
             />
           )}
