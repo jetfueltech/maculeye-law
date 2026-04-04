@@ -738,8 +738,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
              </button>
              {isAcceptedOrLater && (
                  <button onClick={() => setActiveTab('extended')} className={`pb-4 text-sm font-medium transition-colors relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'extended' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
-                     Detailed Intake
-                     <span className="bg-blue-50 text-blue-600 text-[10px] px-1.5 py-0.5 rounded-full font-bold">FORM</span>
+                     Intake
                      {activeTab === 'extended' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
                  </button>
              )}

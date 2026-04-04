@@ -433,6 +433,7 @@ export interface ClientDetails {
     phones?: { home?: string; cell?: string };
     email?: string;
     marital_status?: 'Married' | 'Single';
+    primary_language?: string;
     emergency_contact?: { name?: string; phone?: string };
 }
 
