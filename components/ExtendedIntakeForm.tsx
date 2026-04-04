@@ -4,6 +4,7 @@ import { CaseFile, ExtendedIntakeData, ClientDetails, Insurance, InsuranceAdjust
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { DocumentAttachment } from '../types';
 import { CoverageFieldGroup } from './CoverageFieldGroup';
+import { StateSelect } from './StateSelect';
 
 interface InsuranceBlockProps {
   label: string;
@@ -12,16 +13,15 @@ interface InsuranceBlockProps {
   ins: Insurance;
   onFieldChange: (fields: Partial<Insurance>) => void;
   inputClass: string;
-  selectClass: string;
   labelClass: string;
 }
 
-const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColor, ins, onFieldChange, inputClass, selectClass, labelClass }) => {
+const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColor, ins, onFieldChange, inputClass, labelClass }) => {
   const [newAdj, setNewAdj] = useState({ name: '', phone: '', email: '' });
   const adjusters = ins.adjusters || [];
   const badgeStyles = badgeColor === 'emerald'
-    ? 'bg-emerald-50 text-emerald-600'
-    : 'bg-stone-100 text-stone-500';
+    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+    : 'bg-stone-100 text-stone-500 border-stone-200';
 
   const handleAddAdjuster = () => {
     if (!newAdj.name.trim()) return;
@@ -61,9 +61,9 @@ const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColo
     <div>
       <h4 className="font-bold text-stone-700 mb-3 text-sm flex items-center">
         {label}
-        <span className={`ml-2 ${badgeStyles} text-[10px] px-2 py-0.5 rounded-full uppercase`}>{badge}</span>
+        <span className={`ml-2 ${badgeStyles} text-[10px] px-2 py-0.5 rounded-full uppercase border`}>{badge}</span>
       </h4>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass}>Carrier</label>
           <input className={inputClass} placeholder="e.g. State Farm" value={ins.provider || ''} onChange={e => onFieldChange({ provider: e.target.value })} />
@@ -88,14 +88,14 @@ const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColo
         </div>
       </div>
 
-      <div className="mt-5 border-t border-stone-100 pt-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="mt-4 border-t border-stone-100 pt-3">
+        <div className="flex items-center justify-between mb-2">
           <h5 className="text-xs font-bold text-stone-500 uppercase">Adjusters</h5>
           <span className="text-xs text-stone-400">{adjusters.length} {adjusters.length === 1 ? 'adjuster' : 'adjusters'}</span>
         </div>
 
         {adjusters.length > 0 && (
-          <div className="space-y-3 mb-4">
+          <div className="space-y-2 mb-3">
             {adjusters.map(adj => (
               <div key={adj.id} className="bg-stone-50 rounded-lg border border-stone-200 p-3">
                 <div className="flex items-center justify-between mb-2">
@@ -203,7 +203,17 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
     };
   });
 
-  const [activeSection, setActiveSection] = useState<string>(initialSection || 'admin');
+  const mapInitialSection = (s?: string) => {
+    if (!s) return 'admin';
+    if (s === 'employment' || s === 'medical' || s === 'insurance' || s === 'vehicle') return 'client';
+    return s;
+  };
+
+  const [activeSection, setActiveSection] = useState<string>(mapInitialSection(initialSection));
+  const [clientSubSection, setClientSubSection] = useState<string>(() => {
+    if (initialSection === 'employment' || initialSection === 'medical' || initialSection === 'insurance' || initialSection === 'vehicle') return initialSection;
+    return 'demographics';
+  });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [newProvider, setNewProvider] = useState({ name: '', address: '', phone: '' });
 
@@ -212,7 +222,12 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
   const [showDocPreview, setShowDocPreview] = useState(false);
 
   useEffect(() => {
-    if (initialSection) setActiveSection(initialSection);
+    if (initialSection) {
+      setActiveSection(mapInitialSection(initialSection));
+      if (['employment', 'medical', 'insurance', 'vehicle'].includes(initialSection)) {
+        setClientSubSection(initialSection);
+      }
+    }
   }, [initialSection]);
 
   useEffect(() => {
@@ -284,34 +299,17 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
     setFormData(prev => {
         const clients = [...(prev.additional_clients || [])];
         let client = { ...clients[index] };
-
         if (subField) {
              const fieldData = (client as any)[field] || {};
              if (subSubField) {
                  const subFieldData = fieldData[subField] || {};
-                 client = {
-                     ...client,
-                     [field]: {
-                         ...fieldData,
-                         [subField]: {
-                             ...subFieldData,
-                             [subSubField]: value
-                         }
-                     }
-                 };
+                 client = { ...client, [field]: { ...fieldData, [subField]: { ...subFieldData, [subSubField]: value } } };
              } else {
-                 client = {
-                     ...client,
-                     [field]: {
-                         ...fieldData,
-                         [subField]: value
-                     }
-                 };
+                 client = { ...client, [field]: { ...fieldData, [subField]: value } };
              }
         } else {
              (client as any)[field] = value;
         }
-
         clients[index] = client;
         return { ...prev, additional_clients: clients };
     });
@@ -320,14 +318,8 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
   const handleAddClient = () => {
       setFormData(prev => ({
           ...prev,
-          additional_clients: [
-              ...(prev.additional_clients || []),
-              { full_name: '', address: {} }
-          ],
-          intake_admin: {
-              ...prev.intake_admin,
-              total_clients: (prev.intake_admin?.total_clients || 1) + 1
-          }
+          additional_clients: [...(prev.additional_clients || []), { full_name: '', address: {} }],
+          intake_admin: { ...prev.intake_admin, total_clients: (prev.intake_admin?.total_clients || 1) + 1 }
       }));
   };
 
@@ -336,49 +328,29 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
       setFormData(prev => ({
           ...prev,
           additional_clients: (prev.additional_clients || []).filter((_, i) => i !== index),
-          intake_admin: {
-              ...prev.intake_admin,
-              total_clients: Math.max(1, (prev.intake_admin?.total_clients || 1) - 1)
-          }
+          intake_admin: { ...prev.intake_admin, total_clients: Math.max(1, (prev.intake_admin?.total_clients || 1) - 1) }
       }));
   };
 
   const handleAddProvider = () => {
     if (!newProvider.name) return;
-    setFormData(prev => {
-        const currentMedical = prev.medical || {};
-        const currentProviders = currentMedical.providers || [];
-        return {
-            ...prev,
-            medical: {
-                ...currentMedical,
-                providers: [...currentProviders, newProvider]
-            }
-        };
-    });
+    setFormData(prev => ({
+        ...prev,
+        medical: { ...prev.medical, providers: [...(prev.medical?.providers || []), newProvider] }
+    }));
     setNewProvider({ name: '', address: '', phone: '' });
   };
 
   const handleDeleteProvider = (index: number) => {
-      setFormData(prev => {
-          const currentMedical = prev.medical || {};
-          const currentProviders = currentMedical.providers || [];
-          return {
-              ...prev,
-              medical: {
-                  ...currentMedical,
-                  providers: currentProviders.filter((_, i) => i !== index)
-              }
-          };
-      });
+      setFormData(prev => ({
+          ...prev,
+          medical: { ...prev.medical, providers: (prev.medical?.providers || []).filter((_, i) => i !== index) }
+      }));
   };
 
   const handleSave = () => {
       setSaveStatus('saving');
-      setTimeout(() => {
-          onSave(formData);
-          setSaveStatus('saved');
-      }, 600);
+      setTimeout(() => { onSave(formData); setSaveStatus('saved'); }, 600);
   };
 
   const handleGenerateClick = () => {
@@ -389,46 +361,47 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
 
   const sections = [
     { id: 'admin', label: 'Admin & Referral' },
-    { id: 'client', label: 'Client' },
     { id: 'accident', label: 'Accident' },
+    { id: 'client', label: 'Client' },
     { id: 'defendant', label: 'Defendant' },
+  ];
+
+  const clientSubSections = [
+    { id: 'demographics', label: 'Demographics' },
     { id: 'employment', label: 'Employment' },
     { id: 'medical', label: 'Medical' },
     { id: 'insurance', label: 'Insurance' },
-    { id: 'vehicle', label: 'Vehicle' }
+    { id: 'vehicle', label: 'Vehicle' },
   ];
 
   const inputClass = "w-full bg-white border border-stone-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none";
-  const selectClass = "w-full bg-white border border-stone-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer";
   const labelClass = "block text-xs font-bold text-stone-500 uppercase mb-1";
   const sectionClass = "bg-white rounded-lg border border-stone-200 p-6 animate-fade-in";
+
+  const defIns = getIns('Defendant');
+  const clientIns = getIns('Client');
 
   const renderClientFields = (client: ClientDetails, isPrimary: boolean, index?: number) => {
       const isAddl = !isPrimary && index !== undefined;
       const getValue = (field: keyof ClientDetails) => client[field] || '';
       const getAddr = (field: string) => client.address ? (client.address as any)[field] || '' : '';
-
       const onChange = (field: string, val: any, sub?: string) => {
-          if (isAddl) {
-              handleAdditionalClientChange(index, field, val, sub);
-          } else {
-              handleChange('client', field, val, sub);
-          }
+          if (isAddl) { handleAdditionalClientChange(index, field, val, sub); }
+          else { handleChange('client', field, val, sub); }
       };
 
       return (
-          <div className={`grid grid-cols-2 gap-4 ${isAddl ? 'bg-stone-50 p-4 rounded-xl border border-stone-200 mt-6 relative' : ''}`}>
+          <div className={`grid grid-cols-2 gap-3 ${isAddl ? 'bg-stone-50 p-4 rounded-xl border border-stone-200 mt-6 relative' : ''}`}>
                {isAddl && (
                    <button
                         onClick={() => handleRemoveClient(index)}
-                        className="absolute top-4 right-4 text-red-500 hover:text-red-700 font-bold text-xs flex items-center bg-white px-2 py-1 rounded border border-red-100 shadow-sm"
+                        className="absolute top-3 right-3 text-red-500 hover:text-red-700 font-bold text-xs flex items-center bg-white px-2 py-1 rounded border border-red-100 shadow-sm"
                    >
                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                        Remove
                    </button>
                )}
-               {isAddl && <h4 className="col-span-2 font-bold text-stone-700 border-b pb-2 mb-2">Additional Client #{index + 1}</h4>}
-
+               {isAddl && <h4 className="col-span-2 font-bold text-stone-700 border-b pb-2 mb-1">Additional Client #{index + 1}</h4>}
                <div>
                    <label className={labelClass}>Full Name</label>
                    <input type="text" className={inputClass} value={getValue('full_name')} onChange={e => onChange('full_name', e.target.value)} />
@@ -449,42 +422,30 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                        <option value="Married">Married</option>
                    </select>
                </div>
-
-               <div className="col-span-2 border-t pt-2 mt-2">
+               <div className="col-span-2 border-t pt-2 mt-1">
                    <label className={labelClass}>Address</label>
                    <div className="grid grid-cols-6 gap-2">
-                       <div className="col-span-6">
-                           <input placeholder="Street Address" className={inputClass} value={getAddr('street')} onChange={e => onChange('address', e.target.value, 'street')} />
-                       </div>
-                       <div className="col-span-3">
-                           <input placeholder="City" className={inputClass} value={getAddr('city')} onChange={e => onChange('address', e.target.value, 'city')} />
-                       </div>
+                       <div className="col-span-6"><input placeholder="Street Address" className={inputClass} value={getAddr('street')} onChange={e => onChange('address', e.target.value, 'street')} /></div>
+                       <div className="col-span-3"><input placeholder="City" className={inputClass} value={getAddr('city')} onChange={e => onChange('address', e.target.value, 'city')} /></div>
                        <div className="col-span-1">
-                           <input placeholder="State" className={inputClass} value={getAddr('state')} onChange={e => onChange('address', e.target.value, 'state')} />
+                         <StateSelect value={getAddr('state')} onChange={v => onChange('address', v, 'state')} className={inputClass} />
                        </div>
-                       <div className="col-span-2">
-                           <input placeholder="Zip" className={inputClass} value={getAddr('zip')} onChange={e => onChange('address', e.target.value, 'zip')} />
-                       </div>
+                       <div className="col-span-2"><input placeholder="Zip" className={inputClass} value={getAddr('zip')} onChange={e => onChange('address', e.target.value, 'zip')} /></div>
                    </div>
                </div>
-
-               <div className="col-span-2 border-t pt-2 mt-2">
+               <div className="col-span-2 border-t pt-2 mt-1">
                    <label className={labelClass}>Driver's License</label>
                    <div className="grid grid-cols-2 gap-2">
                        <input placeholder="DL Number" className={inputClass} value={client.drivers_license?.number || ''} onChange={e => isAddl ? handleAdditionalClientChange(index, 'drivers_license', e.target.value, 'number') : handleChange('client', 'drivers_license', e.target.value, 'number')} />
-                       <input placeholder="State Issued" className={inputClass} value={client.drivers_license?.state_issued || ''} onChange={e => isAddl ? handleAdditionalClientChange(index, 'drivers_license', e.target.value, 'state_issued') : handleChange('client', 'drivers_license', e.target.value, 'state_issued')} />
+                       <StateSelect value={client.drivers_license?.state_issued || ''} onChange={v => isAddl ? handleAdditionalClientChange(index, 'drivers_license', v, 'state_issued') : handleChange('client', 'drivers_license', v, 'state_issued')} className={inputClass} placeholder="State Issued" />
                    </div>
                </div>
           </div>
       );
   };
 
-  const defIns = getIns('Defendant');
-  const clientIns = getIns('Client');
-
   return (
-    <div className="space-y-6">
-       {/* Section Navigation & Tools */}
+    <div className="space-y-5">
        <div className="flex justify-between items-center pb-2 border-b border-stone-200">
            <div className="flex space-x-2 overflow-x-auto">
                 {sections.map(s => (
@@ -497,14 +458,14 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                     </button>
                 ))}
            </div>
-           <div className="flex items-center gap-2">
-           </div>
        </div>
+
+       <div className="max-w-5xl">
 
        {activeSection === 'admin' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Intake Administration</h3>
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-2 gap-3">
                    <div>
                        <label className={labelClass}>Total Clients</label>
                        <input type="number" readOnly className={inputClass + " bg-stone-50"} value={formData.intake_admin?.total_clients} />
@@ -512,20 +473,14 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    <div>
                        <label className={labelClass}>Primary Language</label>
                        <select className={inputClass} value={formData.intake_admin?.primary_language} onChange={e => handleChange('intake_admin', 'primary_language', e.target.value)}>
-                           <option>English</option>
-                           <option>Spanish</option>
-                           <option>Other</option>
+                           <option>English</option><option>Spanish</option><option>Other</option>
                        </select>
                    </div>
                    <div>
                        <label className={labelClass}>Referral Source</label>
                        <select className={inputClass} value={formData.intake_admin?.referral_source} onChange={e => handleChange('intake_admin', 'referral_source', e.target.value)}>
-                           <option>Internet</option>
-                           <option>TV</option>
-                           <option>Doctor Ref</option>
-                           <option>Attorney Ref</option>
-                           <option>Billboard</option>
-                           <option>Other</option>
+                           <option>Internet</option><option>TV</option><option>Doctor Ref</option>
+                           <option>Attorney Ref</option><option>Billboard</option><option>Other</option>
                        </select>
                    </div>
                    {formData.intake_admin?.referral_source === 'Other' && (
@@ -540,9 +495,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                            <input type="date" className={inputClass} value={formData.intake_admin?.interview?.date || ''} onChange={e => handleChange('intake_admin', 'interview', e.target.value, 'date')} />
                            <input type="time" className={inputClass} value={formData.intake_admin?.interview?.time || ''} onChange={e => handleChange('intake_admin', 'interview', e.target.value, 'time')} />
                            <select className={inputClass} value={formData.intake_admin?.interview?.location} onChange={e => handleChange('intake_admin', 'interview', e.target.value, 'location')}>
-                               <option value="">Select Location...</option>
-                               <option value="Office">Office</option>
-                               <option value="Field">Field</option>
+                               <option value="">Select Location...</option><option value="Office">Office</option><option value="Field">Field</option>
                            </select>
                        </div>
                    </div>
@@ -550,32 +503,10 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {activeSection === 'client' && (
-           <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Client Details</h3>
-               <div className="mb-8">
-                   <h4 className="font-bold text-blue-800 uppercase text-xs tracking-wider mb-4 bg-blue-50 p-2 rounded">Primary Client</h4>
-                   {renderClientFields(formData.client || {}, true)}
-               </div>
-               {formData.additional_clients && formData.additional_clients.map((client, idx) => (
-                   <div key={idx} className="mb-6">
-                       {renderClientFields(client, false, idx)}
-                   </div>
-               ))}
-               <button
-                  onClick={handleAddClient}
-                  className="w-full py-3 border-2 border-dashed border-stone-300 rounded-xl text-stone-500 font-bold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center"
-               >
-                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                   Add Another Client
-               </button>
-           </div>
-       )}
-
        {activeSection === 'accident' && (
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Accident Details</h3>
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-2 gap-3">
                    <div>
                        <label className={labelClass}>Crash Report #</label>
                        <input type="text" className={inputClass} value={formData.accident?.crash_report_number || ''} onChange={e => handleChange('accident', 'crash_report_number', e.target.value)} />
@@ -604,7 +535,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                             </div>
                             <div className="col-span-1">
                                 <label className={labelClass}>State</label>
-                                <input type="text" className={inputClass} value={formData.accident?.state || ''} onChange={e => handleChange('accident', 'state', e.target.value)} />
+                                <StateSelect value={formData.accident?.state || ''} onChange={v => handleChange('accident', 'state', v)} className={inputClass} />
                             </div>
                             <div className="col-span-2">
                                 <label className={labelClass}>Zip</label>
@@ -615,20 +546,13 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    <div>
                        <label className={labelClass}>Plaintiff Role</label>
                        <select className={inputClass} value={formData.accident?.plaintiff_role} onChange={e => handleChange('accident', 'plaintiff_role', e.target.value)}>
-                           <option value="">Select...</option>
-                           <option>Driver</option>
-                           <option>Passenger</option>
-                           <option>Pedestrian</option>
+                           <option value="">Select...</option><option>Driver</option><option>Passenger</option><option>Pedestrian</option>
                        </select>
                    </div>
                    <div>
                         <label className={labelClass}>Weather</label>
                         <select className={inputClass} value={formData.accident?.weather_conditions} onChange={e => handleChange('accident', 'weather_conditions', e.target.value)}>
-                           <option value="">Select...</option>
-                           <option>Clear</option>
-                           <option>Rain</option>
-                           <option>Snow</option>
-                           <option>Ice</option>
+                           <option value="">Select...</option><option>Clear</option><option>Rain</option><option>Snow</option><option>Ice</option>
                        </select>
                    </div>
                    <div className="col-span-2">
@@ -639,224 +563,153 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            </div>
        )}
 
-       {activeSection === 'defendant' && (
-           <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Defendant Information</h3>
-               <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className={labelClass}>Name</label>
-                        <input className={inputClass} value={formData.defendant?.name || ''} onChange={e => handleChange('defendant', 'name', e.target.value)} />
-                    </div>
-                    <div>
-                        <label className={labelClass}>Phone</label>
-                        <input className={inputClass} value={formData.defendant?.phone || ''} onChange={e => handleChange('defendant', 'phone', e.target.value)} />
-                    </div>
-                    <div className="col-span-2">
-                        <label className={labelClass}>Address</label>
-                        <input className={inputClass} placeholder="Street" value={formData.defendant?.address?.street || ''} onChange={e => handleChange('defendant', 'address', e.target.value, 'street')} />
-                        <div className="grid grid-cols-6 gap-2 mt-2">
-                            <div className="col-span-3">
-                                <input className={inputClass} placeholder="City" value={formData.defendant?.address?.city || ''} onChange={e => handleChange('defendant', 'address', e.target.value, 'city')} />
-                            </div>
-                            <div className="col-span-1">
-                                <input className={inputClass} placeholder="ST" value={formData.defendant?.address?.state || ''} onChange={e => handleChange('defendant', 'address', e.target.value, 'state')} />
-                            </div>
-                            <div className="col-span-2">
-                                <input className={inputClass} placeholder="Zip" value={formData.defendant?.address?.zip || ''} onChange={e => handleChange('defendant', 'address', e.target.value, 'zip')} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {defIns.provider && (
-                      <div className="col-span-2 border-t pt-4 mt-2">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-bold text-stone-700 text-sm">Defendant Insurance</h4>
-                          <button
-                            onClick={() => setActiveSection('insurance')}
-                            className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-                          >
-                            Edit in Insurance tab
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                          </button>
-                        </div>
-                        <div className="bg-stone-50 rounded-lg border border-stone-200 p-4 grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-xs text-stone-400 uppercase font-bold block">Carrier</span>
-                            <span className="text-stone-800 font-medium">{defIns.provider || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="text-xs text-stone-400 uppercase font-bold block">Claim #</span>
-                            <span className="text-stone-800 font-medium">{defIns.claimNumber || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="text-xs text-stone-400 uppercase font-bold block">Status</span>
-                            <span className="text-stone-800 font-medium capitalize">{defIns.insuredStatus || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="text-xs text-stone-400 uppercase font-bold block">Limits</span>
-                            <span className="text-stone-800 font-medium">{defIns.coverageLimits || 'N/A'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+       {activeSection === 'client' && (
+           <div className="space-y-4">
+               <div className="flex space-x-1 border-b border-stone-200 pb-1">
+                 {clientSubSections.map(s => (
+                   <button
+                     key={s.id}
+                     onClick={() => setClientSubSection(s.id)}
+                     className={`px-3 py-1.5 text-xs font-semibold rounded-t-lg transition-colors ${clientSubSection === s.id ? 'bg-white border border-b-white border-stone-200 text-stone-800 -mb-px' : 'text-stone-500 hover:text-stone-700 hover:bg-stone-50'}`}
+                   >
+                     {s.label}
+                   </button>
+                 ))}
                </div>
-           </div>
-       )}
 
-       {activeSection === 'employment' && (
-           <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Employment & Lost Wages</h3>
-               <div className="grid grid-cols-2 gap-4">
-                   <div className="flex items-center space-x-2 col-span-2">
-                       <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.employment?.time_lost_from_work || false} onChange={e => handleChange('employment', 'time_lost_from_work', e.target.checked)} />
-                       <span className="text-sm font-medium text-stone-700">Time lost from work?</span>
+               {clientSubSection === 'demographics' && (
+                 <div className={sectionClass}>
+                   <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Client Details</h3>
+                   <div className="mb-6">
+                       <h4 className="font-bold text-blue-800 uppercase text-xs tracking-wider mb-3 bg-blue-50 p-2 rounded">Primary Client</h4>
+                       {renderClientFields(formData.client || {}, true)}
                    </div>
+                   {formData.additional_clients && formData.additional_clients.map((client, idx) => (
+                       <div key={idx} className="mb-4">{renderClientFields(client, false, idx)}</div>
+                   ))}
+                   <button
+                      onClick={handleAddClient}
+                      className="w-full py-2.5 border-2 border-dashed border-stone-300 rounded-xl text-stone-500 font-bold hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center text-sm"
+                   >
+                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                       Add Another Client
+                   </button>
+                 </div>
+               )}
 
-                   {formData.employment?.time_lost_from_work && (
-                       <>
-                           <div>
-                               <label className={labelClass}>How much time lost?</label>
-                               <input type="text" className={inputClass} value={formData.employment?.how_much_time_lost || ''} onChange={e => handleChange('employment', 'how_much_time_lost', e.target.value)} />
-                           </div>
-                           <div>
-                               <label className={labelClass}>Position/Title</label>
-                               <input type="text" className={inputClass} value={formData.employment?.position || ''} onChange={e => handleChange('employment', 'position', e.target.value)} />
-                           </div>
-                           <div className="col-span-2">
-                               <label className={labelClass}>Employer Name</label>
-                               <input type="text" className={inputClass} value={formData.employment?.employer?.name || ''} onChange={e => handleChange('employment', 'employer', e.target.value, 'name')} />
-                           </div>
-                           <div className="col-span-2">
-                               <label className={labelClass}>Employer Address</label>
-                               <input type="text" className={inputClass} placeholder="Street, City, State" value={formData.employment?.employer?.address?.street || ''} onChange={e => handleChange('employment', 'employer', e.target.value, 'address', 'street')} />
-                           </div>
-                           <div>
-                               <label className={labelClass}>Wages Amount</label>
-                               <input type="number" className={inputClass} value={formData.employment?.wages?.amount || ''} onChange={e => handleChange('employment', 'wages', parseFloat(e.target.value), 'amount')} />
-                           </div>
-                           <div>
-                               <label className={labelClass}>Per</label>
-                               <select className={inputClass} value={formData.employment?.wages?.per} onChange={e => handleChange('employment', 'wages', e.target.value, 'per')}>
-                                   <option>Hour</option>
-                                   <option>Week</option>
-                                   <option>Year</option>
-                               </select>
-                           </div>
-                       </>
-                   )}
-               </div>
-           </div>
-       )}
+               {clientSubSection === 'employment' && (
+                 <div className={sectionClass}>
+                   <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Employment & Lost Wages</h3>
+                   <div className="grid grid-cols-2 gap-3">
+                       <div className="flex items-center space-x-2 col-span-2">
+                           <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.employment?.time_lost_from_work || false} onChange={e => handleChange('employment', 'time_lost_from_work', e.target.checked)} />
+                           <span className="text-sm font-medium text-stone-700">Time lost from work?</span>
+                       </div>
+                       {formData.employment?.time_lost_from_work && (
+                           <>
+                               <div>
+                                   <label className={labelClass}>How much time lost?</label>
+                                   <input type="text" className={inputClass} value={formData.employment?.how_much_time_lost || ''} onChange={e => handleChange('employment', 'how_much_time_lost', e.target.value)} />
+                               </div>
+                               <div>
+                                   <label className={labelClass}>Position/Title</label>
+                                   <input type="text" className={inputClass} value={formData.employment?.position || ''} onChange={e => handleChange('employment', 'position', e.target.value)} />
+                               </div>
+                               <div className="col-span-2">
+                                   <label className={labelClass}>Employer Name</label>
+                                   <input type="text" className={inputClass} value={formData.employment?.employer?.name || ''} onChange={e => handleChange('employment', 'employer', e.target.value, 'name')} />
+                               </div>
+                               <div className="col-span-2">
+                                   <label className={labelClass}>Employer Address</label>
+                                   <input type="text" className={inputClass} placeholder="Street, City, State" value={formData.employment?.employer?.address?.street || ''} onChange={e => handleChange('employment', 'employer', e.target.value, 'address', 'street')} />
+                               </div>
+                               <div>
+                                   <label className={labelClass}>Wages Amount</label>
+                                   <input type="number" className={inputClass} value={formData.employment?.wages?.amount || ''} onChange={e => handleChange('employment', 'wages', parseFloat(e.target.value), 'amount')} />
+                               </div>
+                               <div>
+                                   <label className={labelClass}>Per</label>
+                                   <select className={inputClass} value={formData.employment?.wages?.per} onChange={e => handleChange('employment', 'wages', e.target.value, 'per')}>
+                                       <option>Hour</option><option>Week</option><option>Year</option>
+                                   </select>
+                               </div>
+                           </>
+                       )}
+                   </div>
+                 </div>
+               )}
 
-       {activeSection === 'medical' && (
-           <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Medical Treatment</h3>
-               <div className="grid grid-cols-2 gap-4">
-                   <div className="col-span-2">
-                       <label className={labelClass}>Injuries Detail</label>
-                       <textarea className={inputClass + " h-24"} value={formData.medical?.injuries_detail || ''} onChange={e => handleChange('medical', 'injuries_detail', e.target.value)} />
-                   </div>
-                   <div className="flex items-center space-x-2">
-                       <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.medical?.ambulance || false} onChange={e => handleChange('medical', 'ambulance', e.target.checked)} />
-                       <span className="text-sm font-medium text-stone-700">Ambulance taken?</span>
-                   </div>
-                   <div className="flex items-center space-x-2">
-                       <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.medical?.xrays_taken || false} onChange={e => handleChange('medical', 'xrays_taken', e.target.checked)} />
-                       <span className="text-sm font-medium text-stone-700">X-Rays taken?</span>
-                   </div>
-                   <div className="col-span-2 mt-2">
-                       <label className={labelClass}>Hospital Name</label>
-                       <input type="text" className={inputClass} value={formData.medical?.hospital?.name || ''} onChange={e => handleChange('medical', 'hospital', e.target.value, 'name')} />
-                   </div>
-                   <div className="col-span-2 mt-2">
-                       <label className={labelClass}>Pre-existing Conditions</label>
-                       <textarea className={inputClass + " h-16"} value={formData.medical?.pre_existing_conditions || ''} onChange={e => handleChange('medical', 'pre_existing_conditions', e.target.value)} />
-                   </div>
-
-                   <div className="col-span-2 border-t pt-4 mt-4">
-                        <h4 className="font-semibold text-stone-700 mb-3 text-sm">Additional Treatment Providers</h4>
-
-                        {formData.medical?.providers && formData.medical.providers.length > 0 && (
-                            <div className="space-y-3 mb-4">
-                                {formData.medical.providers.map((p, idx) => (
-                                    <div key={idx} className="flex justify-between items-center bg-stone-50 p-3 rounded border border-stone-200 text-sm">
-                                        <div>
-                                            <div className="font-bold text-stone-800">{p.name}</div>
-                                            <div className="text-stone-500 text-xs">{p.address} {p.phone ? `\u2022 ${p.phone}` : ''}</div>
+               {clientSubSection === 'medical' && (
+                 <div className={sectionClass}>
+                   <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Medical Treatment</h3>
+                   <div className="grid grid-cols-2 gap-3">
+                       <div className="col-span-2">
+                           <label className={labelClass}>Injuries Detail</label>
+                           <textarea className={inputClass + " h-20"} value={formData.medical?.injuries_detail || ''} onChange={e => handleChange('medical', 'injuries_detail', e.target.value)} />
+                       </div>
+                       <div className="flex items-center space-x-2">
+                           <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.medical?.ambulance || false} onChange={e => handleChange('medical', 'ambulance', e.target.checked)} />
+                           <span className="text-sm font-medium text-stone-700">Ambulance taken?</span>
+                       </div>
+                       <div className="flex items-center space-x-2">
+                           <input type="checkbox" className="w-4 h-4 text-blue-600 rounded" checked={formData.medical?.xrays_taken || false} onChange={e => handleChange('medical', 'xrays_taken', e.target.checked)} />
+                           <span className="text-sm font-medium text-stone-700">X-Rays taken?</span>
+                       </div>
+                       <div className="col-span-2">
+                           <label className={labelClass}>Hospital Name</label>
+                           <input type="text" className={inputClass} value={formData.medical?.hospital?.name || ''} onChange={e => handleChange('medical', 'hospital', e.target.value, 'name')} />
+                       </div>
+                       <div className="col-span-2">
+                           <label className={labelClass}>Pre-existing Conditions</label>
+                           <textarea className={inputClass + " h-16"} value={formData.medical?.pre_existing_conditions || ''} onChange={e => handleChange('medical', 'pre_existing_conditions', e.target.value)} />
+                       </div>
+                       <div className="col-span-2 border-t pt-3 mt-2">
+                            <h4 className="font-semibold text-stone-700 mb-3 text-sm">Additional Treatment Providers</h4>
+                            {formData.medical?.providers && formData.medical.providers.length > 0 && (
+                                <div className="space-y-2 mb-3">
+                                    {formData.medical.providers.map((p, idx) => (
+                                        <div key={idx} className="flex justify-between items-center bg-stone-50 p-3 rounded border border-stone-200 text-sm">
+                                            <div>
+                                                <div className="font-bold text-stone-800">{p.name}</div>
+                                                <div className="text-stone-500 text-xs">{p.address} {p.phone ? `\u2022 ${p.phone}` : ''}</div>
+                                            </div>
+                                            <button onClick={() => handleDeleteProvider(idx)} className="text-red-500 hover:text-red-700">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                            </button>
                                         </div>
-                                        <button onClick={() => handleDeleteProvider(idx)} className="text-red-500 hover:text-red-700">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                        </button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
+                            )}
+                            <div className="grid grid-cols-2 gap-2 bg-stone-50 p-3 rounded border border-stone-200">
+                                <div className="col-span-2">
+                                    <input placeholder="Provider Name" className={inputClass} value={newProvider.name} onChange={e => setNewProvider({...newProvider, name: e.target.value})} />
+                                </div>
+                                <input placeholder="Address" className={inputClass} value={newProvider.address} onChange={e => setNewProvider({...newProvider, address: e.target.value})} />
+                                <input placeholder="Phone" className={inputClass} value={newProvider.phone} onChange={e => setNewProvider({...newProvider, phone: e.target.value})} />
+                                <div className="col-span-2 text-right">
+                                    <button onClick={handleAddProvider} disabled={!newProvider.name} className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 disabled:opacity-50 font-medium">+ Add Provider</button>
+                                </div>
                             </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-3 bg-stone-50 p-3 rounded border border-stone-200">
-                            <div className="col-span-2">
-                                <input
-                                    placeholder="Provider Name (e.g. Dr. Smith)"
-                                    className={inputClass}
-                                    value={newProvider.name}
-                                    onChange={e => setNewProvider({...newProvider, name: e.target.value})}
-                                />
-                            </div>
-                            <input
-                                placeholder="Address"
-                                className={inputClass}
-                                value={newProvider.address}
-                                onChange={e => setNewProvider({...newProvider, address: e.target.value})}
-                            />
-                            <input
-                                placeholder="Phone"
-                                className={inputClass}
-                                value={newProvider.phone}
-                                onChange={e => setNewProvider({...newProvider, phone: e.target.value})}
-                            />
-                            <div className="col-span-2 text-right">
-                                <button
-                                    onClick={handleAddProvider}
-                                    disabled={!newProvider.name}
-                                    className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 disabled:opacity-50 font-medium"
-                                >
-                                    + Add Provider
-                                </button>
-                            </div>
-                        </div>
+                       </div>
                    </div>
-               </div>
-           </div>
-       )}
+                 </div>
+               )}
 
-       {activeSection === 'insurance' && (
-           <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Insurance</h3>
-               <div className="space-y-8">
-                   <InsuranceBlock
-                     label="Defendant Insurance"
-                     badge="3rd Party"
-                     badgeColor="stone"
-                     ins={defIns}
-                     onFieldChange={fields => handleInsuranceFieldChange('Defendant', fields)}
-                     inputClass={inputClass}
-                     selectClass={selectClass}
-                     labelClass={labelClass}
-                   />
-
-                   <div className="border-t border-stone-200 pt-6">
+               {clientSubSection === 'insurance' && (
+                 <div className={sectionClass}>
+                   <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Client Insurance</h3>
+                   <div className="space-y-8">
                      <InsuranceBlock
-                       label="Client Insurance"
+                       label="Auto Insurance"
                        badge="1st Party"
                        badgeColor="emerald"
                        ins={clientIns}
                        onFieldChange={fields => handleInsuranceFieldChange('Client', fields)}
                        inputClass={inputClass}
-                       selectClass={selectClass}
                        labelClass={labelClass}
                      />
-                   </div>
 
-                   <div className="border-t border-stone-200 pt-6">
+                     <div className="border-t border-stone-200 pt-6">
                        <h4 className="font-bold text-stone-700 mb-3 text-sm">Health Insurance</h4>
                        <div className="mb-4">
                          <div className="flex items-center gap-4">
@@ -871,7 +724,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                          </div>
                        </div>
                        {formData.health_insurance?.has_insurance !== false && (
-                         <div className="grid grid-cols-2 gap-4">
+                         <div className="grid grid-cols-2 gap-3">
                               <div>
                                   <label className={labelClass}>Company</label>
                                   <input className={inputClass} placeholder="e.g. AETNA" value={formData.health_insurance?.company || ''} onChange={e => handleChange('health_insurance', 'company', e.target.value)} />
@@ -904,7 +757,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                       <input className={inputClass} placeholder="City" value={formData.health_insurance?.address?.city || ''} onChange={e => handleChange('health_insurance', 'address', e.target.value, 'city')} />
                                     </div>
                                     <div className="col-span-1">
-                                      <input className={inputClass} placeholder="ST" value={formData.health_insurance?.address?.state || ''} onChange={e => handleChange('health_insurance', 'address', e.target.value, 'state')} />
+                                      <StateSelect value={formData.health_insurance?.address?.state || ''} onChange={v => handleChange('health_insurance', 'address', v, 'state')} className={inputClass} />
                                     </div>
                                     <div className="col-span-2">
                                       <input className={inputClass} placeholder="Zip" value={formData.health_insurance?.address?.zip || ''} onChange={e => handleChange('health_insurance', 'address', e.target.value, 'zip')} />
@@ -918,60 +771,106 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                            <span className="text-sm font-medium text-amber-700">Client does not have health insurance.</span>
                          </div>
                        )}
+                     </div>
                    </div>
-               </div>
+                 </div>
+               )}
+
+               {clientSubSection === 'vehicle' && (
+                 <div className={sectionClass}>
+                   <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Vehicle Property Damage</h3>
+                   <div className="grid grid-cols-2 gap-3">
+                       <div>
+                           <label className={labelClass}>License Plate</label>
+                           <input type="text" className={inputClass} value={formData.vehicle_property_damage?.license_plate || ''} onChange={e => handleChange('vehicle_property_damage', 'license_plate', e.target.value)} />
+                       </div>
+                       <div>
+                           <label className={labelClass}>Damage Est. ($)</label>
+                           <input type="number" className={inputClass} value={formData.vehicle_property_damage?.property_damage_amount_or_estimate || ''} onChange={e => handleChange('vehicle_property_damage', 'property_damage_amount_or_estimate', parseFloat(e.target.value))} />
+                       </div>
+                       <div className="col-span-2 flex space-x-6 mt-1">
+                           <label className="flex items-center space-x-2">
+                               <input type="checkbox" checked={formData.vehicle_property_damage?.vehicle_drivable || false} onChange={e => handleChange('vehicle_property_damage', 'vehicle_drivable', e.target.checked)} />
+                               <span className="text-sm text-stone-700">Vehicle Drivable</span>
+                           </label>
+                           <label className="flex items-center space-x-2">
+                               <input type="checkbox" checked={formData.vehicle_property_damage?.airbags_deployed || false} onChange={e => handleChange('vehicle_property_damage', 'airbags_deployed', e.target.checked)} />
+                               <span className="text-sm text-stone-700">Airbags Deployed</span>
+                           </label>
+                           <label className="flex items-center space-x-2">
+                               <input type="checkbox" checked={formData.vehicle_property_damage?.seatbelt_worn || false} onChange={e => handleChange('vehicle_property_damage', 'seatbelt_worn', e.target.checked)} />
+                               <span className="text-sm text-stone-700">Seatbelt Worn</span>
+                           </label>
+                       </div>
+                       <div className="col-span-2 mt-3 border-t pt-3">
+                            <h4 className="font-semibold text-stone-700 mb-2 text-sm">Body Shop Information</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="col-span-2">
+                                    <label className={labelClass}>Shop Name</label>
+                                    <input type="text" className={inputClass} value={formData.vehicle_property_damage?.body_shop?.name || ''} onChange={e => handleChange('vehicle_property_damage', 'body_shop', e.target.value, 'name')} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Shop Phone</label>
+                                    <input type="text" className={inputClass} value={formData.vehicle_property_damage?.body_shop?.phone || ''} onChange={e => handleChange('vehicle_property_damage', 'body_shop', e.target.value, 'phone')} />
+                                </div>
+                                <div>
+                                    <label className={labelClass}>Shop Address</label>
+                                    <input type="text" className={inputClass} value={formData.vehicle_property_damage?.body_shop?.address || ''} onChange={e => handleChange('vehicle_property_damage', 'body_shop', e.target.value, 'address')} />
+                                </div>
+                            </div>
+                       </div>
+                   </div>
+                 </div>
+               )}
            </div>
        )}
 
-       {activeSection === 'vehicle' && (
+       {activeSection === 'defendant' && (
            <div className={sectionClass}>
-               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Vehicle Property Damage</h3>
-               <div className="grid grid-cols-2 gap-4">
-                   <div>
-                       <label className={labelClass}>License Plate</label>
-                       <input type="text" className={inputClass} value={formData.vehicle_property_damage?.license_plate || ''} onChange={e => handleChange('vehicle_property_damage', 'license_plate', e.target.value)} />
-                   </div>
-                   <div>
-                       <label className={labelClass}>Damage Est. ($)</label>
-                       <input type="number" className={inputClass} value={formData.vehicle_property_damage?.property_damage_amount_or_estimate || ''} onChange={e => handleChange('vehicle_property_damage', 'property_damage_amount_or_estimate', parseFloat(e.target.value))} />
-                   </div>
-                   <div className="col-span-2 flex space-x-6 mt-2">
-                       <label className="flex items-center space-x-2">
-                           <input type="checkbox" checked={formData.vehicle_property_damage?.vehicle_drivable || false} onChange={e => handleChange('vehicle_property_damage', 'vehicle_drivable', e.target.checked)} />
-                           <span className="text-sm text-stone-700">Vehicle Drivable</span>
-                       </label>
-                       <label className="flex items-center space-x-2">
-                           <input type="checkbox" checked={formData.vehicle_property_damage?.airbags_deployed || false} onChange={e => handleChange('vehicle_property_damage', 'airbags_deployed', e.target.checked)} />
-                           <span className="text-sm text-stone-700">Airbags Deployed</span>
-                       </label>
-                       <label className="flex items-center space-x-2">
-                           <input type="checkbox" checked={formData.vehicle_property_damage?.seatbelt_worn || false} onChange={e => handleChange('vehicle_property_damage', 'seatbelt_worn', e.target.checked)} />
-                           <span className="text-sm text-stone-700">Seatbelt Worn</span>
-                       </label>
-                   </div>
-
-                   <div className="col-span-2 mt-4 border-t pt-4">
-                        <h4 className="font-semibold text-stone-700 mb-2 text-sm">Body Shop Information</h4>
-                        <div className="grid grid-cols-2 gap-4">
+               <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Defendant Information</h3>
+               <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <label className={labelClass}>Name</label>
+                        <input className={inputClass} value={formData.defendant?.name || ''} onChange={e => handleChange('defendant', 'name', e.target.value)} />
+                    </div>
+                    <div>
+                        <label className={labelClass}>Phone</label>
+                        <input className={inputClass} value={formData.defendant?.phone || ''} onChange={e => handleChange('defendant', 'phone', e.target.value)} />
+                    </div>
+                    <div className="col-span-2">
+                        <label className={labelClass}>Address</label>
+                        <input className={inputClass} placeholder="Street" value={formData.defendant?.address?.street || ''} onChange={e => handleChange('defendant', 'address', e.target.value, 'street')} />
+                        <div className="grid grid-cols-6 gap-2 mt-2">
+                            <div className="col-span-3">
+                                <input className={inputClass} placeholder="City" value={formData.defendant?.address?.city || ''} onChange={e => handleChange('defendant', 'address', e.target.value, 'city')} />
+                            </div>
+                            <div className="col-span-1">
+                                <StateSelect value={formData.defendant?.address?.state || ''} onChange={v => handleChange('defendant', 'address', v, 'state')} className={inputClass} />
+                            </div>
                             <div className="col-span-2">
-                                <label className={labelClass}>Shop Name</label>
-                                <input type="text" className={inputClass} value={formData.vehicle_property_damage?.body_shop?.name || ''} onChange={e => handleChange('vehicle_property_damage', 'body_shop', e.target.value, 'name')} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Shop Phone</label>
-                                <input type="text" className={inputClass} value={formData.vehicle_property_damage?.body_shop?.phone || ''} onChange={e => handleChange('vehicle_property_damage', 'body_shop', e.target.value, 'phone')} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Shop Address</label>
-                                <input type="text" className={inputClass} value={formData.vehicle_property_damage?.body_shop?.address || ''} onChange={e => handleChange('vehicle_property_damage', 'body_shop', e.target.value, 'address')} />
+                                <input className={inputClass} placeholder="Zip" value={formData.defendant?.address?.zip || ''} onChange={e => handleChange('defendant', 'address', e.target.value, 'zip')} />
                             </div>
                         </div>
-                   </div>
+                    </div>
+               </div>
+
+               <div className="border-t border-stone-200 pt-6 mt-6">
+                 <InsuranceBlock
+                   label="Defendant Insurance"
+                   badge="3rd Party"
+                   badgeColor="stone"
+                   ins={defIns}
+                   onFieldChange={fields => handleInsuranceFieldChange('Defendant', fields)}
+                   inputClass={inputClass}
+                   labelClass={labelClass}
+                 />
                </div>
            </div>
        )}
 
-       <div className="flex justify-end pt-4 border-t border-stone-200">
+       </div>
+
+       <div className="flex justify-end pt-4 border-t border-stone-200 max-w-5xl">
            <button
              onClick={handleSave}
              disabled={saveStatus === 'saving' || saveStatus === 'saved'}
