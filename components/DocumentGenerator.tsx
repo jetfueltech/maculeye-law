@@ -5,6 +5,8 @@ import { DistributionSheetRenderer } from './DistributionSheetRenderer';
 
 export type DocumentFormType =
   | 'rep_lien'
+  | 'rep_lien_1p'
+  | 'rep_lien_3p'
   | 'foia'
   | 'intake_summary'
   | 'boss_intake_form'
@@ -60,6 +62,10 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   const defInsurer = intake.defendant?.insurance?.company || caseData.insurance?.find(i => i.type === 'Defendant')?.provider || '[INSURANCE CO]';
   const claimNo = intake.defendant?.insurance?.claim_number || caseData.insurance?.find(i => i.type === 'Defendant')?.claimNumber || '[CLAIM #]';
   const crashReportNo = intake.accident?.crash_report_number || '[CRASH REPORT #]';
+
+  const clientInsurer = intake.first_party_insurance?.company || intake.auto_insurance?.driver_or_passenger_insurance_company || caseData.insurance?.find(i => i.type === 'Client')?.provider || '[INSURANCE CO]';
+  const clientClaimNo = intake.first_party_insurance?.claim_number || intake.auto_insurance?.claim_number || caseData.insurance?.find(i => i.type === 'Client')?.claimNumber || '[CLAIM #]';
+  const clientPolicyNo = intake.first_party_insurance?.policy_number || intake.auto_insurance?.policy_number || caseData.insurance?.find(i => i.type === 'Client')?.policyNumber || '[POLICY #]';
   
   // Static Attorney Info (Simulated "SAP LAW")
   const attorneyName = "Steve Pisman, Esq.";
@@ -185,6 +191,133 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 for personal injuries and/or property damage sustained in relation the above-captioned accident. Pursuant to the Illinois 
                 Attorney Lien Act, you are hereby placed on notice that <span className="bg-yellow-100 font-bold">{clientName}</span> has 
                 agreed to pay SAP Law for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered from suit or settlement, 
+                and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
+            </p>
+
+            <div className="mt-16 mb-12">
+                <div className="border-t border-black w-64 mb-1"></div>
+                <p className="font-bold">{attorneyName}</p>
+                <p>{attorneyFirm}</p>
+            </div>
+
+            <div className="mb-8 italic text-sm">
+                <p>Being first duly sworn, DEPOSES AND SAYS, that (s)he served the above Notice by faxing a copy of the same to the above-named party on <span className="bg-yellow-100 not-italic font-bold">{today}</span>.</p>
+            </div>
+             <div className="mt-8">
+                <div className="border-t border-black w-64 mb-1"></div>
+                <p className="font-bold">{attorneyName}</p>
+                <p>{attorneyFirm}</p>
+            </div>
+        </div>
+    </>
+  );
+
+  const renderRepAndLien1P = () => (
+    <>
+        <div className={paperClass}>
+            <div className={letterheadClass}>
+                <h1 className={lhTitle}>SAP LAW</h1>
+                <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
+                <p className="text-sm font-sans">Phone: {attorneyPhone} Fax: {attorneyFax}</p>
+            </div>
+
+            <div className="text-center font-bold mb-6 underline">{today}</div>
+
+            <div className="mb-6">
+                <p className="font-bold">Via Facsimile/Email</p>
+                <p className="font-bold">{clientInsurer}</p>
+                <p>Claims Department</p>
+            </div>
+
+            <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-6 font-bold">
+                <div>RE:</div>
+                <div className="grid grid-cols-[100px_1fr] gap-y-1">
+                    <span>Our Client:</span>
+                    <span className="bg-yellow-100 px-1">{clientName}</span>
+
+                    <span>Claim No.:</span>
+                    <span className="bg-yellow-100 px-1">{clientClaimNo}</span>
+
+                    <span>Policy No.:</span>
+                    <span className="bg-yellow-100 px-1">{clientPolicyNo}</span>
+
+                    <span>Date of Loss:</span>
+                    <span className="bg-yellow-100 px-1">{dol}</span>
+                </div>
+            </div>
+
+            <p className="mb-4">To Whom It May Concern:</p>
+
+            <p className="mb-4 text-justify">
+                Please be advised our office represents <span className="bg-yellow-100 font-bold">{clientName}</span>, your insured, in a claim for personal injuries arising from the above-referenced accident.
+                SAP Law has an attorney's lien on our client's claim and any recovery. This lien is attached hereto.
+                Please include SAP Law as payee on all settlement drafts, unless notified in writing, that our office no longer represents said client.
+            </p>
+
+            <p className="mb-4 text-justify">
+                Please forward your insurance company policy limits upon receipt of this letter. If there is medical payment coverage available,
+                checks should be made out to our client and SAP Law only. <span className="font-bold">No medical payments should be made to medical providers directly.</span>
+            </p>
+
+            <p className="mb-4 text-justify">
+                Please forward copies of any property damage photos (including color copies if available), estimates, monies paid for vehicular damage
+                and any recorded statements, written or other, that may exist. Please preserve all accident-related evidence in this case.
+                <i>See Boyd v. Travelers Ins. Co. 625 N.E.2d 267 (Ill. 1995).</i>
+            </p>
+
+            <p className="mb-6">
+                Please refrain from direct or indirect contact with our client, their family and treating physicians.
+                We look forward to working with you to resolve this matter.
+            </p>
+
+            <div className="mt-12">
+                <p>Sincerely,</p>
+                <div className="h-12 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+                <p className="font-bold">{attorneyName}</p>
+                <p className="font-bold">{attorneyFirm}</p>
+            </div>
+        </div>
+
+        <div className={paperClass}>
+            <div className="text-center font-bold uppercase mb-8 mt-4">
+                <h2 className="text-lg underline">Notice of Attorney's Lien</h2>
+                <p className="text-sm">(Under the Law of 1909, as Amended)</p>
+            </div>
+
+            <div className="mb-8">
+                <p>STATE OF ILLINOIS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
+                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) SS</p>
+                <p>COOK COUNTY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
+            </div>
+
+            <div className="mb-6 font-bold">
+                <p className="underline mb-2">Via Facsimile/Email</p>
+                <p>{clientInsurer}</p>
+                <p>Claims Department</p>
+            </div>
+
+            <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-8 font-bold">
+                <div>RE:</div>
+                <div className="grid grid-cols-[100px_1fr] gap-y-1">
+                    <span>Our Client:</span>
+                    <span className="bg-yellow-100 px-1">{clientName}</span>
+
+                    <span>Claim No.:</span>
+                    <span className="bg-yellow-100 px-1">{clientClaimNo}</span>
+
+                    <span>Policy No.:</span>
+                    <span className="bg-yellow-100 px-1">{clientPolicyNo}</span>
+
+                    <span>Date of Loss:</span>
+                    <span className="bg-yellow-100 px-1">{dol}</span>
+                </div>
+            </div>
+
+            <p className="mb-6 text-justify leading-loose">
+                Please take notice that SAP Law has been retained by the above mentioned claimant(s) to prosecute or settle his/her claim
+                for personal injuries and/or property damage sustained in relation the above-captioned accident. Pursuant to the Illinois
+                Attorney Lien Act, you are hereby placed on notice that <span className="bg-yellow-100 font-bold">{clientName}</span> has
+                agreed to pay SAP Law for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered from suit or settlement,
                 and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
             </p>
 
@@ -1339,6 +1472,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
   const FORM_TITLES: Record<DocumentFormType, string> = {
     rep_lien: 'Letter of Representation & Lien',
+    rep_lien_1p: 'Letter of Representation & Lien — 1P (Client Insurance)',
+    rep_lien_3p: 'Letter of Representation & Lien — 3P (Defendant Insurance)',
     foia: 'FOIA / Crash Report Request',
     intake_summary: 'Intake Summary',
     boss_intake_form: 'Boss Intake Form',
@@ -1396,6 +1531,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
             {/* Scrollable Preview Area */}
             <div className="flex-1 overflow-y-auto p-8 bg-stone-200">
                 {formType === 'rep_lien' && renderRepAndLien()}
+                {formType === 'rep_lien_3p' && renderRepAndLien()}
+                {formType === 'rep_lien_1p' && renderRepAndLien1P()}
                 {formType === 'foia' && renderFOIA()}
                 {formType === 'intake_summary' && renderIntakeSummary()}
                 {formType === 'boss_intake_form' && renderBossIntakeForm()}

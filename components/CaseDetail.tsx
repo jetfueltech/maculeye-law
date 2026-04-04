@@ -1716,7 +1716,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
               <p className="text-sm text-stone-600 mb-4">Select the document you wish to generate based on the current case data.</p>
               <div className="space-y-3 mb-6">
                 {([
-                  { key: 'rep_lien' as DocumentFormType, title: 'Letter of Representation + Lien', desc: 'Includes notification to insurance carrier and attorney lien notice.' },
+                  { key: 'rep_lien_1p' as DocumentFormType, title: 'Letter of Representation + Lien — 1P (Client Insurance)', desc: 'LOR and lien sent to the client\'s own insurance company.' },
+                  { key: 'rep_lien_3p' as DocumentFormType, title: 'Letter of Representation + Lien — 3P (Defendant Insurance)', desc: 'LOR and lien sent to the defendant\'s insurance company.' },
                   { key: 'foia' as DocumentFormType, title: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
                   { key: 'preservation_of_evidence' as DocumentFormType, title: 'Preservation of Evidence', desc: 'Formal demand to preserve surveillance footage near the accident location.' },
                   { key: 'intake_summary' as DocumentFormType, title: 'Client Intake Summary', desc: 'Detailed form including Accident, Client, Medical, and Insurance info.' },

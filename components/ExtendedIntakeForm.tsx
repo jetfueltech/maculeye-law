@@ -222,7 +222,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
   const [newProvider, setNewProvider] = useState({ name: '', address: '', phone: '' });
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [selectedForm, setSelectedForm] = useState<'rep_lien' | 'foia' | 'intake_summary' | 'boss_intake_form' | null>(null);
+  const [selectedForm, setSelectedForm] = useState<'rep_lien_1p' | 'rep_lien_3p' | 'foia' | 'intake_summary' | 'boss_intake_form' | null>(null);
   const [showDocPreview, setShowDocPreview] = useState(false);
 
   useEffect(() => {
@@ -1159,7 +1159,8 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                        <p className="text-sm text-stone-600 mb-4">Select the documents you wish to generate based on the current intake data.</p>
                        <div className="space-y-3 mb-6">
                            {[
-                             { id: 'rep_lien' as const, label: 'Letter of Representation + Lien', desc: 'Includes notification to insurance carrier and attorney lien notice.' },
+                             { id: 'rep_lien_1p' as const, label: 'Letter of Representation + Lien — 1P (Client Insurance)', desc: 'LOR and lien sent to the client\'s own insurance company.' },
+                             { id: 'rep_lien_3p' as const, label: 'Letter of Representation + Lien — 3P (Defendant Insurance)', desc: 'LOR and lien sent to the defendant\'s insurance company.' },
                              { id: 'foia' as const, label: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
                              { id: 'intake_summary' as const, label: 'Client Intake Summary', desc: 'Detailed form including Accident, Client, Medical, and Insurance info.' },
                              { id: 'boss_intake_form' as const, label: 'Boss Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },

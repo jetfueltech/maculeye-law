@@ -35,17 +35,17 @@ interface ActionConfig {
 
 const ACTION_CONFIG: Record<WorkflowActionType, ActionConfig> = {
   lor_defendant: {
-    title: "Letter of Representation",
+    title: "Letter of Representation — 3P",
     description: "Generate and send LOR with Attorney's Lien to the defendant's insurance company.",
-    docType: 'rep_lien',
+    docType: 'rep_lien_3p',
     sentLabel: "LOR Sent to Defendant's Insurance",
     confirmLabel: "Mark LOR as Sent",
     icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
   },
   lor_client_ins: {
-    title: "LOR — Client's Insurance",
+    title: "Letter of Representation — 1P",
     description: "Generate and send Letter of Representation to the client's own insurance company.",
-    docType: 'rep_lien',
+    docType: 'rep_lien_1p',
     sentLabel: "LOR Sent to Client's Insurance",
     confirmLabel: "Mark LOR as Sent",
     icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
@@ -271,6 +271,8 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
   const handleSaveToDocuments = (docName: string, docFormType: DocumentFormType) => {
     const DOC_TYPE_MAP: Record<string, DocumentAttachment['type']> = {
       rep_lien: 'other',
+      rep_lien_1p: 'other',
+      rep_lien_3p: 'other',
       foia: 'crash_report',
       bill_request: 'other',
       records_request: 'medical_record',
