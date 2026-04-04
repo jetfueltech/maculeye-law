@@ -300,7 +300,7 @@ export const NewIntakeModal: React.FC<NewIntakeModalProps> = ({ isOpen, onClose,
               {/* Defendant */}
               <div>
                 <h4 className="font-semibold text-stone-800 border-b border-stone-100 pb-2 mb-4 flex justify-between items-center">
-                    <span>Defendant (At-Fault)</span>
+                    <span>Defendant</span>
                     <label className="flex items-center space-x-2 cursor-pointer">
                         <input type="checkbox" checked={partyInfo.defUninsured} onChange={e => setPartyInfo({...partyInfo, defUninsured: e.target.checked})} className="rounded text-blue-600 focus:ring-blue-500" />
                         <span className="text-xs font-bold text-red-500 uppercase tracking-wide">Uninsured Driver?</span>
@@ -309,7 +309,7 @@ export const NewIntakeModal: React.FC<NewIntakeModalProps> = ({ isOpen, onClose,
                 <div className="grid grid-cols-12 gap-5">
                   <div className="col-span-12">
                     <label className={labelClass}>Defendant Name</label>
-                    <input type="text" className={inputClass} value={partyInfo.defName} onChange={e => setPartyInfo({...partyInfo, defName: e.target.value})} placeholder="At-fault driver name" />
+                    <input type="text" className={inputClass} value={partyInfo.defName} onChange={e => setPartyInfo({...partyInfo, defName: e.target.value})} placeholder="Defendant name" />
                   </div>
                   <div className="col-span-6">
                     <label className={labelClass}>Insurance Company</label>

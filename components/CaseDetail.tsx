@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ExtendedIntakeForm } from './ExtendedIntakeForm';
 import { MedicalTreatment } from './MedicalTreatment';
 import { CoverageTracker } from './CoverageTracker';
+import { CoverageFieldGroup } from './CoverageFieldGroup';
 import { CaseTasksPanel } from './CaseTasksPanel';
 import { DocumentsPanel } from './DocumentsPanel';
 import { DocumentPreviewModal } from './DocumentPreviewModal';
@@ -573,7 +574,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
   const isAcceptedOrLater = [CaseStatus.ACCEPTED, CaseStatus.INTAKE_PROCESSING, CaseStatus.INTAKE_PAUSED, CaseStatus.INTAKE_COMPLETE].includes(caseData.status);
 
-  const getIns = (type: 'Defendant' | 'Client') => editForm.insurance?.find(i => i.type === type) || { provider: '', claimNumber: '', coverageLimits: '' };
+  const getIns = (type: 'Defendant' | 'Client') => editForm.insurance?.find(i => i.type === type) || { provider: '', claimNumber: '', coverageLimits: '', insuredStatus: undefined, coverageType: undefined };
 
   // --- Group Emails by Thread ---
   const emailThreads = new Map<string, Email[]>();
@@ -953,22 +954,15 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
                                   {/* Defendant Insurance */}
                                   <div className="space-y-5">
-                                      <h5 className="text-sm font-bold text-stone-700 flex items-center">
-                                          Defendant Coverage
-                                          <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">At-Fault</span>
-                                      </h5>
+                                      <h5 className="text-sm font-bold text-stone-700">Defendant Coverage</h5>
                                       <InlineEditField label="Carrier" value={getIns('Defendant').provider || ''} placeholder="e.g. State Farm" onSave={v => handleInlineInsuranceSave('Defendant', 'provider', v)} />
                                       <InlineEditField label="Claim Number" value={getIns('Defendant').claimNumber || ''} placeholder="Claim #" onSave={v => handleInlineInsuranceSave('Defendant', 'claimNumber', v)} />
-                                      <InlineEditField
-                                        label="Coverage Limits"
-                                        value={getIns('Defendant').coverageLimits || ''}
-                                        placeholder="e.g. 100/300/50"
-                                        onSave={v => handleInlineInsuranceSave('Defendant', 'coverageLimits', v)}
-                                        displayValue={
-                                          getIns('Defendant').coverageLimits ? (
-                                            <span className="bg-stone-50 text-stone-700 px-2 py-1 rounded font-mono text-sm font-bold border border-stone-200">{getIns('Defendant').coverageLimits}</span>
-                                          ) : undefined
-                                        }
+                                      <CoverageFieldGroup
+                                        insuredStatus={getIns('Defendant').insuredStatus}
+                                        coverageType={getIns('Defendant').coverageType}
+                                        coverageLimits={getIns('Defendant').coverageLimits || ''}
+                                        onChange={(field, value) => handleInlineInsuranceSave('Defendant', field as keyof Insurance, value)}
+                                        accentColor="stone"
                                       />
                                   </div>
 
@@ -980,16 +974,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                       </h5>
                                       <InlineEditField label="Carrier" value={getIns('Client').provider || ''} placeholder="e.g. Geico" onSave={v => handleInlineInsuranceSave('Client', 'provider', v)} />
                                       <InlineEditField label="Claim Number" value={getIns('Client').claimNumber || ''} placeholder="Claim #" onSave={v => handleInlineInsuranceSave('Client', 'claimNumber', v)} />
-                                      <InlineEditField
-                                        label="Coverage Limits"
-                                        value={getIns('Client').coverageLimits || ''}
-                                        placeholder="e.g. 50/100 UIM"
-                                        onSave={v => handleInlineInsuranceSave('Client', 'coverageLimits', v)}
-                                        displayValue={
-                                          getIns('Client').coverageLimits ? (
-                                            <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded font-mono text-sm font-bold border border-emerald-100">{getIns('Client').coverageLimits}</span>
-                                          ) : undefined
-                                        }
+                                      <CoverageFieldGroup
+                                        insuredStatus={getIns('Client').insuredStatus}
+                                        coverageType={getIns('Client').coverageType}
+                                        coverageLimits={getIns('Client').coverageLimits || ''}
+                                        onChange={(field, value) => handleInlineInsuranceSave('Client', field as keyof Insurance, value)}
+                                        accentColor="emerald"
                                       />
                                   </div>
                               </div>

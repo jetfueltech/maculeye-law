@@ -99,7 +99,7 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
           <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16h2v2h-2zm0-6h2v4h-2z"/></svg>
           <div>
             <p className="text-sm font-bold text-amber-800">Coverage or liability confirmation pending</p>
-            <p className="text-xs text-amber-600 mt-0.5">Follow up with the at-fault insurer weekly until confirmed. Client treatment may be at risk.</p>
+            <p className="text-xs text-amber-600 mt-0.5">Follow up with the defendant's insurer weekly until confirmed. Client treatment may be at risk.</p>
           </div>
         </div>
       )}

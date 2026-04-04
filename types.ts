@@ -382,6 +382,9 @@ export interface DirectoryAddressEntry {
   zip: string;
 }
 
+export type InsuredStatus = 'insured' | 'uninsured';
+export type CoverageType = 'liability' | 'full_coverage';
+
 export interface Insurance {
   type: 'Client' | 'Defendant' | 'Other';
   provider: string;
@@ -389,6 +392,8 @@ export interface Insurance {
   claimNumber?: string;
   adjuster?: string;
   coverageLimits?: string;
+  insuredStatus?: InsuredStatus;
+  coverageType?: CoverageType;
   isUninsured?: boolean;
   coverageStatus?: CoverageStatusType;
   liabilityStatus?: LiabilityStatusType;
@@ -525,6 +530,8 @@ export interface ExtendedIntakeData {
     insured_name?: string;
     policy_number?: string;
     notes?: string;
+    insured_status?: InsuredStatus;
+    coverage_type?: CoverageType;
     coverage_limits?: string;
   };
   defendant?: {
@@ -540,6 +547,8 @@ export interface ExtendedIntakeData {
       claim_number?: string;
       policy_number?: string;
       claims_adjuster?: { name?: string; phone?: string; ext?: string; email?: string };
+      insured_status?: InsuredStatus;
+      coverage_type?: CoverageType;
       coverage_limits?: string;
     };
   };

@@ -238,6 +238,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
   ];
 
   const inputClass = "w-full bg-white border border-stone-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none";
+  const selectClass = "w-full bg-white border border-stone-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none appearance-none cursor-pointer";
   const labelClass = "block text-xs font-bold text-stone-500 uppercase mb-1";
   const sectionClass = "bg-white rounded-lg border border-stone-200 p-6 animate-fade-in";
 
@@ -518,9 +519,36 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                                 <input className={inputClass} value={formData.defendant?.insurance?.company || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'company')} />
                             </div>
                             <div>
-                                <label className={labelClass}>Coverage Limits</label>
-                                <input className={inputClass} placeholder="e.g. 100/300/100" value={formData.defendant?.insurance?.coverage_limits || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'coverage_limits')} />
+                                <label className={labelClass}>Insurance Status</label>
+                                <select className={selectClass} value={formData.defendant?.insurance?.insured_status || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'insured_status')}>
+                                    <option value="">Select...</option>
+                                    <option value="insured">Insured</option>
+                                    <option value="uninsured">Uninsured</option>
+                                </select>
                             </div>
+                            {formData.defendant?.insurance?.insured_status === 'insured' && (
+                                <div>
+                                    <label className={labelClass}>Coverage Type</label>
+                                    <select className={selectClass} value={formData.defendant?.insurance?.coverage_type || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'coverage_type')}>
+                                        <option value="">Select...</option>
+                                        <option value="liability">Liability</option>
+                                        <option value="full_coverage">Full Coverage</option>
+                                    </select>
+                                </div>
+                            )}
+                            {formData.defendant?.insurance?.insured_status === 'insured' && formData.defendant?.insurance?.coverage_type && (
+                                <div>
+                                    <label className={labelClass}>Coverage Limits</label>
+                                    <input className={inputClass} placeholder="e.g. 100/300/100" value={formData.defendant?.insurance?.coverage_limits || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'coverage_limits')} />
+                                </div>
+                            )}
+                            {formData.defendant?.insurance?.insured_status === 'uninsured' && (
+                                <div className="col-span-2">
+                                    <div className="px-3 py-2 rounded-lg border bg-amber-50 border-amber-200">
+                                        <span className="text-xs font-semibold text-amber-700">Uninsured Motorist</span>
+                                    </div>
+                                </div>
+                            )}
                             <div>
                                 <label className={labelClass}>Policy #</label>
                                 <input className={inputClass} value={formData.defendant?.insurance?.policy_number || ''} onChange={e => handleChange('defendant', 'insurance', e.target.value, 'policy_number')} />
@@ -691,10 +719,49 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    <div>
                        <h4 className="font-semibold text-stone-700 mb-2 text-sm">First Party Insurance (Client Auto)</h4>
                        <div className="grid grid-cols-2 gap-4">
-                            <input className={inputClass} placeholder="Company" value={formData.first_party_insurance?.company || ''} onChange={e => handleChange('first_party_insurance', 'company', e.target.value)} />
-                            <input className={inputClass} placeholder="Claim #" value={formData.first_party_insurance?.claim_number || ''} onChange={e => handleChange('first_party_insurance', 'claim_number', e.target.value)} />
-                            <input className={inputClass} placeholder="Coverage Limits" value={formData.first_party_insurance?.coverage_limits || ''} onChange={e => handleChange('first_party_insurance', 'coverage_limits', e.target.value)} />
-                            <input className={inputClass} placeholder="Policy #" value={formData.first_party_insurance?.policy_number || ''} onChange={e => handleChange('first_party_insurance', 'policy_number', e.target.value)} />
+                            <div>
+                                <label className={labelClass}>Company</label>
+                                <input className={inputClass} placeholder="Company" value={formData.first_party_insurance?.company || ''} onChange={e => handleChange('first_party_insurance', 'company', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Insurance Status</label>
+                                <select className={selectClass} value={formData.first_party_insurance?.insured_status || ''} onChange={e => handleChange('first_party_insurance', 'insured_status', e.target.value)}>
+                                    <option value="">Select...</option>
+                                    <option value="insured">Insured</option>
+                                    <option value="uninsured">Uninsured</option>
+                                </select>
+                            </div>
+                            {formData.first_party_insurance?.insured_status === 'insured' && (
+                                <div>
+                                    <label className={labelClass}>Coverage Type</label>
+                                    <select className={selectClass} value={formData.first_party_insurance?.coverage_type || ''} onChange={e => handleChange('first_party_insurance', 'coverage_type', e.target.value)}>
+                                        <option value="">Select...</option>
+                                        <option value="liability">Liability</option>
+                                        <option value="full_coverage">Full Coverage</option>
+                                    </select>
+                                </div>
+                            )}
+                            {formData.first_party_insurance?.insured_status === 'insured' && formData.first_party_insurance?.coverage_type && (
+                                <div>
+                                    <label className={labelClass}>Coverage Limits</label>
+                                    <input className={inputClass} placeholder="e.g. 50/100" value={formData.first_party_insurance?.coverage_limits || ''} onChange={e => handleChange('first_party_insurance', 'coverage_limits', e.target.value)} />
+                                </div>
+                            )}
+                            {formData.first_party_insurance?.insured_status === 'uninsured' && (
+                                <div className="col-span-2">
+                                    <div className="px-3 py-2 rounded-lg border bg-amber-50 border-amber-200">
+                                        <span className="text-xs font-semibold text-amber-700">Uninsured Motorist</span>
+                                    </div>
+                                </div>
+                            )}
+                            <div>
+                                <label className={labelClass}>Claim #</label>
+                                <input className={inputClass} placeholder="Claim #" value={formData.first_party_insurance?.claim_number || ''} onChange={e => handleChange('first_party_insurance', 'claim_number', e.target.value)} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Policy #</label>
+                                <input className={inputClass} placeholder="Policy #" value={formData.first_party_insurance?.policy_number || ''} onChange={e => handleChange('first_party_insurance', 'policy_number', e.target.value)} />
+                            </div>
                        </div>
                    </div>
                </div>

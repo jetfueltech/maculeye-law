@@ -182,7 +182,7 @@ export const AccidentSection: React.FC<SectionProps> = (props) => (
 export const DefendantSection: React.FC<SectionProps> = (props) => (
   <div className="space-y-5 animate-fade-in">
     <div className="grid grid-cols-2 gap-4">
-      <Field label="Defendant Name" field="defendantName" placeholder="At-fault party" props={props} />
+      <Field label="Defendant Name" field="defendantName" placeholder="Defendant name" props={props} />
       <Field label="Phone" field="defendantPhone" placeholder="Phone" type="tel" props={props} />
       <Field label="Driver's License" field="defendantDriversLicense" placeholder="DL number" props={props} />
       <Field label="License Plate" field="defendantLicensePlate" placeholder="Plate number" props={props} />

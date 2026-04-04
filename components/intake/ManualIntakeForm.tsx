@@ -256,7 +256,7 @@ export const ManualIntakeForm: React.FC<ManualIntakeFormProps> = ({ onSubmit, re
           <div className="space-y-8">
             <div>
               <h4 className="font-bold text-stone-800 border-b border-stone-100 pb-3 mb-4 flex justify-between items-center">
-                <span>Defendant (At-Fault)</span>
+                <span>Defendant</span>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={partyInfo.defUninsured} onChange={e => setPartyInfo({ ...partyInfo, defUninsured: e.target.checked })} className="rounded text-blue-600 focus:ring-blue-500" />
                   <span className="text-xs font-bold text-red-500 uppercase tracking-wide">Uninsured?</span>
@@ -265,7 +265,7 @@ export const ManualIntakeForm: React.FC<ManualIntakeFormProps> = ({ onSubmit, re
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12">
                   <label className={labelClass}>Defendant Name</label>
-                  <input type="text" className={inputClass} value={partyInfo.defName} onChange={e => setPartyInfo({ ...partyInfo, defName: e.target.value })} placeholder="At-fault driver name" />
+                  <input type="text" className={inputClass} value={partyInfo.defName} onChange={e => setPartyInfo({ ...partyInfo, defName: e.target.value })} placeholder="Defendant name" />
                 </div>
                 <div className="col-span-6">
                   <label className={labelClass}>Insurance Company</label>
