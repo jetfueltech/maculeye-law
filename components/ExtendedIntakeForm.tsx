@@ -1,9 +1,156 @@
 
 import React, { useState, useEffect } from 'react';
-import { CaseFile, ExtendedIntakeData, ClientDetails, Insurance } from '../types';
+import { CaseFile, ExtendedIntakeData, ClientDetails, Insurance, InsuranceAdjuster } from '../types';
 import { DocumentGenerator, DocumentFormType } from './DocumentGenerator';
 import { DocumentAttachment } from '../types';
 import { CoverageFieldGroup } from './CoverageFieldGroup';
+
+interface InsuranceBlockProps {
+  label: string;
+  badge: string;
+  badgeColor: 'stone' | 'emerald';
+  ins: Insurance;
+  onFieldChange: (fields: Partial<Insurance>) => void;
+  inputClass: string;
+  selectClass: string;
+  labelClass: string;
+}
+
+const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColor, ins, onFieldChange, inputClass, selectClass, labelClass }) => {
+  const [newAdj, setNewAdj] = useState({ name: '', phone: '', email: '' });
+  const adjusters = ins.adjusters || [];
+  const badgeStyles = badgeColor === 'emerald'
+    ? 'bg-emerald-50 text-emerald-600'
+    : 'bg-stone-100 text-stone-500';
+
+  const handleAddAdjuster = () => {
+    if (!newAdj.name.trim()) return;
+    const adj: InsuranceAdjuster = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newAdj.name.trim(),
+      phone: newAdj.phone.trim() || undefined,
+      email: newAdj.email.trim() || undefined,
+      isPrimary: adjusters.length === 0,
+      addedDate: new Date().toISOString(),
+    };
+    onFieldChange({ adjusters: [...adjusters, adj] });
+    setNewAdj({ name: '', phone: '', email: '' });
+  };
+
+  const handleRemoveAdjuster = (id: string) => {
+    const updated = adjusters.filter(a => a.id !== id);
+    if (updated.length > 0 && !updated.some(a => a.isPrimary)) {
+      updated[0].isPrimary = true;
+    }
+    onFieldChange({ adjusters: updated });
+  };
+
+  const handleAdjusterFieldChange = (id: string, field: keyof InsuranceAdjuster, value: string) => {
+    onFieldChange({
+      adjusters: adjusters.map(a => a.id === id ? { ...a, [field]: value } : a),
+    });
+  };
+
+  const handleSetPrimary = (id: string) => {
+    onFieldChange({
+      adjusters: adjusters.map(a => ({ ...a, isPrimary: a.id === id })),
+    });
+  };
+
+  return (
+    <div>
+      <h4 className="font-bold text-stone-700 mb-3 text-sm flex items-center">
+        {label}
+        <span className={`ml-2 ${badgeStyles} text-[10px] px-2 py-0.5 rounded-full uppercase`}>{badge}</span>
+      </h4>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className={labelClass}>Carrier</label>
+          <input className={inputClass} placeholder="e.g. State Farm" value={ins.provider || ''} onChange={e => onFieldChange({ provider: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Claim #</label>
+          <input className={inputClass} placeholder="Claim #" value={ins.claimNumber || ''} onChange={e => onFieldChange({ claimNumber: e.target.value })} />
+        </div>
+        <div>
+          <label className={labelClass}>Policy #</label>
+          <input className={inputClass} placeholder="Policy #" value={ins.policyNumber || ''} onChange={e => onFieldChange({ policyNumber: e.target.value })} />
+        </div>
+        <div className="col-span-2">
+          <CoverageFieldGroup
+            insuredStatus={ins.insuredStatus}
+            coverageType={ins.coverageType}
+            coverageLimits={ins.coverageLimits || ''}
+            onChange={(field, value) => onFieldChange({ [field]: value } as Partial<Insurance>)}
+            onBatchChange={fields => onFieldChange(fields as Partial<Insurance>)}
+            accentColor={badgeColor}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 border-t border-stone-100 pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h5 className="text-xs font-bold text-stone-500 uppercase">Adjusters</h5>
+          <span className="text-xs text-stone-400">{adjusters.length} {adjusters.length === 1 ? 'adjuster' : 'adjusters'}</span>
+        </div>
+
+        {adjusters.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {adjusters.map(adj => (
+              <div key={adj.id} className="bg-stone-50 rounded-lg border border-stone-200 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-stone-800">{adj.name}</span>
+                    {adj.isPrimary && (
+                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase">Primary</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {!adj.isPrimary && (
+                      <button onClick={() => handleSetPrimary(adj.id)} className="text-[10px] text-blue-600 hover:text-blue-700 font-medium px-1.5 py-0.5 rounded hover:bg-blue-50">
+                        Set Primary
+                      </button>
+                    )}
+                    <button onClick={() => handleRemoveAdjuster(adj.id)} className="text-stone-400 hover:text-red-500 p-0.5">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] text-stone-400 uppercase font-bold mb-0.5">Phone</label>
+                    <input className={inputClass + ' !py-1.5 !text-xs'} placeholder="Phone" value={adj.phone || ''} onChange={e => handleAdjusterFieldChange(adj.id, 'phone', e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-stone-400 uppercase font-bold mb-0.5">Email</label>
+                    <input className={inputClass + ' !py-1.5 !text-xs'} type="email" placeholder="Email" value={adj.email || ''} onChange={e => handleAdjusterFieldChange(adj.id, 'email', e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="bg-stone-50 rounded-lg border border-dashed border-stone-300 p-3">
+          <div className="grid grid-cols-3 gap-2">
+            <input className={inputClass + ' !py-1.5 !text-xs'} placeholder="Adjuster Name" value={newAdj.name} onChange={e => setNewAdj(p => ({ ...p, name: e.target.value }))} />
+            <input className={inputClass + ' !py-1.5 !text-xs'} placeholder="Phone" value={newAdj.phone} onChange={e => setNewAdj(p => ({ ...p, phone: e.target.value }))} />
+            <input className={inputClass + ' !py-1.5 !text-xs'} type="email" placeholder="Email" value={newAdj.email} onChange={e => setNewAdj(p => ({ ...p, email: e.target.value }))} />
+          </div>
+          <div className="text-right mt-2">
+            <button
+              onClick={handleAddAdjuster}
+              disabled={!newAdj.name.trim()}
+              className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 disabled:opacity-50 font-medium"
+            >
+              + Add Adjuster
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface ExtendedIntakeFormProps {
   caseData: CaseFile;
@@ -685,84 +832,92 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
            <div className={sectionClass}>
                <h3 className="text-lg font-bold text-stone-800 mb-4 border-b pb-2">Insurance</h3>
                <div className="space-y-8">
-                   <div>
-                       <h4 className="font-bold text-stone-700 mb-3 text-sm flex items-center">
-                         Defendant Insurance
-                         <span className="ml-2 bg-stone-100 text-stone-500 text-[10px] px-2 py-0.5 rounded-full uppercase">3rd Party</span>
-                       </h4>
-                       <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Carrier</label>
-                                <input className={inputClass} placeholder="e.g. State Farm" value={defIns.provider || ''} onChange={e => handleInsuranceFieldChange('Defendant', { provider: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Claim #</label>
-                                <input className={inputClass} placeholder="Claim #" value={defIns.claimNumber || ''} onChange={e => handleInsuranceFieldChange('Defendant', { claimNumber: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Policy #</label>
-                                <input className={inputClass} placeholder="Policy #" value={defIns.policyNumber || ''} onChange={e => handleInsuranceFieldChange('Defendant', { policyNumber: e.target.value })} />
-                            </div>
-                            <div className="col-span-2">
-                                <CoverageFieldGroup
-                                  insuredStatus={defIns.insuredStatus}
-                                  coverageType={defIns.coverageType}
-                                  coverageLimits={defIns.coverageLimits || ''}
-                                  onChange={(field, value) => handleInsuranceFieldChange('Defendant', { [field]: value } as Partial<Insurance>)}
-                                  onBatchChange={fields => handleInsuranceFieldChange('Defendant', fields as Partial<Insurance>)}
-                                  accentColor="stone"
-                                />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Adjuster Name</label>
-                                <input className={inputClass} value={defIns.adjuster || ''} onChange={e => handleInsuranceFieldChange('Defendant', { adjuster: e.target.value })} />
-                            </div>
-                       </div>
-                   </div>
+                   <InsuranceBlock
+                     label="Defendant Insurance"
+                     badge="3rd Party"
+                     badgeColor="stone"
+                     ins={defIns}
+                     onFieldChange={fields => handleInsuranceFieldChange('Defendant', fields)}
+                     inputClass={inputClass}
+                     selectClass={selectClass}
+                     labelClass={labelClass}
+                   />
 
                    <div className="border-t border-stone-200 pt-6">
-                       <h4 className="font-bold text-stone-700 mb-3 text-sm flex items-center">
-                         Client Insurance
-                         <span className="ml-2 bg-emerald-50 text-emerald-600 text-[10px] px-2 py-0.5 rounded-full uppercase">1st Party</span>
-                       </h4>
-                       <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Carrier</label>
-                                <input className={inputClass} placeholder="e.g. Geico" value={clientIns.provider || ''} onChange={e => handleInsuranceFieldChange('Client', { provider: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Claim #</label>
-                                <input className={inputClass} placeholder="Claim #" value={clientIns.claimNumber || ''} onChange={e => handleInsuranceFieldChange('Client', { claimNumber: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Policy #</label>
-                                <input className={inputClass} placeholder="Policy #" value={clientIns.policyNumber || ''} onChange={e => handleInsuranceFieldChange('Client', { policyNumber: e.target.value })} />
-                            </div>
-                            <div className="col-span-2">
-                                <CoverageFieldGroup
-                                  insuredStatus={clientIns.insuredStatus}
-                                  coverageType={clientIns.coverageType}
-                                  coverageLimits={clientIns.coverageLimits || ''}
-                                  onChange={(field, value) => handleInsuranceFieldChange('Client', { [field]: value } as Partial<Insurance>)}
-                                  onBatchChange={fields => handleInsuranceFieldChange('Client', fields as Partial<Insurance>)}
-                                  accentColor="emerald"
-                                />
-                            </div>
-                       </div>
+                     <InsuranceBlock
+                       label="Client Insurance"
+                       badge="1st Party"
+                       badgeColor="emerald"
+                       ins={clientIns}
+                       onFieldChange={fields => handleInsuranceFieldChange('Client', fields)}
+                       inputClass={inputClass}
+                       selectClass={selectClass}
+                       labelClass={labelClass}
+                     />
                    </div>
 
                    <div className="border-t border-stone-200 pt-6">
                        <h4 className="font-bold text-stone-700 mb-3 text-sm">Health Insurance</h4>
-                       <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Company</label>
-                                <input className={inputClass} placeholder="e.g. AETNA" value={formData.health_insurance?.company || ''} onChange={e => handleChange('health_insurance', 'company', e.target.value)} />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Member ID</label>
-                                <input className={inputClass} placeholder="Member ID" value={formData.health_insurance?.member_number || ''} onChange={e => handleChange('health_insurance', 'member_number', e.target.value)} />
-                            </div>
+                       <div className="mb-4">
+                         <div className="flex items-center gap-4">
+                           <label className="flex items-center gap-2 cursor-pointer">
+                             <input type="radio" name="health_ins_status" checked={formData.health_insurance?.has_insurance === true} onChange={() => handleChange('health_insurance', 'has_insurance', true)} className="w-4 h-4 text-blue-600" />
+                             <span className="text-sm font-medium text-stone-700">Insured</span>
+                           </label>
+                           <label className="flex items-center gap-2 cursor-pointer">
+                             <input type="radio" name="health_ins_status" checked={formData.health_insurance?.has_insurance === false} onChange={() => handleChange('health_insurance', 'has_insurance', false)} className="w-4 h-4 text-blue-600" />
+                             <span className="text-sm font-medium text-stone-700">No Insurance</span>
+                           </label>
+                         </div>
                        </div>
+                       {formData.health_insurance?.has_insurance !== false && (
+                         <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                  <label className={labelClass}>Company</label>
+                                  <input className={inputClass} placeholder="e.g. AETNA" value={formData.health_insurance?.company || ''} onChange={e => handleChange('health_insurance', 'company', e.target.value)} />
+                              </div>
+                              <div>
+                                  <label className={labelClass}>Member ID</label>
+                                  <input className={inputClass} placeholder="Member ID" value={formData.health_insurance?.member_number || ''} onChange={e => handleChange('health_insurance', 'member_number', e.target.value)} />
+                              </div>
+                              <div>
+                                  <label className={labelClass}>Group #</label>
+                                  <input className={inputClass} placeholder="Group #" value={formData.health_insurance?.group_number || ''} onChange={e => handleChange('health_insurance', 'group_number', e.target.value)} />
+                              </div>
+                              <div>
+                                  <label className={labelClass}>Phone</label>
+                                  <input className={inputClass} placeholder="Phone" value={formData.health_insurance?.phone || ''} onChange={e => handleChange('health_insurance', 'phone', e.target.value)} />
+                              </div>
+                              <div>
+                                  <label className={labelClass}>Email</label>
+                                  <input className={inputClass} type="email" placeholder="Email" value={formData.health_insurance?.email || ''} onChange={e => handleChange('health_insurance', 'email', e.target.value)} />
+                              </div>
+                              <div>
+                                  <label className={labelClass}>Fax</label>
+                                  <input className={inputClass} placeholder="Fax" value={formData.health_insurance?.fax || ''} onChange={e => handleChange('health_insurance', 'fax', e.target.value)} />
+                              </div>
+                              <div className="col-span-2">
+                                  <label className={labelClass}>Address</label>
+                                  <input className={inputClass} placeholder="Street" value={formData.health_insurance?.address?.street || ''} onChange={e => handleChange('health_insurance', 'address', e.target.value, 'street')} />
+                                  <div className="grid grid-cols-6 gap-2 mt-2">
+                                    <div className="col-span-3">
+                                      <input className={inputClass} placeholder="City" value={formData.health_insurance?.address?.city || ''} onChange={e => handleChange('health_insurance', 'address', e.target.value, 'city')} />
+                                    </div>
+                                    <div className="col-span-1">
+                                      <input className={inputClass} placeholder="ST" value={formData.health_insurance?.address?.state || ''} onChange={e => handleChange('health_insurance', 'address', e.target.value, 'state')} />
+                                    </div>
+                                    <div className="col-span-2">
+                                      <input className={inputClass} placeholder="Zip" value={formData.health_insurance?.address?.zip || ''} onChange={e => handleChange('health_insurance', 'address', e.target.value, 'zip')} />
+                                    </div>
+                                  </div>
+                              </div>
+                         </div>
+                       )}
+                       {formData.health_insurance?.has_insurance === false && (
+                         <div className="px-4 py-3 rounded-lg border bg-amber-50 border-amber-200">
+                           <span className="text-sm font-medium text-amber-700">Client does not have health insurance.</span>
+                         </div>
+                       )}
                    </div>
                </div>
            </div>

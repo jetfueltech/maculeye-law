@@ -385,12 +385,22 @@ export interface DirectoryAddressEntry {
 export type InsuredStatus = 'insured' | 'uninsured';
 export type CoverageType = 'liability' | 'full_coverage';
 
+export interface InsuranceAdjuster {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  isPrimary?: boolean;
+  addedDate: string;
+}
+
 export interface Insurance {
   type: 'Client' | 'Defendant' | 'Other';
   provider: string;
   policyNumber?: string;
   claimNumber?: string;
   adjuster?: string;
+  adjusters?: InsuranceAdjuster[];
   coverageLimits?: string;
   insuredStatus?: InsuredStatus;
   coverageType?: CoverageType;
@@ -515,11 +525,14 @@ export interface ExtendedIntakeData {
     insured_policy_info?: string;
   };
   health_insurance?: {
+    has_insurance?: boolean;
     company?: string;
     insured_name?: string;
     ssn?: string;
     address?: { street?: string; city?: string; state?: string; zip?: string };
     phone?: string;
+    email?: string;
+    fax?: string;
     group_number?: string;
     id_number?: string;
     member_number?: string;
