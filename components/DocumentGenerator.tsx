@@ -1,7 +1,7 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CaseFile, ExtendedIntakeData, MedicalProvider, ERVisit } from '../types';
 import { DistributionSheetRenderer } from './DistributionSheetRenderer';
+import { DocumentFieldsPanel, DocumentFields } from './DocumentFieldsPanel';
 
 export type DocumentFormType =
   | 'rep_lien'
@@ -46,39 +46,86 @@ interface DocumentGeneratorProps {
 
 export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, caseData, formType, context, onSaveToDocuments }) => {
   const [saved, setSaved] = useState(false);
+  const [showFieldsPanel, setShowFieldsPanel] = useState(true);
+
+  const buildInitialFields = useCallback((): DocumentFields => {
+    const intake = caseData.extendedIntake || {};
+    const defInsObj = caseData.insurance?.find(i => i.type === 'Defendant');
+    const clientInsObj = caseData.insurance?.find(i => i.type === 'Client');
+    const provider = context?.provider;
+    const erVisit = context?.erVisit;
+    const evidenceRecipient = context?.evidenceRecipient;
+
+    return {
+      clientName: caseData.clientName || '[CLIENT NAME]',
+      clientDob: caseData.clientDob || intake.client?.date_of_birth || '[DOB]',
+      clientPhone: caseData.clientPhone || intake.client?.phones?.cell || '[PHONE]',
+      clientEmail: caseData.clientEmail || intake.client?.email || '[EMAIL]',
+      clientAddress: caseData.clientAddress || intake.client?.address?.street || '[ADDRESS]',
+      clientCity: intake.client?.address?.city || '[CITY]',
+      clientState: intake.client?.address?.state || '[STATE]',
+      clientZip: intake.client?.address?.zip || '[ZIP]',
+      clientSsn: intake.client?.ssn || '',
+      accidentDate: caseData.accidentDate || '[DATE OF LOSS]',
+      accidentLocation: caseData.location || intake.accident?.accident_location || '[LOCATION]',
+      accidentTime: intake.accident?.time_of_accident || '[TIME]',
+      crashReportNo: intake.accident?.crash_report_number || '[CRASH REPORT #]',
+      defName: intake.defendant?.name || caseData.parties?.find(p => p.role === 'Defendant')?.name || '[DEFENDANT NAME]',
+      defInsurer: intake.defendant?.insurance?.company || defInsObj?.provider || '[INSURANCE CO]',
+      defInsAddress: [defInsObj?.address, defInsObj?.city, defInsObj?.state, defInsObj?.zip].filter(Boolean).join(', '),
+      defClaimsEmail: defInsObj?.claimsEmail || '',
+      defClaimsFax: defInsObj?.claimsFax || '',
+      defClaimsPhone: defInsObj?.claimsPhone || '',
+      claimNo: intake.defendant?.insurance?.claim_number || defInsObj?.claimNumber || '[CLAIM #]',
+      clientInsurer: intake.first_party_insurance?.company || intake.auto_insurance?.driver_or_passenger_insurance_company || clientInsObj?.provider || '[INSURANCE CO]',
+      clientInsAddress: [clientInsObj?.address, clientInsObj?.city, clientInsObj?.state, clientInsObj?.zip].filter(Boolean).join(', '),
+      clientClaimsEmail: clientInsObj?.claimsEmail || '',
+      clientClaimsFax: clientInsObj?.claimsFax || '',
+      clientClaimsPhone: clientInsObj?.claimsPhone || '',
+      clientClaimNo: intake.first_party_insurance?.claim_number || intake.auto_insurance?.claim_number || clientInsObj?.claimNumber || '[CLAIM #]',
+      clientPolicyNo: intake.first_party_insurance?.policy_number || intake.auto_insurance?.policy_number || clientInsObj?.policyNumber || '[POLICY #]',
+      providerName: provider?.name || erVisit?.facilityName || '[PROVIDER NAME]',
+      providerAddress: provider ? [provider.address, provider.city, provider.state, provider.zip].filter(Boolean).join(', ') : '[PROVIDER ADDRESS]',
+      providerFax: provider?.fax || '[FAX NUMBER]',
+      recipientName: evidenceRecipient?.recipientName || '[RECIPIENT NAME]',
+      recipientContact: evidenceRecipient?.contactName || '',
+      recipientAddress: evidenceRecipient?.address || '[ADDRESS]',
+      recipientCityStateZip: evidenceRecipient ? `${evidenceRecipient.city}, ${evidenceRecipient.state} ${evidenceRecipient.zip}` : '[CITY, STATE ZIP]',
+    };
+  }, [caseData, context]);
+
+  const [fields, setFields] = useState<DocumentFields>(buildInitialFields);
 
   useEffect(() => {
     setSaved(false);
-  }, [formType]);
+    setFields(buildInitialFields());
+  }, [formType, buildInitialFields]);
+
+  const handleFieldChange = useCallback((key: keyof DocumentFields, value: string) => {
+    setFields(prev => ({ ...prev, [key]: value }));
+  }, []);
 
   if (!isOpen || !formType) return null;
 
   const intake = caseData.extendedIntake || {};
-  const clientName = caseData.clientName;
-  const dol = caseData.accidentDate;
-  
-  // Data extraction with fallbacks
-  const defName = intake.defendant?.name || caseData.parties?.find(p => p.role === 'Defendant')?.name || '[DEFENDANT NAME]';
-  const defInsurer = intake.defendant?.insurance?.company || caseData.insurance?.find(i => i.type === 'Defendant')?.provider || '[INSURANCE CO]';
-  const claimNo = intake.defendant?.insurance?.claim_number || caseData.insurance?.find(i => i.type === 'Defendant')?.claimNumber || '[CLAIM #]';
-  const crashReportNo = intake.accident?.crash_report_number || '[CRASH REPORT #]';
+  const clientName = fields.clientName;
+  const dol = fields.accidentDate;
+  const defName = fields.defName;
+  const defInsurer = fields.defInsurer;
+  const claimNo = fields.claimNo;
+  const crashReportNo = fields.crashReportNo;
+  const defClaimsEmail = fields.defClaimsEmail;
+  const defClaimsPhone = fields.defClaimsPhone;
+  const defClaimsFax = fields.defClaimsFax;
+  const defInsAddress = fields.defInsAddress;
+  const clientInsurer = fields.clientInsurer;
+  const clientClaimNo = fields.clientClaimNo;
+  const clientPolicyNo = fields.clientPolicyNo;
+  const clientClaimsEmail = fields.clientClaimsEmail;
+  const clientClaimsPhone = fields.clientClaimsPhone;
+  const clientClaimsFax = fields.clientClaimsFax;
+  const clientInsAddress = fields.clientInsAddress;
 
-  const defInsObj = caseData.insurance?.find(i => i.type === 'Defendant');
-  const defClaimsEmail = defInsObj?.claimsEmail || '';
-  const defClaimsPhone = defInsObj?.claimsPhone || '';
-  const defClaimsFax = defInsObj?.claimsFax || '';
-  const defInsAddress = [defInsObj?.address, defInsObj?.city, defInsObj?.state, defInsObj?.zip].filter(Boolean).join(', ');
-
-  const clientInsObj = caseData.insurance?.find(i => i.type === 'Client');
-  const clientInsurer = intake.first_party_insurance?.company || intake.auto_insurance?.driver_or_passenger_insurance_company || clientInsObj?.provider || '[INSURANCE CO]';
-  const clientClaimNo = intake.first_party_insurance?.claim_number || intake.auto_insurance?.claim_number || clientInsObj?.claimNumber || '[CLAIM #]';
-  const clientPolicyNo = intake.first_party_insurance?.policy_number || intake.auto_insurance?.policy_number || clientInsObj?.policyNumber || '[POLICY #]';
-  const clientClaimsEmail = clientInsObj?.claimsEmail || '';
-  const clientClaimsPhone = clientInsObj?.claimsPhone || '';
-  const clientClaimsFax = clientInsObj?.claimsFax || '';
-  const clientInsAddress = [clientInsObj?.address, clientInsObj?.city, clientInsObj?.state, clientInsObj?.zip].filter(Boolean).join(', ');
-  
-  // Static Attorney Info (Simulated "SAP LAW")
   const attorneyName = "Steve Pisman, Esq.";
   const attorneyFirm = "SAP LAW";
   const attorneyAddress = "205 N. Michigan Ave., Suite 810";
@@ -89,7 +136,6 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  // Styles for the "Paper" view
   const paperClass = "bg-white text-black font-serif p-12 mb-8 shadow-lg mx-auto max-w-[8.5in] min-h-[11in] relative leading-relaxed text-[11pt]";
   const letterheadClass = "text-center border-b-2 border-black pb-4 mb-8";
   const lhTitle = "text-4xl font-bold tracking-widest font-serif mb-2 uppercase";
@@ -680,12 +726,12 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
           <div className="bg-gray-100 text-center font-bold border-b border-black py-1">Client Information</div>
           <div className="p-3 text-sm space-y-2">
             <div className="grid grid-cols-2 gap-4">
-              <div>Client Name: <span className="border-b border-black font-bold px-1 bg-yellow-100">{caseData.clientName}</span></div>
-              <div>DOB: <span className="border-b border-black px-1">{caseData.clientDob || intake.client?.date_of_birth || '___________'}</span></div>
+              <div>Client Name: <span className="border-b border-black font-bold px-1 bg-yellow-100">{clientName}</span></div>
+              <div>DOB: <span className="border-b border-black px-1">{fields.clientDob}</span></div>
             </div>
-            <div>Phone: <span className="border-b border-black px-1">{caseData.clientPhone}</span></div>
-            <div>Email: <span className="border-b border-black px-1">{caseData.clientEmail}</span></div>
-            <div>Address: <span className="border-b border-black px-1">{caseData.clientAddress || [intake.client?.address?.street, intake.client?.address?.city, intake.client?.address?.state, intake.client?.address?.zip].filter(Boolean).join(', ') || '___________'}</span></div>
+            <div>Phone: <span className="border-b border-black px-1">{fields.clientPhone}</span></div>
+            <div>Email: <span className="border-b border-black px-1">{fields.clientEmail}</span></div>
+            <div>Address: <span className="border-b border-black px-1">{fields.clientAddress}</span></div>
           </div>
         </div>
 
@@ -693,8 +739,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
           <div className="bg-gray-100 text-center font-bold border-b border-black py-1">Accident Information</div>
           <div className="p-3 text-sm space-y-2">
             <div className="grid grid-cols-2 gap-4">
-              <div>Date of Loss: <span className="border-b border-black font-bold px-1 bg-yellow-100">{caseData.accidentDate}</span></div>
-              <div>Location: <span className="border-b border-black px-1">{caseData.location || intake.accident?.accident_location || '___________'}</span></div>
+              <div>Date of Loss: <span className="border-b border-black font-bold px-1 bg-yellow-100">{dol}</span></div>
+              <div>Location: <span className="border-b border-black px-1">{fields.accidentLocation}</span></div>
             </div>
             <div>Crash Report #: <span className="border-b border-black px-1">{intake.accident?.crash_report_number || '___________'}</span></div>
             <div>Facts: <span className="border-b border-black px-1">{caseData.description || intake.accident?.accident_facts || '___________'}</span></div>
@@ -784,22 +830,20 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   const provider = context?.provider;
   const erVisit = context?.erVisit;
 
-  const providerName = provider?.name || erVisit?.facilityName || '[PROVIDER NAME]';
-  const providerAddress = provider
-    ? [provider.address, provider.city, provider.state, provider.zip].filter(Boolean).join(', ')
-    : '[PROVIDER ADDRESS]';
-  const providerFax = provider?.fax || '[FAX NUMBER]';
+  const providerName = fields.providerName;
+  const providerAddress = fields.providerAddress;
+  const providerFax = fields.providerFax;
 
   const renderBillRequest = () => {
     const provAddr = provider
       ? [provider.address, provider.city ? `${provider.city}, ${provider.state || 'IL'} ${provider.zip || ''}` : ''].filter(Boolean)
       : [];
-    const clientDob = caseData.clientDob || intake.client?.date_of_birth || '[DOB]';
-    const clientAddr = caseData.clientAddress || [intake.client?.address?.street, intake.client?.address?.city, intake.client?.address?.state, intake.client?.address?.zip].filter(Boolean).join(', ') || '[ADDRESS]';
-    const clientCty = intake.client?.address?.city || 'Chicago';
-    const clientSt = intake.client?.address?.state || 'IL';
-    const clientZp = intake.client?.address?.zip || '[ZIP]';
-    const clientPh = caseData.clientPhone || intake.client?.phones?.cell || '';
+    const clientDob = fields.clientDob;
+    const clientAddr = [fields.clientAddress, fields.clientCity, fields.clientState, fields.clientZip].filter(v => v && !v.startsWith('[')).join(', ') || '[ADDRESS]';
+    const clientCty = fields.clientCity;
+    const clientSt = fields.clientState;
+    const clientZp = fields.clientZip;
+    const clientPh = fields.clientPhone;
 
     return (
       <>
@@ -1028,7 +1072,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
           <span>Date of Loss:</span>
           <span className="bg-yellow-100 px-1">{dol}</span>
           <span>Date of Birth:</span>
-          <span className="bg-yellow-100 px-1">{caseData.clientDob || '[DOB]'}</span>
+          <span className="bg-yellow-100 px-1">{fields.clientDob}</span>
         </div>
       </div>
 
@@ -1090,15 +1134,15 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
           </div>
           <div>
             <p className="text-xs font-bold">Date of Birth:</p>
-            <p className="bg-yellow-100 px-1 border-b border-black">{caseData.clientDob || '________________'}</p>
+            <p className="bg-yellow-100 px-1 border-b border-black">{fields.clientDob}</p>
           </div>
           <div>
             <p className="text-xs font-bold">Address:</p>
-            <p className="bg-yellow-100 px-1 border-b border-black">{caseData.clientAddress || '________________'}</p>
+            <p className="bg-yellow-100 px-1 border-b border-black">{fields.clientAddress}</p>
           </div>
           <div>
             <p className="text-xs font-bold">Phone:</p>
-            <p className="bg-yellow-100 px-1 border-b border-black">{caseData.clientPhone || '________________'}</p>
+            <p className="bg-yellow-100 px-1 border-b border-black">{fields.clientPhone}</p>
           </div>
         </div>
       </div>
@@ -1161,14 +1205,12 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   const evidenceRecipient = context?.evidenceRecipient;
 
   const renderPreservationOfEvidence = () => {
-    const recipientBusiness = evidenceRecipient?.recipientName || '[RECIPIENT NAME]';
-    const recipientContact = evidenceRecipient?.contactName || '';
-    const recipientAddr = evidenceRecipient?.address || '[ADDRESS]';
-    const recipientCityStateZip = evidenceRecipient
-      ? `${evidenceRecipient.city}, ${evidenceRecipient.state} ${evidenceRecipient.zip}`
-      : '[CITY, STATE ZIP]';
-    const accidentLocation = caseData.location || intake.accident?.accident_location || '[ACCIDENT LOCATION]';
-    const accidentTime = intake.accident?.time_of_accident || '[TIME]';
+    const recipientBusiness = fields.recipientName;
+    const recipientContact = fields.recipientContact;
+    const recipientAddr = fields.recipientAddress;
+    const recipientCityStateZip = fields.recipientCityStateZip;
+    const accidentLocation = fields.accidentLocation;
+    const accidentTime = fields.accidentTime;
     const accidentDateFormatted = dol
       ? new Date(dol).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
       : '[DATE]';
@@ -1283,12 +1325,12 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     const provAddr = provider
       ? [provider.address, provider.city ? `${provider.city}, ${provider.state || 'IL'} ${provider.zip || ''}` : ''].filter(Boolean)
       : [];
-    const clientDob = caseData.clientDob || intake.client?.date_of_birth || '[DOB]';
-    const clientAddress = caseData.clientAddress || [intake.client?.address?.street, intake.client?.address?.city, intake.client?.address?.state, intake.client?.address?.zip].filter(Boolean).join(', ') || '[ADDRESS]';
-    const clientCity = intake.client?.address?.city || 'Chicago';
-    const clientState = intake.client?.address?.state || 'IL';
-    const clientZip = intake.client?.address?.zip || '[ZIP]';
-    const clientPhone = caseData.clientPhone || intake.client?.phones?.cell || '';
+    const clientDob = fields.clientDob;
+    const clientAddress = [fields.clientAddress, fields.clientCity, fields.clientState, fields.clientZip].filter(v => v && !v.startsWith('[')).join(', ') || '[ADDRESS]';
+    const clientCity = fields.clientCity;
+    const clientState = fields.clientState;
+    const clientZip = fields.clientZip;
+    const clientPhone = fields.clientPhone;
 
     return (
       <>
@@ -1508,23 +1550,35 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     medical_bill_request: `Medical Records & Bills Request — ${providerName}`,
   };
 
+  const hasFieldsPanel = formType !== 'intake_summary' && formType !== 'boss_intake_form' && formType !== 'distribution_sheet';
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-        <div className="bg-stone-200 w-full max-w-6xl h-[95vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="bg-black text-white px-6 py-4 flex justify-between items-center shadow-md z-10">
-                <div>
-                    <h3 className="text-lg font-bold flex items-center">
-                        <svg className="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                        {FORM_TITLES[formType]}
-                    </h3>
-                    <p className="text-xs text-stone-400">Generated on {today}</p>
+        <div className="bg-stone-200 w-full max-w-7xl h-[95vh] rounded-xl flex flex-col shadow-2xl overflow-hidden">
+            <div className="bg-black text-white px-6 py-3 flex justify-between items-center shadow-md z-10">
+                <div className="flex items-center gap-4">
+                    <div>
+                        <h3 className="text-base font-bold flex items-center">
+                            <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            {FORM_TITLES[formType]}
+                        </h3>
+                        <p className="text-xs text-stone-400">{today}</p>
+                    </div>
+                    {hasFieldsPanel && (
+                      <button
+                        onClick={() => setShowFieldsPanel(p => !p)}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${showFieldsPanel ? 'bg-stone-700 text-white' : 'bg-stone-800 text-stone-400 hover:text-white'}`}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        {showFieldsPanel ? 'Hide Fields' : 'Edit Fields'}
+                      </button>
+                    )}
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
                     {saved && (
                       <div className="flex items-center gap-1.5 text-sm text-emerald-400 font-medium animate-fade-in mr-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                        Saved to case
+                        Saved
                       </div>
                     )}
                     {onSaveToDocuments && !saved && (
@@ -1533,15 +1587,15 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                           onSaveToDocuments(FORM_TITLES[formType], formType);
                           setSaved(true);
                         }}
-                        className="px-4 py-2 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 shadow-lg flex items-center"
+                        className="px-3 py-1.5 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 shadow-lg flex items-center"
                       >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
                         Save to Case
                       </button>
                     )}
-                    <button onClick={() => window.print()} className="px-5 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-500 shadow-lg flex items-center">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        Print / Save PDF
+                    <button onClick={() => window.print()} className="px-3 py-1.5 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-500 shadow-lg flex items-center">
+                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Print / PDF
                     </button>
                     <button onClick={onClose} className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-lg transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1549,29 +1603,40 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 </div>
             </div>
 
-            {/* Scrollable Preview Area */}
-            <div className="flex-1 overflow-y-auto p-8 bg-stone-200">
-                {formType === 'rep_lien' && renderRepAndLien()}
-                {formType === 'rep_lien_3p' && renderRepAndLien()}
-                {formType === 'rep_lien_1p' && renderRepAndLien1P()}
-                {formType === 'foia' && renderFOIA()}
-                {formType === 'intake_summary' && renderIntakeSummary()}
-                {formType === 'boss_intake_form' && renderBossIntakeForm()}
-                {formType === 'bill_request' && renderBillRequest()}
-                {formType === 'records_request' && renderRecordsRequest()}
-                {formType === 'hipaa_auth' && renderHIPAAAuth()}
-                {formType === 'er_bill_request' && renderBillRequest()}
-                {formType === 'er_records_request' && renderRecordsRequest()}
-                {formType === 'preservation_of_evidence' && renderPreservationOfEvidence()}
-                {formType === 'medical_bill_request' && renderMedicalBillRequest()}
-                {formType === 'distribution_sheet' && (
-                  <DistributionSheetRenderer
-                    caseData={caseData}
-                    firmName={attorneyFirm}
-                    firmAddress1={attorneyAddress}
-                    firmAddress2={attorneyCity}
-                  />
+            <div className="flex-1 flex overflow-hidden">
+                {hasFieldsPanel && showFieldsPanel && (
+                  <div className="w-80 flex-shrink-0 bg-white border-r border-stone-200 print:hidden">
+                    <DocumentFieldsPanel
+                      formType={formType}
+                      fields={fields}
+                      onChange={handleFieldChange}
+                    />
+                  </div>
                 )}
+
+                <div className="flex-1 overflow-y-auto p-8 bg-stone-200">
+                    {formType === 'rep_lien' && renderRepAndLien()}
+                    {formType === 'rep_lien_3p' && renderRepAndLien()}
+                    {formType === 'rep_lien_1p' && renderRepAndLien1P()}
+                    {formType === 'foia' && renderFOIA()}
+                    {formType === 'intake_summary' && renderIntakeSummary()}
+                    {formType === 'boss_intake_form' && renderBossIntakeForm()}
+                    {formType === 'bill_request' && renderBillRequest()}
+                    {formType === 'records_request' && renderRecordsRequest()}
+                    {formType === 'hipaa_auth' && renderHIPAAAuth()}
+                    {formType === 'er_bill_request' && renderBillRequest()}
+                    {formType === 'er_records_request' && renderRecordsRequest()}
+                    {formType === 'preservation_of_evidence' && renderPreservationOfEvidence()}
+                    {formType === 'medical_bill_request' && renderMedicalBillRequest()}
+                    {formType === 'distribution_sheet' && (
+                      <DistributionSheetRenderer
+                        caseData={caseData}
+                        firmName={attorneyFirm}
+                        firmAddress1={attorneyAddress}
+                        firmAddress2={attorneyCity}
+                      />
+                    )}
+                </div>
             </div>
         </div>
     </div>
