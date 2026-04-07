@@ -12,6 +12,7 @@ import {
   removeFirmMember,
   updateUserSystemRole,
   createMemberAccount,
+  updateMemberAccount,
   FirmMemberWithProfile,
   FirmDetails,
 } from '../../services/firmService';
@@ -228,6 +229,11 @@ export const FirmManagement: React.FC = () => {
   const [createAccountError, setCreateAccountError] = useState('');
   const [createAccountSuccess, setCreateAccountSuccess] = useState('');
 
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editAccount, setEditAccount] = useState({ full_name: '', username: '', email: '', password: '', system_role: 'member' as 'admin' | 'manager' | 'member' });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState('');
+
   const loadData = useCallback(async () => {
     const [firms, users] = await Promise.all([getAllFirms(), getAllUsers()]);
     setAllFirms(firms);
@@ -315,6 +321,34 @@ export const FirmManagement: React.FC = () => {
       setCreateAccountSuccess(`Account created for ${newAccount.full_name || newAccount.username}.`);
       setNewAccount({ full_name: '', username: '', email: '', password: '', system_role: 'member' });
       setShowCreateAccount(false);
+      await loadData();
+    }
+  };
+
+  const startEditUser = (u: any) => {
+    setEditingUserId(u.id);
+    setEditAccount({ full_name: u.full_name || '', username: u.username || '', email: u.email || '', password: '', system_role: u.system_role || 'member' });
+    setEditError('');
+  };
+
+  const handleUpdateAccount = async () => {
+    if (!editingUserId || !editAccount.username || !editAccount.email) return;
+    setSavingEdit(true);
+    setEditError('');
+    const params: Record<string, unknown> = {
+      user_id: editingUserId,
+      full_name: editAccount.full_name,
+      username: editAccount.username,
+      email: editAccount.email,
+      system_role: editAccount.system_role,
+    };
+    if (editAccount.password) params.password = editAccount.password;
+    const { error } = await updateMemberAccount(params as any);
+    setSavingEdit(false);
+    if (error) {
+      setEditError(error);
+    } else {
+      setEditingUserId(null);
       await loadData();
     }
   };
@@ -718,34 +752,114 @@ export const FirmManagement: React.FC = () => {
 
         <div className="space-y-2">
           {allUsers.map(u => (
-            <div key={u.id} className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl hover:border-stone-300 transition-colors">
-              <div className="flex items-center gap-3">
-                {u.avatar_url ? (
-                  <img src={u.avatar_url} alt={u.full_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-stone-400 to-stone-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                    {u.avatar_initials || getInitials(u.full_name || u.email)}
+            <div key={u.id}>
+              {editingUserId === u.id ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 space-y-4 animate-fade-in">
+                  <div className="flex items-center justify-between">
+                    <h5 className="font-bold text-stone-800 text-sm">Edit User</h5>
+                    <button onClick={() => setEditingUserId(null)} className="text-stone-400 hover:text-stone-600">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
                   </div>
-                )}
-                <div>
-                  <p className="text-sm font-bold text-stone-900">{u.full_name || u.email}</p>
-                  <p className="text-xs text-stone-500">{u.email}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">Full Name</label>
+                      <input
+                        className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={editAccount.full_name}
+                        onChange={e => setEditAccount(a => ({ ...a, full_name: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">Username <span className="text-red-500">*</span></label>
+                      <input
+                        className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={editAccount.username}
+                        onChange={e => setEditAccount(a => ({ ...a, username: e.target.value.toLowerCase().replace(/\s/g, '') }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">Email <span className="text-red-500">*</span></label>
+                      <input
+                        type="email"
+                        className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={editAccount.email}
+                        onChange={e => setEditAccount(a => ({ ...a, email: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">New Password</label>
+                      <input
+                        type="password"
+                        className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Leave blank to keep current"
+                        value={editAccount.password}
+                        onChange={e => setEditAccount(a => ({ ...a, password: e.target.value }))}
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-stone-500 uppercase tracking-wide mb-1">System Role</label>
+                      <select
+                        className="w-full border border-stone-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={editAccount.system_role}
+                        onChange={e => setEditAccount(a => ({ ...a, system_role: e.target.value as 'admin' | 'manager' | 'member' }))}
+                      >
+                        <option value="member">Member</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </div>
+                  </div>
+                  {editError && <p className="text-xs text-red-600">{editError}</p>}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={handleUpdateAccount}
+                      disabled={!editAccount.username || !editAccount.email || savingEdit}
+                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+                    >
+                      {savingEdit ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button
+                      onClick={() => setEditingUserId(null)}
+                      className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs font-bold uppercase px-2.5 py-1 rounded-full border ${ROLE_COLORS[u.system_role]}`}>
-                  {ROLE_LABELS[u.system_role]}
-                </span>
-                <select
-                  className="text-xs border border-stone-200 rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={u.system_role}
-                  onChange={e => handleSystemRoleChange(u.id, e.target.value as 'admin' | 'manager' | 'member')}
-                >
-                  <option value="member">Member</option>
-                  <option value="manager">Manager</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
+              ) : (
+                <div className="flex items-center justify-between p-4 bg-white border border-stone-200 rounded-xl group hover:border-stone-300 transition-colors">
+                  <div className="flex items-center gap-3">
+                    {u.avatar_url ? (
+                      <img src={u.avatar_url} alt={u.full_name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-stone-400 to-stone-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        {u.avatar_initials || getInitials(u.full_name || u.email)}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-bold text-stone-900">{u.full_name || u.email}</p>
+                      <p className="text-xs text-stone-500">{u.email}{u.username ? ` (@${u.username})` : ''}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs font-bold uppercase px-2.5 py-1 rounded-full border ${ROLE_COLORS[u.system_role]}`}>
+                      {ROLE_LABELS[u.system_role]}
+                    </span>
+                    <button
+                      onClick={() => startEditUser(u)}
+                      className="text-stone-300 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all"
+                      title="Edit user"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

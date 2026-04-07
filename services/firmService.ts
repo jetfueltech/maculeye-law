@@ -118,27 +118,43 @@ export interface CreateMemberParams {
   firm_id?: string;
 }
 
-export async function createMemberAccount(params: CreateMemberParams): Promise<{ user_id: string | null; error: string | null }> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData.session?.access_token ?? import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-member-account`;
+async function callEdgeFunction(slug: string, body: Record<string, unknown>): Promise<{ data: any; error: string | null }> {
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${slug}`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       'Apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
     },
-    body: JSON.stringify(params),
+    body: JSON.stringify(body),
   });
 
   let json: any;
   try {
     json = await res.json();
   } catch {
-    return { user_id: null, error: `Server error (${res.status})` };
+    return { data: null, error: `Server error (${res.status})` };
   }
-  if (!res.ok || json.error) return { user_id: null, error: json.error || `Failed to create account (${res.status})` };
-  return { user_id: json.user_id, error: null };
+  if (!res.ok || json.error) return { data: null, error: json.error || `Failed (${res.status})` };
+  return { data: json, error: null };
+}
+
+export async function createMemberAccount(params: CreateMemberParams): Promise<{ user_id: string | null; error: string | null }> {
+  const { data, error } = await callEdgeFunction('create-member-account', params as unknown as Record<string, unknown>);
+  return { user_id: data?.user_id ?? null, error };
+}
+
+export interface UpdateMemberParams {
+  user_id: string;
+  full_name?: string;
+  username?: string;
+  email?: string;
+  password?: string;
+  system_role?: 'admin' | 'manager' | 'member';
+}
+
+export async function updateMemberAccount(params: UpdateMemberParams): Promise<{ error: string | null }> {
+  const { error } = await callEdgeFunction('update-member-account', params as unknown as Record<string, unknown>);
+  return { error };
 }
