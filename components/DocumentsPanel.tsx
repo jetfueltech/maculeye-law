@@ -859,7 +859,7 @@ export const DocumentsPanel: React.FC<DocumentsPanelProps> = ({ caseData, onUpda
                           extractedData: doc.aiAnalysis.extractedData,
                         };
                         setDeepAnalyses([analysis]);
-                      } else if (doc.generatedFormType) {
+                      } else if (doc.generatedFormType && !doc.storageUrl) {
                         setGeneratedDocPreview(doc.generatedFormType as DocumentFormType);
                       } else {
                         setPreviewIndex(idx);

@@ -1799,16 +1799,22 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
         caseData={caseData}
         formType={selectedForm}
         context={docContext}
-        onSaveToDocuments={(docName: string, docFormType: DocumentFormType) => {
+        onSaveToDocuments={async (docName: string, docFormType: DocumentFormType, htmlContent: string) => {
+          const fileName = `${docName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.html`;
+          const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${docName}</title><link href="https://cdn.jsdelivr.net/npm/tailwindcss@3/dist/tailwind.min.css" rel="stylesheet"><style>body{background:#e7e5e4;padding:2rem;font-family:Georgia,serif}</style></head><body>${htmlContent}</body></html>`;
+          const blob = new Blob([fullHtml], { type: 'text/html' });
+          const file = new File([blob], fileName, { type: 'text/html' });
+          const result = await uploadDocument(caseData.id, file);
           const newDoc: DocumentAttachment = {
-            type: 'other',
+            type: 'correspondence',
             fileData: null,
-            fileName: `${docName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.pdf`,
-            mimeType: 'application/pdf',
+            fileName,
+            mimeType: 'text/html',
             source: 'Generated',
             category: 'intake',
             generatedFormType: docFormType,
             uploadedAt: new Date().toISOString(),
+            ...('url' in result ? { storageUrl: result.url, storagePath: result.path } : {}),
           };
           onUpdateCase({ ...caseData, documents: [...caseData.documents, newDoc] });
         }}

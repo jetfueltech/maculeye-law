@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { DocumentAttachment, DOCUMENT_NAMING_RULES, PHOTO_CATEGORY_LABELS } from '../types';
 
 interface DocumentPreviewModalProps {
@@ -31,8 +31,58 @@ function detectIsPdf(doc: DocumentAttachment): boolean {
   return /\.pdf$/i.test(ext);
 }
 
+function detectIsHtml(doc: DocumentAttachment): boolean {
+  if (doc.mimeType?.includes('html')) return true;
+  const ext = doc.fileName?.toLowerCase() || '';
+  return /\.html?$/i.test(ext);
+}
+
 function getPreviewSrc(doc: DocumentAttachment): string | null {
   return doc.storageUrl || doc.fileData || null;
+}
+
+function useBlobUrl(src: string | null, needsBlob: boolean) {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!src || !needsBlob) {
+      setBlobUrl(null);
+      return;
+    }
+
+    if (src.startsWith('data:') || src.startsWith('blob:')) {
+      setBlobUrl(src);
+      return;
+    }
+
+    let revoke = '';
+    setLoading(true);
+    setError(false);
+
+    fetch(src)
+      .then(res => {
+        if (!res.ok) throw new Error('fetch failed');
+        return res.blob();
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        revoke = url;
+        setBlobUrl(url);
+      })
+      .catch(() => {
+        setError(true);
+        setBlobUrl(null);
+      })
+      .finally(() => setLoading(false));
+
+    return () => {
+      if (revoke) URL.revokeObjectURL(revoke);
+    };
+  }, [src, needsBlob]);
+
+  return { blobUrl, loading, error };
 }
 
 export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
@@ -60,12 +110,18 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     };
   }, [handleKeyDown]);
 
+  const previewSrc = doc ? getPreviewSrc(doc) : null;
+  const isImage = doc ? detectIsImage(doc) : false;
+  const isPdf = doc ? detectIsPdf(doc) : false;
+  const isHtml = doc ? detectIsHtml(doc) : false;
+  const needsBlob = isPdf || isHtml;
+  const { blobUrl, loading: pdfLoading, error: pdfError } = useBlobUrl(previewSrc, needsBlob);
+
   if (!doc) return null;
 
-  const previewSrc = getPreviewSrc(doc);
-  const isImage = detectIsImage(doc);
-  const isPdf = detectIsPdf(doc);
-  const canPreview = !!previewSrc && (isImage || isPdf);
+  const canPreviewImage = !!previewSrc && isImage;
+  const canPreviewPdf = isPdf && !!blobUrl;
+  const canPreviewHtml = isHtml && !!blobUrl;
   const typeColor = DOC_TYPE_ICON_COLORS[doc.type] || DOC_TYPE_ICON_COLORS.other;
   const downloadUrl = doc.storageUrl || doc.fileData;
 
@@ -170,15 +226,23 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           className="max-w-5xl w-full max-h-full flex items-center justify-center"
           onClick={(e) => e.stopPropagation()}
         >
-          {canPreview && isImage ? (
+          {canPreviewImage ? (
             <img
               src={previewSrc!}
               alt={doc.fileName}
               className="max-w-full max-h-[82vh] rounded-xl shadow-2xl object-contain"
             />
-          ) : canPreview && isPdf ? (
+          ) : needsBlob && pdfLoading ? (
+            <div className="bg-white rounded-2xl shadow-2xl p-12 text-center">
+              <svg className="animate-spin w-8 h-8 text-stone-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <p className="text-sm text-stone-500">Loading document...</p>
+            </div>
+          ) : canPreviewPdf || canPreviewHtml ? (
             <iframe
-              src={previewSrc!}
+              src={blobUrl!}
               className="w-full rounded-xl border border-white/10 shadow-2xl bg-white"
               style={{ height: '82vh' }}
               title={doc.fileName}
@@ -190,7 +254,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               </div>
               <p className="text-stone-800 font-semibold text-lg break-all">{doc.fileName}</p>
               <p className="text-sm text-stone-400 mt-2 mb-6">
-                {!previewSrc ? 'This document has no preview or download available' : 'Preview is not available for this file type'}
+                {pdfError ? 'Could not load this document for preview' : !previewSrc ? 'This document has no preview available' : 'Preview is not available for this file type'}
               </p>
               {downloadUrl && (
                 <div className="flex items-center justify-center gap-3">

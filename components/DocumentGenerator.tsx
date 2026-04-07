@@ -1,7 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CaseFile, ExtendedIntakeData, MedicalProvider, ERVisit } from '../types';
 import { DistributionSheetRenderer } from './DistributionSheetRenderer';
 import { DocumentFieldsPanel, DocumentFields } from './DocumentFieldsPanel';
+
+const EmbeddedPdfViewer: React.FC<{ src: string; title: string; height?: string }> = ({ src, title, height = '900px' }) => {
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (src.startsWith('data:') || src.startsWith('blob:')) {
+      setBlobUrl(src);
+      setLoading(false);
+      return;
+    }
+    let url = '';
+    fetch(src)
+      .then(r => r.blob())
+      .then(blob => {
+        url = URL.createObjectURL(blob);
+        setBlobUrl(url);
+      })
+      .catch(() => setBlobUrl(null))
+      .finally(() => setLoading(false));
+    return () => { if (url) URL.revokeObjectURL(url); };
+  }, [src]);
+
+  if (loading) return <div className="flex items-center justify-center" style={{ height }}><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-stone-600" /></div>;
+  if (!blobUrl) return <div className="flex items-center justify-center text-stone-400 text-sm" style={{ height }}>Could not load document</div>;
+  return <iframe src={blobUrl} className="w-full" style={{ height }} title={title} />;
+};
 
 export type DocumentFormType =
   | 'rep_lien'
@@ -41,12 +68,13 @@ interface DocumentGeneratorProps {
   caseData: CaseFile;
   formType: DocumentFormType | null;
   context?: DocumentContext;
-  onSaveToDocuments?: (docName: string, formType: DocumentFormType) => void;
+  onSaveToDocuments?: (docName: string, formType: DocumentFormType, htmlContent: string) => void;
 }
 
 export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, caseData, formType, context, onSaveToDocuments }) => {
   const [saved, setSaved] = useState(false);
   const [showFieldsPanel, setShowFieldsPanel] = useState(true);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const buildInitialFields = useCallback((): DocumentFields => {
     const intake = caseData.extendedIntake || {};
@@ -1299,11 +1327,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
               {policeReport?.mimeType?.startsWith('image/') || policeReportUrl.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
                 <img src={policeReportUrl} alt="Police Report" className="w-full h-auto" />
               ) : (
-                <iframe
-                  src={policeReportUrl}
-                  className="w-full h-[900px]"
-                  title="Police Report"
-                />
+                <EmbeddedPdfViewer src={policeReportUrl} title="Police Report" height="900px" />
               )}
             </div>
           </div>
@@ -1584,7 +1608,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                     {onSaveToDocuments && !saved && (
                       <button
                         onClick={() => {
-                          onSaveToDocuments(FORM_TITLES[formType], formType);
+                          const html = previewRef.current?.innerHTML || '';
+                          onSaveToDocuments(FORM_TITLES[formType], formType, html);
                           setSaved(true);
                         }}
                         className="px-3 py-1.5 text-sm font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 shadow-lg flex items-center"
@@ -1614,7 +1639,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                   </div>
                 )}
 
-                <div className="flex-1 overflow-y-auto p-8 bg-stone-200">
+                <div ref={previewRef} className="flex-1 overflow-y-auto p-8 bg-stone-200">
                     {formType === 'rep_lien' && renderRepAndLien()}
                     {formType === 'rep_lien_3p' && renderRepAndLien()}
                     {formType === 'rep_lien_1p' && renderRepAndLien1P()}
