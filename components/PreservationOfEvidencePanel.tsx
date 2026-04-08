@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CaseFile, DocumentAttachment, ActivityLog, PreservationRecipient } from '../types';
 import { DocumentGenerator, DocumentFormType, EvidenceRecipient } from './DocumentGenerator';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../services/supabaseClient';
 
 interface PreservationOfEvidencePanelProps {
   caseData: CaseFile;
@@ -18,12 +19,6 @@ interface SearchResult {
 }
 
 type RightPanel = 'compose' | 'search';
-
-const searchCache = new Map<string, SearchResult[]>();
-
-function getCacheKey(caseId: string | number, query: string, location: string): string {
-  return `${caseId}::${query.trim().toLowerCase()}::${location.trim().toLowerCase()}`;
-}
 
 export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelProps> = ({
   caseData,
@@ -47,28 +42,57 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
   const [savedDoc, setSavedDoc] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>(() => {
-    const accLoc = caseData.location || caseData.extendedIntake?.accident?.accident_location || '';
-    const key = getCacheKey(caseData.id, '', accLoc);
-    return searchCache.get(key) || [];
-  });
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [loadingCache, setLoadingCache] = useState(true);
+  const lastLoadedQuery = useRef('');
 
   const sentRecipients = caseData.preservationRecipients || [];
   const accidentLocation = caseData.location || caseData.extendedIntake?.accident?.accident_location || '';
 
+  useEffect(() => {
+    let cancelled = false;
+    const loadCachedResults = async () => {
+      setLoadingCache(true);
+      const { data } = await supabase
+        .from('poe_search_cache')
+        .select('query, results')
+        .eq('case_id', caseData.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (!cancelled && data && data.length > 0) {
+        const cached = data[0];
+        const results = (cached.results || []) as SearchResult[];
+        if (results.length > 0) {
+          setSearchResults(results);
+          setSearchQuery(cached.query || '');
+          lastLoadedQuery.current = cached.query || '';
+        }
+      }
+      if (!cancelled) setLoadingCache(false);
+    };
+    loadCachedResults();
+    return () => { cancelled = true; };
+  }, [caseData.id]);
+
+  const saveToCacheDb = async (query: string, location: string, results: SearchResult[]) => {
+    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedLocation = location.trim().toLowerCase();
+    await supabase
+      .from('poe_search_cache')
+      .upsert({
+        case_id: caseData.id,
+        query: normalizedQuery,
+        location: normalizedLocation,
+        results,
+      }, { onConflict: 'case_id,query,location' });
+  };
+
   const handleSearch = async () => {
     if (!accidentLocation) {
       setSearchError('No accident location set on this case. Enter the location in the case details first.');
-      return;
-    }
-
-    const cacheKey = getCacheKey(caseData.id, searchQuery.trim(), accidentLocation);
-    const cached = searchCache.get(cacheKey);
-    if (cached && cached.length > 0) {
-      setSearchResults(cached);
-      setSearchError('');
       return;
     }
 
@@ -97,7 +121,7 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
       const results = data.results || [];
       setSearchResults(results);
       if (results.length > 0) {
-        searchCache.set(cacheKey, results);
+        saveToCacheDb(searchQuery, accidentLocation, results);
       } else {
         setSearchError('No businesses found near that location.');
       }
@@ -457,6 +481,13 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
                       {searchResults.length > 0 ? 'Filter' : 'Search'}
                     </button>
                   </div>
+
+                  {loadingCache && searchResults.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="w-6 h-6 border-2 border-stone-200 border-t-stone-500 rounded-full animate-spin mb-3" />
+                      <p className="text-xs text-stone-400">Loading previous results...</p>
+                    </div>
+                  )}
 
                   {searching && searchResults.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
