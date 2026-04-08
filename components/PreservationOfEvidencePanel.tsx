@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { CaseFile, DocumentAttachment, ActivityLog, PreservationRecipient } from '../types';
 import { DocumentGenerator, DocumentFormType, EvidenceRecipient } from './DocumentGenerator';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,13 +44,11 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
-  const hasAutoSearched = useRef(false);
 
   const sentRecipients = caseData.preservationRecipients || [];
   const accidentLocation = caseData.location || caseData.extendedIntake?.accident?.accident_location || '';
 
-  const handleSearch = async (filterOverride?: string) => {
-    const filter = filterOverride !== undefined ? filterOverride : searchQuery.trim();
+  const handleSearch = async () => {
     if (!accidentLocation) {
       setSearchError('No accident location set on this case. Enter the location in the case details first.');
       return;
@@ -71,7 +69,7 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
             'Authorization': `Bearer ${supabaseKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query: filter || '', location: accidentLocation }),
+          body: JSON.stringify({ query: searchQuery.trim(), location: accidentLocation }),
         }
       );
 
@@ -88,13 +86,6 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
       setSearching(false);
     }
   };
-
-  useEffect(() => {
-    if (rightPanel === 'search' && !hasAutoSearched.current && accidentLocation && searchResults.length === 0 && !searching) {
-      hasAutoSearched.current = true;
-      handleSearch('');
-    }
-  }, [rightPanel]);
 
   const selectResult = (result: SearchResult) => {
     setRecipient({
@@ -273,13 +264,7 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
                 New Request
               </button>
               <button
-                onClick={() => {
-                  setRightPanel('search');
-                  if (!hasAutoSearched.current && accidentLocation && searchResults.length === 0 && !searching) {
-                    hasAutoSearched.current = true;
-                    handleSearch('');
-                  }
-                }}
+                onClick={() => setRightPanel('search')}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border-b-2 -mb-px ${
                   rightPanel === 'search'
                     ? 'bg-white text-stone-800 border-blue-600'
