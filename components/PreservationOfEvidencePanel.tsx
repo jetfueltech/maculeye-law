@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CaseFile, DocumentAttachment, ActivityLog, PreservationRecipient } from '../types';
 import { DocumentGenerator, DocumentFormType, EvidenceRecipient } from './DocumentGenerator';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,14 +44,15 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const hasAutoSearched = useRef(false);
 
   const sentRecipients = caseData.preservationRecipients || [];
   const accidentLocation = caseData.location || caseData.extendedIntake?.accident?.accident_location || '';
 
-  const handleSearch = async () => {
-    const query = searchQuery.trim() || 'businesses';
+  const handleSearch = async (filterOverride?: string) => {
+    const filter = filterOverride !== undefined ? filterOverride : searchQuery.trim();
     if (!accidentLocation) {
-      setSearchError('No accident location set on this case. Enter the location in the case details first, or search manually.');
+      setSearchError('No accident location set on this case. Enter the location in the case details first.');
       return;
     }
 
@@ -70,7 +71,7 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
             'Authorization': `Bearer ${supabaseKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query, location: accidentLocation }),
+          body: JSON.stringify({ query: filter || '', location: accidentLocation }),
         }
       );
 
@@ -79,7 +80,7 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
       const data = await response.json();
       setSearchResults(data.results || []);
       if ((data.results || []).length === 0) {
-        setSearchError('No results found near that location. Try a different search term.');
+        setSearchError('No businesses found near that location.');
       }
     } catch {
       setSearchError('Search is currently unavailable. Please enter the recipient information manually.');
@@ -87,6 +88,13 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
       setSearching(false);
     }
   };
+
+  useEffect(() => {
+    if (rightPanel === 'search' && !hasAutoSearched.current && accidentLocation && searchResults.length === 0 && !searching) {
+      hasAutoSearched.current = true;
+      handleSearch('');
+    }
+  }, [rightPanel]);
 
   const selectResult = (result: SearchResult) => {
     setRecipient({
@@ -265,7 +273,13 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
                 New Request
               </button>
               <button
-                onClick={() => setRightPanel('search')}
+                onClick={() => {
+                  setRightPanel('search');
+                  if (!hasAutoSearched.current && accidentLocation && searchResults.length === 0 && !searching) {
+                    hasAutoSearched.current = true;
+                    handleSearch('');
+                  }
+                }}
                 className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold rounded-t-lg transition-all border-b-2 -mb-px ${
                   rightPanel === 'search'
                     ? 'bg-white text-stone-800 border-blue-600'
@@ -401,17 +415,29 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
 
               {rightPanel === 'search' && (
                 <div className="space-y-3">
+                  {accidentLocation && (
+                    <div className="flex items-center gap-2 bg-stone-50 rounded-lg px-3 py-2">
+                      <svg className="w-4 h-4 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <p className="text-xs text-stone-600">
+                        Showing businesses within 1000 ft of <span className="font-semibold text-stone-800">{accidentLocation}</span>
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <input
                       type="text"
                       className="flex-1 border border-stone-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Search near accident location (e.g., gas station, residence, police dept)..."
+                      placeholder="Filter results (e.g., gas station, restaurant)..."
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && handleSearch()}
                     />
                     <button
-                      onClick={handleSearch}
+                      onClick={() => handleSearch()}
                       disabled={searching}
                       className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
@@ -422,14 +448,16 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                       )}
-                      Search
+                      {searchResults.length > 0 ? 'Filter' : 'Search'}
                     </button>
                   </div>
 
-                  {accidentLocation && (
-                    <p className="text-xs text-stone-500">
-                      Searching near: <span className="font-medium text-stone-700">{accidentLocation}</span>
-                    </p>
+                  {searching && searchResults.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <div className="w-8 h-8 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4" />
+                      <p className="text-sm font-medium text-stone-600">Finding nearby businesses...</p>
+                      <p className="text-xs text-stone-400 mt-1">This may take a few seconds</p>
+                    </div>
                   )}
 
                   {searchError && (
