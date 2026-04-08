@@ -178,37 +178,31 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   
   const renderRepAndLien = () => (
     <>
-        {/* Page 1: Letter of Representation */}
         <div className={paperClass}>
             <div className={letterheadClass}>
                 <h1 className={lhTitle}>SAP LAW</h1>
                 <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
-                <p className="text-sm font-sans">Phone: {attorneyPhone} Fax: {attorneyFax}</p>
+                <p className="text-sm font-sans">Phone: {attorneyPhone} &nbsp;&nbsp; Fax: {attorneyFax}</p>
             </div>
 
-            <div className="text-center font-bold mb-6 underline">{today}</div>
+            <div className="mb-6">{today}</div>
 
             <div className="mb-6">
-                <p className="font-bold">Via Facsimile/Email</p>
+                {defClaimsEmail && <p className="font-bold italic">Via E-Mail: <span className="bg-yellow-50 px-1 not-italic">{defClaimsEmail}</span></p>}
+                {!defClaimsEmail && <p className="font-bold">Via Facsimile/Email</p>}
                 <p className="font-bold bg-yellow-50 inline-block px-1">{defInsurer}</p>
-                <p>Claims Department</p>
                 {defInsAddress && <p className="bg-yellow-50 px-1">{defInsAddress}</p>}
-                {defClaimsEmail && <p className="bg-yellow-50 px-1">{defClaimsEmail}</p>}
-                {defClaimsFax && <p className="text-sm">Fax: <span className="bg-yellow-50 px-1">{defClaimsFax}</span></p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-6 font-bold">
                 <div>RE:</div>
-                <div className="grid grid-cols-[100px_1fr] gap-y-1">
+                <div className="grid grid-cols-[120px_1fr] gap-y-1">
                     <span>Our Client:</span>
                     <span className="bg-yellow-100 px-1">{clientName}</span>
-
-                    <span>Your Insured:</span>
+                    <span>Your insured:</span>
                     <span className="bg-yellow-100 px-1">{defName}</span>
-
                     <span>Date of Loss:</span>
                     <span className="bg-yellow-100 px-1">{dol}</span>
-
                     <span>Claim No.:</span>
                     <span className="bg-yellow-100 px-1">{claimNo}</span>
                 </div>
@@ -223,14 +217,18 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
             </p>
 
             <p className="mb-4 text-justify">
-                Please forward your insurance company policy limits upon receipt of this letter. If there is medical payment coverage available, 
+                Please forward your insurance company policy limits upon receipt of this letter. If there is medical payment coverage available,
                 checks should be made out to our client and SAP Law only. <span className="font-bold">No medical payments should be made to medical providers directly.</span>
             </p>
 
             <p className="mb-4 text-justify">
-                Please forward copies of any property damage photos (including color copies if available), estimates, monies paid for vehicular damage 
-                and any recorded statements, written or other, that may exist. Please preserve all accident-related evidence in this case. 
-                <i>See Boyd v. Travelers Ins. Co. 625 N.E.2d 267 (Ill. 1995).</i>
+                Please forward copies of any property damage photos (including color copies if available), estimates, monies paid for vehicular damage
+                and any recorded statements, written or other, that may exist. Please preserve all accident-related evidence in this case.
+                <i> See Boyd v. Travelers Ins. Co. 625 N.E.2d 267 (Ill. 1995); Kambylis v. Ford Motor Co., 171 Ill. Dec. 702 (Ill. App. Ct. 1992); Petrillo v. Syntax Laboratories, Inc. 499 N.E.2d 952 (Ill. App. Ct. 1986).</i>
+            </p>
+
+            <p className="mb-4 text-justify">
+                Please be advised that pursuant to Section 215 ILCS 5/143.24(b), you are required to respond to this communication within thirty (30) days.
             </p>
 
             <p className="mb-6">
@@ -238,70 +236,73 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 We look forward to working with you to resolve this matter.
             </p>
 
-            <div className="mt-12">
+            <div className="mt-10">
                 <p>Sincerely,</p>
-                <div className="h-12 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+                <div className="h-14 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p className="font-bold">{attorneyFirm}</p>
             </div>
         </div>
 
-        {/* Page 2: Lien Notice */}
         <div className={paperClass}>
-            <div className="text-center font-bold uppercase mb-8 mt-4">
-                <h2 className="text-lg underline">Notice of Attorney's Lien</h2>
-                <p className="text-sm">(Under the Law of 1909, as Amended)</p>
+            <div className={letterheadClass}>
+                <h1 className={lhTitle}>SAP LAW</h1>
+                <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
+                <p className="text-sm font-sans">Phone: {attorneyPhone} &nbsp;&nbsp; Fax: {attorneyFax}</p>
             </div>
 
-            <div className="mb-8">
+            <div className="text-center font-bold uppercase mb-8 mt-4">
+                <h2 className="text-lg underline">Notice of Attorney's Lien</h2>
+                <p className="text-sm mt-1">(Under the Law of 1909, as Amended)</p>
+            </div>
+
+            <div className="mb-8 font-serif">
                 <p>STATE OF ILLINOIS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
                 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) SS</p>
                 <p>COOK COUNTY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
             </div>
 
-            <div className="mb-6 font-bold">
-                <p className="underline mb-2">Via Facsimile/Email</p>
-                <p>{defInsurer}</p>
+            <div className="mb-6">
+                {defClaimsEmail && <p className="font-bold italic underline mb-2">Via E-Mail: <span className="not-italic">{defClaimsEmail}</span></p>}
+                {!defClaimsEmail && <p className="font-bold underline mb-2">Via Facsimile/Email</p>}
+                <p className="font-bold">{defInsurer}</p>
                 <p>Claims Department</p>
-                {defInsAddress && <p className="font-normal bg-yellow-50 px-1">{defInsAddress}</p>}
-                {defClaimsEmail && <p className="font-normal bg-yellow-50 px-1">{defClaimsEmail}</p>}
+                {defInsAddress && <p className="bg-yellow-50 px-1">{defInsAddress}</p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-8 font-bold">
                 <div>RE:</div>
-                <div className="grid grid-cols-[100px_1fr] gap-y-1">
+                <div className="grid grid-cols-[120px_1fr] gap-y-1">
                     <span>Our Client:</span>
                     <span className="bg-yellow-100 px-1">{clientName}</span>
-
                     <span>Your Insured:</span>
                     <span className="bg-yellow-100 px-1">{defName}</span>
-
                     <span>Date of Loss:</span>
                     <span className="bg-yellow-100 px-1">{dol}</span>
-
                     <span>Claim No.:</span>
                     <span className="bg-yellow-100 px-1">{claimNo}</span>
                 </div>
             </div>
 
             <p className="mb-6 text-justify leading-loose">
-                Please take notice that SAP Law has been retained by the above mentioned claimant(s) to prosecute or settle his/her claim 
-                for personal injuries and/or property damage sustained in relation the above-captioned accident. Pursuant to the Illinois 
-                Attorney Lien Act, you are hereby placed on notice that <span className="bg-yellow-100 font-bold">{clientName}</span> has 
-                agreed to pay SAP Law for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered from suit or settlement, 
+                Please take notice that SAP Law has been retained by the above mentioned claimant(s) to prosecute or settle his/her claim
+                for personal injuries and/or property damage sustained in relation the above-captioned accident. Pursuant to the Illinois
+                Attorney Lien Act, you are hereby placed on notice that <span className="bg-yellow-100 font-bold">{clientName}</span> has
+                agreed to pay SAP Law for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered from suit or settlement,
                 and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
             </p>
 
-            <div className="mt-16 mb-12">
+            <div className="mt-12 mb-8">
                 <div className="border-t border-black w-64 mb-1"></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p>{attorneyFirm}</p>
+                <p className="text-sm mt-1">Fed Tax ID: 93-2407864</p>
             </div>
 
             <div className="mb-8 italic text-sm">
                 <p>Being first duly sworn, DEPOSES AND SAYS, that (s)he served the above Notice by faxing a copy of the same to the above-named party on <span className="bg-yellow-100 not-italic font-bold">{today}</span>.</p>
             </div>
-             <div className="mt-8">
+            <div className="mt-8">
                 <div className="border-t border-black w-64 mb-1"></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p>{attorneyFirm}</p>
@@ -316,32 +317,27 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
             <div className={letterheadClass}>
                 <h1 className={lhTitle}>SAP LAW</h1>
                 <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
-                <p className="text-sm font-sans">Phone: {attorneyPhone} Fax: {attorneyFax}</p>
+                <p className="text-sm font-sans">Phone: {attorneyPhone} &nbsp;&nbsp; Fax: {attorneyFax}</p>
             </div>
 
-            <div className="text-center font-bold mb-6 underline">{today}</div>
+            <div className="mb-6">{today}</div>
 
             <div className="mb-6">
-                <p className="font-bold">Via Facsimile/Email</p>
+                {clientClaimsEmail && <p className="font-bold italic">Via E-Mail: <span className="bg-yellow-50 px-1 not-italic">{clientClaimsEmail}</span></p>}
+                {!clientClaimsEmail && <p className="font-bold">Via Facsimile/Email</p>}
                 <p className="font-bold bg-yellow-50 inline-block px-1">{clientInsurer}</p>
-                <p>Claims Department</p>
                 {clientInsAddress && <p className="bg-yellow-50 px-1">{clientInsAddress}</p>}
-                {clientClaimsEmail && <p className="bg-yellow-50 px-1">{clientClaimsEmail}</p>}
-                {clientClaimsFax && <p className="text-sm">Fax: <span className="bg-yellow-50 px-1">{clientClaimsFax}</span></p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-6 font-bold">
                 <div>RE:</div>
-                <div className="grid grid-cols-[100px_1fr] gap-y-1">
+                <div className="grid grid-cols-[120px_1fr] gap-y-1">
                     <span>Our Client:</span>
                     <span className="bg-yellow-100 px-1">{clientName}</span>
-
                     <span>Claim No.:</span>
                     <span className="bg-yellow-100 px-1">{clientClaimNo}</span>
-
                     <span>Policy No.:</span>
                     <span className="bg-yellow-100 px-1">{clientPolicyNo}</span>
-
                     <span>Date of Loss:</span>
                     <span className="bg-yellow-100 px-1">{dol}</span>
                 </div>
@@ -363,7 +359,11 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
             <p className="mb-4 text-justify">
                 Please forward copies of any property damage photos (including color copies if available), estimates, monies paid for vehicular damage
                 and any recorded statements, written or other, that may exist. Please preserve all accident-related evidence in this case.
-                <i>See Boyd v. Travelers Ins. Co. 625 N.E.2d 267 (Ill. 1995).</i>
+                <i> See Boyd v. Travelers Ins. Co. 625 N.E.2d 267 (Ill. 1995); Kambylis v. Ford Motor Co., 171 Ill. Dec. 702 (Ill. App. Ct. 1992); Petrillo v. Syntax Laboratories, Inc. 499 N.E.2d 952 (Ill. App. Ct. 1986).</i>
+            </p>
+
+            <p className="mb-4 text-justify">
+                Please be advised that pursuant to Section 215 ILCS 5/143.24(b), you are required to respond to this communication within thirty (30) days.
             </p>
 
             <p className="mb-6">
@@ -371,46 +371,49 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 We look forward to working with you to resolve this matter.
             </p>
 
-            <div className="mt-12">
+            <div className="mt-10">
                 <p>Sincerely,</p>
-                <div className="h-12 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+                <div className="h-14 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p className="font-bold">{attorneyFirm}</p>
             </div>
         </div>
 
         <div className={paperClass}>
-            <div className="text-center font-bold uppercase mb-8 mt-4">
-                <h2 className="text-lg underline">Notice of Attorney's Lien</h2>
-                <p className="text-sm">(Under the Law of 1909, as Amended)</p>
+            <div className={letterheadClass}>
+                <h1 className={lhTitle}>SAP LAW</h1>
+                <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
+                <p className="text-sm font-sans">Phone: {attorneyPhone} &nbsp;&nbsp; Fax: {attorneyFax}</p>
             </div>
 
-            <div className="mb-8">
+            <div className="text-center font-bold uppercase mb-8 mt-4">
+                <h2 className="text-lg underline">Notice of Attorney's Lien</h2>
+                <p className="text-sm mt-1">(Under the Law of 1909, as Amended)</p>
+            </div>
+
+            <div className="mb-8 font-serif">
                 <p>STATE OF ILLINOIS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
                 <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) SS</p>
                 <p>COOK COUNTY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
             </div>
 
-            <div className="mb-6 font-bold">
-                <p className="underline mb-2">Via Facsimile/Email</p>
-                <p>{clientInsurer}</p>
+            <div className="mb-6">
+                {clientClaimsEmail && <p className="font-bold italic underline mb-2">Via E-Mail: <span className="not-italic">{clientClaimsEmail}</span></p>}
+                {!clientClaimsEmail && <p className="font-bold underline mb-2">Via Facsimile/Email</p>}
+                <p className="font-bold">{clientInsurer}</p>
                 <p>Claims Department</p>
-                {clientInsAddress && <p className="font-normal bg-yellow-50 px-1">{clientInsAddress}</p>}
-                {clientClaimsEmail && <p className="font-normal bg-yellow-50 px-1">{clientClaimsEmail}</p>}
+                {clientInsAddress && <p className="bg-yellow-50 px-1">{clientInsAddress}</p>}
             </div>
 
             <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-8 font-bold">
                 <div>RE:</div>
-                <div className="grid grid-cols-[100px_1fr] gap-y-1">
+                <div className="grid grid-cols-[120px_1fr] gap-y-1">
                     <span>Our Client:</span>
                     <span className="bg-yellow-100 px-1">{clientName}</span>
-
                     <span>Claim No.:</span>
                     <span className="bg-yellow-100 px-1">{clientClaimNo}</span>
-
                     <span>Policy No.:</span>
                     <span className="bg-yellow-100 px-1">{clientPolicyNo}</span>
-
                     <span>Date of Loss:</span>
                     <span className="bg-yellow-100 px-1">{dol}</span>
                 </div>
@@ -424,16 +427,17 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                 and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
             </p>
 
-            <div className="mt-16 mb-12">
+            <div className="mt-12 mb-8">
                 <div className="border-t border-black w-64 mb-1"></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p>{attorneyFirm}</p>
+                <p className="text-sm mt-1">Fed Tax ID: 93-2407864</p>
             </div>
 
             <div className="mb-8 italic text-sm">
                 <p>Being first duly sworn, DEPOSES AND SAYS, that (s)he served the above Notice by faxing a copy of the same to the above-named party on <span className="bg-yellow-100 not-italic font-bold">{today}</span>.</p>
             </div>
-             <div className="mt-8">
+            <div className="mt-8">
                 <div className="border-t border-black w-64 mb-1"></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p>{attorneyFirm}</p>
