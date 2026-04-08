@@ -19,6 +19,12 @@ interface SearchResult {
 
 type RightPanel = 'compose' | 'search';
 
+const searchCache = new Map<string, SearchResult[]>();
+
+function getCacheKey(caseId: string | number, query: string, location: string): string {
+  return `${caseId}::${query.trim().toLowerCase()}::${location.trim().toLowerCase()}`;
+}
+
 export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelProps> = ({
   caseData,
   onUpdateCase,
@@ -41,7 +47,11 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
   const [savedDoc, setSavedDoc] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>(() => {
+    const accLoc = caseData.location || caseData.extendedIntake?.accident?.accident_location || '';
+    const key = getCacheKey(caseData.id, '', accLoc);
+    return searchCache.get(key) || [];
+  });
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
 
@@ -51,6 +61,14 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
   const handleSearch = async () => {
     if (!accidentLocation) {
       setSearchError('No accident location set on this case. Enter the location in the case details first.');
+      return;
+    }
+
+    const cacheKey = getCacheKey(caseData.id, searchQuery.trim(), accidentLocation);
+    const cached = searchCache.get(cacheKey);
+    if (cached && cached.length > 0) {
+      setSearchResults(cached);
+      setSearchError('');
       return;
     }
 
@@ -76,8 +94,11 @@ export const PreservationOfEvidencePanel: React.FC<PreservationOfEvidencePanelPr
       if (!response.ok) throw new Error('Search failed');
 
       const data = await response.json();
-      setSearchResults(data.results || []);
-      if ((data.results || []).length === 0) {
+      const results = data.results || [];
+      setSearchResults(results);
+      if (results.length > 0) {
+        searchCache.set(cacheKey, results);
+      } else {
         setSearchError('No businesses found near that location.');
       }
     } catch {
