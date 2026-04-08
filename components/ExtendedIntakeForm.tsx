@@ -351,7 +351,27 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
     } else {
       newIns.push({ type, provider: '', ...fields } as Insurance);
     }
-    onUpdateCase({ ...caseData, insurance: newIns });
+
+    let updatedAdjusters = [...(caseData.adjusters || [])];
+    if (fields.adjusters !== undefined) {
+      const insObj = newIns.find(i => i.type === type);
+      const provider = insObj?.provider || '';
+      updatedAdjusters = updatedAdjusters.filter(a => a.insuranceType !== type || a._fromIntake !== true);
+      const insAdjusters = (fields.adjusters || []).map(ia => ({
+        id: ia.id,
+        name: ia.name,
+        email: ia.email,
+        phone: ia.phone,
+        isPrimary: ia.isPrimary || false,
+        insuranceType: type as 'Client' | 'Defendant',
+        insuranceProvider: provider,
+        addedDate: ia.addedDate || new Date().toISOString(),
+        _fromIntake: true as const,
+      }));
+      updatedAdjusters = [...updatedAdjusters, ...insAdjusters];
+    }
+
+    onUpdateCase({ ...caseData, insurance: newIns, adjusters: updatedAdjusters });
   };
 
   const handleChange = (section: keyof ExtendedIntakeData, field: string, value: any, subField?: string, subSubField?: string) => {

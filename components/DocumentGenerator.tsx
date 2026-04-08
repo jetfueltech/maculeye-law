@@ -86,6 +86,12 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     const erVisit = context?.erVisit;
     const evidenceRecipient = context?.evidenceRecipient;
 
+    const defPrimaryAdj = defInsObj?.adjusters?.find(a => a.isPrimary) || defInsObj?.adjusters?.[0];
+    const clientPrimaryAdj = clientInsObj?.adjusters?.find(a => a.isPrimary) || clientInsObj?.adjusters?.[0];
+
+    const defAdjFallback = defPrimaryAdj || caseData.adjusters?.find(a => a.insuranceType === 'Defendant');
+    const clientAdjFallback = clientPrimaryAdj || caseData.adjusters?.find(a => a.insuranceType === 'Client');
+
     return {
       clientName: caseData.clientName || '[CLIENT NAME]',
       clientDob: caseData.clientDob || intake.client?.date_of_birth || '[DOB]',
@@ -103,15 +109,15 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
       defName: intake.defendant?.name || caseData.parties?.find(p => p.role === 'Defendant')?.name || '[DEFENDANT NAME]',
       defInsurer: intake.defendant?.insurance?.company || defInsObj?.provider || '[INSURANCE CO]',
       defInsAddress: [defInsObj?.address, defInsObj?.city, defInsObj?.state, defInsObj?.zip].filter(Boolean).join(', '),
-      defClaimsEmail: defInsObj?.claimsEmail || '',
+      defClaimsEmail: defInsObj?.claimsEmail || defAdjFallback?.email || '',
       defClaimsFax: defInsObj?.claimsFax || '',
-      defClaimsPhone: defInsObj?.claimsPhone || '',
+      defClaimsPhone: defInsObj?.claimsPhone || defAdjFallback?.phone || '',
       claimNo: intake.defendant?.insurance?.claim_number || defInsObj?.claimNumber || '[CLAIM #]',
       clientInsurer: intake.first_party_insurance?.company || intake.auto_insurance?.driver_or_passenger_insurance_company || clientInsObj?.provider || '[INSURANCE CO]',
       clientInsAddress: [clientInsObj?.address, clientInsObj?.city, clientInsObj?.state, clientInsObj?.zip].filter(Boolean).join(', '),
-      clientClaimsEmail: clientInsObj?.claimsEmail || '',
+      clientClaimsEmail: clientInsObj?.claimsEmail || clientAdjFallback?.email || '',
       clientClaimsFax: clientInsObj?.claimsFax || '',
-      clientClaimsPhone: clientInsObj?.claimsPhone || '',
+      clientClaimsPhone: clientInsObj?.claimsPhone || clientAdjFallback?.phone || '',
       clientClaimNo: intake.first_party_insurance?.claim_number || intake.auto_insurance?.claim_number || clientInsObj?.claimNumber || '[CLAIM #]',
       clientPolicyNo: intake.first_party_insurance?.policy_number || intake.auto_insurance?.policy_number || clientInsObj?.policyNumber || '[POLICY #]',
       providerName: provider?.name || erVisit?.facilityName || '[PROVIDER NAME]',

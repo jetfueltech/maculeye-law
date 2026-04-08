@@ -124,9 +124,30 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   }));
 
   useEffect(() => {
-      const migrated = migrateExtendedInsurance(caseData);
-      if (migrated !== caseData) {
-        onUpdateCase(migrated);
+      let updated = migrateExtendedInsurance(caseData);
+      const insAdjusters: Adjuster[] = [];
+      (updated.insurance || []).forEach(ins => {
+        (ins.adjusters || []).forEach(ia => {
+          if (!(updated.adjusters || []).some(a => a.id === ia.id)) {
+            insAdjusters.push({
+              id: ia.id,
+              name: ia.name,
+              email: ia.email,
+              phone: ia.phone,
+              isPrimary: ia.isPrimary || false,
+              insuranceType: ins.type as 'Client' | 'Defendant',
+              insuranceProvider: ins.provider || '',
+              addedDate: ia.addedDate || new Date().toISOString(),
+              _fromIntake: true,
+            });
+          }
+        });
+      });
+      if (insAdjusters.length > 0) {
+        updated = { ...updated, adjusters: [...(updated.adjusters || []), ...insAdjusters] };
+      }
+      if (updated !== caseData) {
+        onUpdateCase(updated);
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
