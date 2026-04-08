@@ -41,7 +41,7 @@ function getPreviewSrc(doc: DocumentAttachment): string | null {
   return doc.storageUrl || doc.fileData || null;
 }
 
-function useBlobUrl(src: string | null, needsBlob: boolean) {
+function useBlobUrl(src: string | null, needsBlob: boolean, expectedType?: string) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -67,7 +67,10 @@ function useBlobUrl(src: string | null, needsBlob: boolean) {
         return res.blob();
       })
       .then(blob => {
-        const url = URL.createObjectURL(blob);
+        const finalBlob = expectedType && blob.type !== expectedType
+          ? new Blob([blob], { type: expectedType })
+          : blob;
+        const url = URL.createObjectURL(finalBlob);
         revoke = url;
         setBlobUrl(url);
       })
@@ -80,7 +83,7 @@ function useBlobUrl(src: string | null, needsBlob: boolean) {
     return () => {
       if (revoke) URL.revokeObjectURL(revoke);
     };
-  }, [src, needsBlob]);
+  }, [src, needsBlob, expectedType]);
 
   return { blobUrl, loading, error };
 }
@@ -115,7 +118,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const isPdf = doc ? detectIsPdf(doc) : false;
   const isHtml = doc ? detectIsHtml(doc) : false;
   const needsBlob = isPdf || isHtml;
-  const { blobUrl, loading: pdfLoading, error: pdfError } = useBlobUrl(previewSrc, needsBlob);
+  const expectedType = isHtml ? 'text/html' : isPdf ? 'application/pdf' : undefined;
+  const { blobUrl, loading: pdfLoading, error: pdfError } = useBlobUrl(previewSrc, needsBlob, expectedType);
 
   if (!doc) return null;
 
