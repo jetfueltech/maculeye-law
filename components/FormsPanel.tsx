@@ -24,7 +24,7 @@ type ManagerTab = 'templates' | 'naming';
 
 const KNOWN_FORM_KEYS: DocumentFormType[] = [
   'rep_lien', 'rep_lien_1p', 'rep_lien_3p',
-  'foia', 'intake_summary', 'boss_intake_form',
+  'foia', 'intake_summary', 'boss_intake_form', 'sap_intake_form',
   'bill_request', 'records_request', 'hipaa_auth',
   'er_bill_request', 'er_records_request', 'distribution_sheet',
   'preservation_of_evidence', 'medical_bill_request',
@@ -385,6 +385,7 @@ export const FormsPanel: React.FC<FormsPanelProps> = ({ cases, onUpdateCase }) =
           onClose={closePreview}
           caseData={previewCase}
           formType={previewFormType}
+          formTitle={previewTemplate?.name}
           onSaveToDocuments={handleSaveToDocuments}
         />
       )}

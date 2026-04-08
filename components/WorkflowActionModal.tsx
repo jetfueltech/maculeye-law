@@ -281,6 +281,7 @@ export const WorkflowActionModal: React.FC<WorkflowActionModalProps> = ({
       er_records_request: 'medical_record',
       intake_summary: 'other',
       boss_intake_form: 'other',
+      sap_intake_form: 'other',
       medical_bill_request: 'medical_record',
       preservation_of_evidence: 'other',
     };

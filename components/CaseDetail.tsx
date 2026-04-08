@@ -19,6 +19,8 @@ import { PreservationOfEvidencePanel } from './PreservationOfEvidencePanel';
 import { InlineEditField } from './InlineEditField';
 import { uploadDocument } from '../services/documentStorageService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
+import { useFirm } from '../contexts/FirmContext';
+import { FormTemplate, getFormTemplates } from '../services/formTemplateService';
 
 const DOC_TYPE_ICONS: Record<string, { bg: string; text: string; icon: string; label: string }> = {
   retainer: { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', label: 'Retainer' },
@@ -96,7 +98,10 @@ function migrateExtendedInsurance(c: CaseFile): CaseFile {
 
 export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase, defaultTab }) => {
   const { profile } = useAuth();
+  const { activeFirm } = useFirm();
   const [activeTab, setActiveTab] = useState<CaseDetailTab>(defaultTab || 'overview');
+  const [formTemplates, setFormTemplates] = useState<FormTemplate[]>([]);
+  const [selectedFormTitle, setSelectedFormTitle] = useState<string | undefined>(undefined);
   const [analyzing, setAnalyzing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [intakeSection, setIntakeSection] = useState<string | undefined>(undefined);
@@ -125,6 +130,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (activeFirm?.id) {
+      getFormTemplates(activeFirm.id).then(setFormTemplates);
+    }
+  }, [activeFirm?.id]);
 
   useEffect(() => {
       setEditForm({
@@ -1714,16 +1725,19 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
             </div>
             <div className="p-6">
               <p className="text-sm text-stone-600 mb-4">Select the document you wish to generate based on the current case data.</p>
-              <div className="space-y-3 mb-6">
-                {([
-                  { key: 'rep_lien_1p' as DocumentFormType, title: 'Letter of Representation + Lien — 1P (Client Insurance)', desc: 'LOR and lien sent to the client\'s own insurance company.' },
-                  { key: 'rep_lien_3p' as DocumentFormType, title: 'Letter of Representation + Lien — 3P (Defendant Insurance)', desc: 'LOR and lien sent to the defendant\'s insurance company.' },
-                  { key: 'foia' as DocumentFormType, title: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
-                  { key: 'preservation_of_evidence' as DocumentFormType, title: 'Preservation of Evidence', desc: 'Formal demand to preserve surveillance footage near the accident location.' },
-                  { key: 'intake_summary' as DocumentFormType, title: 'Client Intake Summary', desc: 'Detailed form including Accident, Client, Medical, and Insurance info.' },
-                  { key: 'boss_intake_form' as DocumentFormType, title: 'Boss Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },
-                  { key: 'bill_request' as DocumentFormType, title: 'Medical Records & Bills Request', desc: 'Rush request for all medical records and itemized bills with HIPAA authorization attached.' },
-                ]).map(opt => (
+              <div className="space-y-3 mb-6 max-h-[50vh] overflow-y-auto">
+                {(formTemplates.filter(t => t.is_active).length > 0
+                  ? formTemplates.filter(t => t.is_active).map(t => ({ key: t.form_key as DocumentFormType, title: t.name, desc: t.description }))
+                  : [
+                    { key: 'rep_lien_1p' as DocumentFormType, title: 'Letter of Representation + Lien — 1P (Client Insurance)', desc: 'LOR and lien sent to the client\'s own insurance company.' },
+                    { key: 'rep_lien_3p' as DocumentFormType, title: 'Letter of Representation + Lien — 3P (Defendant Insurance)', desc: 'LOR and lien sent to the defendant\'s insurance company.' },
+                    { key: 'foia' as DocumentFormType, title: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
+                    { key: 'preservation_of_evidence' as DocumentFormType, title: 'Preservation of Evidence', desc: 'Formal demand to preserve surveillance footage near the accident location.' },
+                    { key: 'intake_summary' as DocumentFormType, title: 'Client Intake Summary', desc: 'Detailed form including Accident, Client, Medical, and Insurance info.' },
+                    { key: 'sap_intake_form' as DocumentFormType, title: 'SAP Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },
+                    { key: 'bill_request' as DocumentFormType, title: 'Medical Records & Bills Request', desc: 'Rush request for all medical records and itemized bills with HIPAA authorization attached.' },
+                  ]
+                ).map(opt => (
                   <label key={opt.key} className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedForm === opt.key ? 'border-blue-500 bg-blue-50' : 'border-stone-200 hover:bg-stone-50'}`}>
                     <input
                       type="radio"
@@ -1731,6 +1745,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                       checked={selectedForm === opt.key}
                       onChange={() => {
                         setSelectedForm(opt.key);
+                        setSelectedFormTitle(opt.title);
                         if (opt.key !== 'bill_request') {
                           setSelectedProviderId('');
                         }
@@ -1795,9 +1810,10 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
       <DocumentGenerator
         isOpen={showDocGenerator}
-        onClose={() => { setShowDocGenerator(false); setDocContext(undefined); }}
+        onClose={() => { setShowDocGenerator(false); setDocContext(undefined); setSelectedFormTitle(undefined); }}
         caseData={caseData}
         formType={selectedForm}
+        formTitle={selectedFormTitle}
         context={docContext}
         onSaveToDocuments={async (docName: string, docFormType: DocumentFormType, htmlContent: string) => {
           const fileName = `${docName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.html`;

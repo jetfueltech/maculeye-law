@@ -37,6 +37,7 @@ export type DocumentFormType =
   | 'foia'
   | 'intake_summary'
   | 'boss_intake_form'
+  | 'sap_intake_form'
   | 'bill_request'
   | 'records_request'
   | 'hipaa_auth'
@@ -67,11 +68,12 @@ interface DocumentGeneratorProps {
   onClose: () => void;
   caseData: CaseFile;
   formType: DocumentFormType | null;
+  formTitle?: string;
   context?: DocumentContext;
   onSaveToDocuments?: (docName: string, formType: DocumentFormType, htmlContent: string) => void;
 }
 
-export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, caseData, formType, context, onSaveToDocuments }) => {
+export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, caseData, formType, formTitle, context, onSaveToDocuments }) => {
   const [saved, setSaved] = useState(false);
   const [showFieldsPanel, setShowFieldsPanel] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -1563,7 +1565,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     rep_lien_3p: 'Letter of Representation & Lien — 3P (Defendant Insurance)',
     foia: 'FOIA / Crash Report Request',
     intake_summary: 'Intake Summary',
-    boss_intake_form: 'Boss Intake Form',
+    boss_intake_form: 'SAP Intake Form',
+    sap_intake_form: 'SAP Intake Form',
     bill_request: `Medical Records & Bills Request — ${providerName}`,
     records_request: `Records Request — ${providerName}`,
     hipaa_auth: 'HIPAA Authorization',
@@ -1574,7 +1577,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
     medical_bill_request: `Medical Records & Bills Request — ${providerName}`,
   };
 
-  const hasFieldsPanel = formType !== 'intake_summary' && formType !== 'boss_intake_form' && formType !== 'distribution_sheet';
+  const hasFieldsPanel = formType !== 'intake_summary' && formType !== 'boss_intake_form' && formType !== 'sap_intake_form' && formType !== 'distribution_sheet';
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -1584,7 +1587,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                     <div>
                         <h3 className="text-base font-bold flex items-center">
                             <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                            {FORM_TITLES[formType]}
+                            {formTitle || FORM_TITLES[formType]}
                         </h3>
                         <p className="text-xs text-stone-400">{today}</p>
                     </div>
@@ -1645,7 +1648,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
                     {formType === 'rep_lien_1p' && renderRepAndLien1P()}
                     {formType === 'foia' && renderFOIA()}
                     {formType === 'intake_summary' && renderIntakeSummary()}
-                    {formType === 'boss_intake_form' && renderBossIntakeForm()}
+                    {(formType === 'boss_intake_form' || formType === 'sap_intake_form') && renderBossIntakeForm()}
                     {formType === 'bill_request' && renderBillRequest()}
                     {formType === 'records_request' && renderRecordsRequest()}
                     {formType === 'hipaa_auth' && renderHIPAAAuth()}

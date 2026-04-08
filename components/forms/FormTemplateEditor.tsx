@@ -50,10 +50,10 @@ export const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({
     .replace(/\s+/g, '_')
     .slice(0, 40);
 
-  const effectiveKey = isEditing ? formKey : (formKey || autoKey);
+  const effectiveKey = formKey || autoKey;
   const effectiveCategory = category === '__custom__' ? customCategory : category;
 
-  const keyConflict = !isEditing && existingKeys.includes(effectiveKey);
+  const keyConflict = existingKeys.filter(k => !(isEditing && k === template?.form_key)).includes(effectiveKey);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,15 +130,14 @@ export const FormTemplateEditor: React.FC<FormTemplateEditorProps> = ({
             </label>
             <input
               type="text"
-              value={isEditing ? formKey : effectiveKey}
+              value={effectiveKey}
               onChange={e => setFormKey(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
               placeholder="e.g., idot_um"
               className={`w-full px-4 py-2.5 rounded-xl border text-sm font-mono focus:outline-none focus:ring-1 ${
                 keyConflict
                   ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
                   : 'border-stone-200 focus:border-stone-400 focus:ring-stone-200'
-              } ${isEditing ? 'bg-stone-50 text-stone-500' : ''}`}
-              readOnly={isEditing}
+              }`}
             />
             {keyConflict && (
               <p className="text-xs text-red-500 mt-1">This key already exists. Choose a different one.</p>
