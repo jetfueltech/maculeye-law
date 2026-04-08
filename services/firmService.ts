@@ -158,3 +158,51 @@ export async function updateMemberAccount(params: UpdateMemberParams): Promise<{
   const { error } = await callEdgeFunction('update-member-account', params as unknown as Record<string, unknown>);
   return { error };
 }
+
+export async function uploadFirmSignature(firmId: string, file: File): Promise<{ url: string | null; error: string | null }> {
+  const ext = file.name.split('.').pop() || 'png';
+  const path = `${firmId}/signature.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('firm-assets')
+    .upload(path, file, { upsert: true });
+
+  if (uploadError) return { url: null, error: uploadError.message };
+
+  const { data: urlData } = supabase.storage
+    .from('firm-assets')
+    .getPublicUrl(path);
+
+  const publicUrl = urlData.publicUrl;
+
+  const { error: updateError } = await supabase
+    .from('firms')
+    .update({ signature_url: publicUrl })
+    .eq('id', firmId);
+
+  if (updateError) return { url: null, error: updateError.message };
+
+  return { url: publicUrl, error: null };
+}
+
+export async function removeFirmSignature(firmId: string): Promise<{ error: string | null }> {
+  const { data: firm } = await supabase
+    .from('firms')
+    .select('signature_url')
+    .eq('id', firmId)
+    .maybeSingle();
+
+  if (firm?.signature_url) {
+    const urlPath = firm.signature_url.split('/firm-assets/').pop();
+    if (urlPath) {
+      await supabase.storage.from('firm-assets').remove([urlPath]);
+    }
+  }
+
+  const { error } = await supabase
+    .from('firms')
+    .update({ signature_url: null })
+    .eq('id', firmId);
+
+  return { error: error?.message || null };
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CaseFile, ExtendedIntakeData, MedicalProvider, ERVisit } from '../types';
 import { DistributionSheetRenderer } from './DistributionSheetRenderer';
 import { DocumentFieldsPanel, DocumentFields } from './DocumentFieldsPanel';
+import { useFirm } from '../contexts/FirmContext';
 
 const EmbeddedPdfViewer: React.FC<{ src: string; title: string; height?: string }> = ({ src, title, height = '900px' }) => {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -74,6 +75,7 @@ interface DocumentGeneratorProps {
 }
 
 export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, onClose, caseData, formType, formTitle, context, onSaveToDocuments }) => {
+  const { activeFirm } = useFirm();
   const [saved, setSaved] = useState(false);
   const [showFieldsPanel, setShowFieldsPanel] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -169,6 +171,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
   const attorneyPhone = "(312) 224-4200";
   const attorneyFax = "(713) 583-5119";
   const attorneyEmail = "steve@saplaw.com";
+  const firmSignatureUrl = activeFirm?.signature_url || null;
 
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -238,7 +241,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
             <div className="mt-10">
                 <p>Sincerely,</p>
-                <div className="h-14 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+                <div className="h-14 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: `url("${firmSignatureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'}")`, backgroundPosition: 'left' }}></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p className="font-bold">{attorneyFirm}</p>
             </div>
@@ -373,7 +376,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
             <div className="mt-10">
                 <p>Sincerely,</p>
-                <div className="h-14 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+                <div className="h-14 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: `url("${firmSignatureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'}")`, backgroundPosition: 'left' }}></div>
                 <p className="font-bold">{attorneyName}</p>
                 <p className="font-bold">{attorneyFirm}</p>
             </div>
@@ -495,7 +498,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
             <div className="mt-8">
                 <p>Sincerely,</p>
-                <div className="h-16 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+                <div className="h-16 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: `url("${firmSignatureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'}")`, backgroundPosition: 'left' }}></div>
                 <p className="font-bold">Rosa M. Hernandez, Esq.</p>
                 <p className="font-bold">{attorneyFirm}</p>
                 <a href="#" className="text-blue-600 underline">rosa@SAPLaw.com</a>
@@ -927,7 +930,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
           <div className="mt-12 text-center">
             <p>Very truly yours,</p>
-            <div className="h-16 w-48 mx-auto my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'center' }}></div>
+            <div className="h-16 w-48 mx-auto my-2 bg-contain bg-no-repeat" style={{ backgroundImage: `url("${firmSignatureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'}")`, backgroundPosition: 'center' }}></div>
             <p className="mt-4">.............................................</p>
             <p className="font-bold">Alexandria Delaola-Rodriguez</p>
             <p>Paralegal</p>
@@ -1141,7 +1144,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
       <div className="mt-12">
         <p>Sincerely,</p>
-        <div className="h-12 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+        <div className="h-12 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: `url("${firmSignatureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'}")`, backgroundPosition: 'left' }}></div>
         <p className="font-bold">{attorneyName}</p>
         <p className="font-bold">{attorneyFirm}</p>
       </div>
@@ -1322,7 +1325,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
           <div className="mt-8">
             <p>Sincerely,</p>
-            <div className="h-16 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'left' }}></div>
+            <div className="h-16 w-48 my-2 bg-contain bg-no-repeat" style={{ backgroundImage: `url("${firmSignatureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'}")`, backgroundPosition: 'left' }}></div>
             <p className="font-bold">Rosa M. Hernandez, Esq.</p>
             <p className="font-bold">{attorneyFirm}</p>
             <a href="#" className="text-blue-600 underline">rosa@SAPLaw.com</a>
@@ -1410,7 +1413,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
 
           <div className="mt-12 text-center">
             <p>Very truly yours,</p>
-            <div className="h-16 w-48 mx-auto my-2 bg-contain bg-no-repeat" style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png")', backgroundPosition: 'center' }}></div>
+            <div className="h-16 w-48 mx-auto my-2 bg-contain bg-no-repeat" style={{ backgroundImage: `url("${firmSignatureUrl || 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Signature_sample.svg/1200px-Signature_sample.svg.png'}")`, backgroundPosition: 'center' }}></div>
             <p className="mt-4">.............................................</p>
             <p className="font-bold">Alexandria Delaola-Rodriguez</p>
             <p>Paralegal</p>

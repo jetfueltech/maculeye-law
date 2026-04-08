@@ -13,6 +13,8 @@ import {
   updateUserSystemRole,
   createMemberAccount,
   updateMemberAccount,
+  uploadFirmSignature,
+  removeFirmSignature,
   FirmMemberWithProfile,
   FirmDetails,
 } from '../../services/firmService';
@@ -234,6 +236,9 @@ export const FirmManagement: React.FC = () => {
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState('');
 
+  const [uploadingSignature, setUploadingSignature] = useState(false);
+  const [signatureError, setSignatureError] = useState('');
+
   const loadData = useCallback(async () => {
     const [firms, users] = await Promise.all([getAllFirms(), getAllUsers()]);
     setAllFirms(firms);
@@ -351,6 +356,29 @@ export const FirmManagement: React.FC = () => {
       setEditingUserId(null);
       await loadData();
     }
+  };
+
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedFirmId) return;
+    setUploadingSignature(true);
+    setSignatureError('');
+    const { error } = await uploadFirmSignature(selectedFirmId, file);
+    setUploadingSignature(false);
+    if (error) { setSignatureError(error); return; }
+    await loadData();
+    await refreshFirms();
+  };
+
+  const handleRemoveSignature = async () => {
+    if (!selectedFirmId) return;
+    setUploadingSignature(true);
+    setSignatureError('');
+    const { error } = await removeFirmSignature(selectedFirmId);
+    setUploadingSignature(false);
+    if (error) { setSignatureError(error); return; }
+    await loadData();
+    await refreshFirms();
   };
 
   const selectedFirm = allFirms.find(f => f.id === selectedFirmId);
@@ -510,6 +538,43 @@ export const FirmManagement: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              <div className="bg-white border border-stone-200 rounded-xl p-4 space-y-3">
+                <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Attorney Signature</h4>
+                <p className="text-xs text-stone-500">Upload the attorney's signature image used in generated documents (LOR, lien notices, etc.).</p>
+                {selectedFirm.signature_url ? (
+                  <div className="flex items-center gap-4">
+                    <div className="border border-stone-200 rounded-lg p-2 bg-stone-50">
+                      <img
+                        src={selectedFirm.signature_url}
+                        alt="Attorney signature"
+                        className="h-16 max-w-[200px] object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="cursor-pointer px-3 py-1.5 text-xs font-medium bg-stone-100 text-stone-700 rounded-lg hover:bg-stone-200 transition-colors inline-flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        Replace
+                        <input type="file" accept="image/*" className="hidden" onChange={handleSignatureUpload} disabled={uploadingSignature} />
+                      </label>
+                      <button
+                        onClick={handleRemoveSignature}
+                        disabled={uploadingSignature}
+                        className="px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className={`cursor-pointer flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-stone-300 rounded-xl text-sm text-stone-500 hover:border-blue-400 hover:text-blue-600 transition-colors ${uploadingSignature ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    {uploadingSignature ? 'Uploading...' : 'Upload Signature Image'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleSignatureUpload} disabled={uploadingSignature} />
+                  </label>
+                )}
+                {signatureError && <p className="text-xs text-red-600">{signatureError}</p>}
+              </div>
 
               <div className="flex items-center justify-between">
                 <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider">

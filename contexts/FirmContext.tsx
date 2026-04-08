@@ -19,6 +19,7 @@ export interface Firm {
   description: string;
   case_prefix: string | null;
   next_case_number: number;
+  signature_url: string | null;
 }
 
 export interface FirmMember {
