@@ -248,67 +248,114 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
         </div>
 
         <div className={paperClass}>
-            <div className={letterheadClass}>
-                <h1 className={lhTitle}>SAP LAW</h1>
-                <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
-                <p className="text-sm font-sans">Phone: {attorneyPhone} &nbsp;&nbsp; Fax: {attorneyFax}</p>
+            <div className="text-center font-bold uppercase mb-6">
+                <h2 className="text-base">NOTICE OF ATTORNEY'S LIEN</h2>
+                <p className="text-sm mt-0.5">(UNDER THE LAW OF 1909, AS AMENDED)</p>
             </div>
 
-            <div className="text-center font-bold uppercase mb-8 mt-4">
-                <h2 className="text-lg underline">Notice of Attorney's Lien</h2>
-                <p className="text-sm mt-1">(Under the Law of 1909, as Amended)</p>
+            <table className="mb-8 text-[11pt]" style={{ borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td className="pr-6 font-serif" style={{ width: '220px' }}>STATE OF ILLINOIS</td>
+                  <td className="font-serif">)</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="font-serif font-bold">) SS</td>
+                </tr>
+                <tr>
+                  <td className="pr-6 font-serif">COOK COUNTY</td>
+                  <td className="font-serif">)</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="mb-6 mt-8">
+                {defClaimsEmail && <p className="italic underline mb-2">Via E-Mail: {defClaimsEmail}</p>}
+                {!defClaimsEmail && <p className="underline mb-2">Via Facsimile/Email</p>}
+                <p>{defInsurer}</p>
+                {defInsAddress && defInsAddress.split(',').map((line: string, i: number) => (
+                  <p key={i}>{line.trim()}</p>
+                ))}
             </div>
 
-            <div className="mb-8 font-serif">
-                <p>STATE OF ILLINOIS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
-                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) SS</p>
-                <p>COOK COUNTY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
-            </div>
+            <table className="mb-8 text-[11pt]" style={{ borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td className="pr-4 align-top" style={{ width: '60px' }}>RE:</td>
+                  <td className="pr-4" style={{ width: '130px' }}>Our Client:</td>
+                  <td className="bg-yellow-100 px-1">{clientName}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="pr-4">Your Insured:</td>
+                  <td className="bg-yellow-100 px-1">{defName}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="pr-4">Date of Loss:</td>
+                  <td className="bg-yellow-100 px-1">{dol}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="pr-4">Claim No.:</td>
+                  <td className="bg-yellow-100 px-1">{claimNo}</td>
+                </tr>
+              </tbody>
+            </table>
 
-            <div className="mb-6">
-                {defClaimsEmail && <p className="font-bold italic underline mb-2">Via E-Mail: <span className="not-italic">{defClaimsEmail}</span></p>}
-                {!defClaimsEmail && <p className="font-bold underline mb-2">Via Facsimile/Email</p>}
-                <p className="font-bold">{defInsurer}</p>
-                <p>Claims Department</p>
-                {defInsAddress && <p className="bg-yellow-50 px-1">{defInsAddress}</p>}
-            </div>
-
-            <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-8 font-bold">
-                <div>RE:</div>
-                <div className="grid grid-cols-[120px_1fr] gap-y-1">
-                    <span>Our Client:</span>
-                    <span className="bg-yellow-100 px-1">{clientName}</span>
-                    <span>Your Insured:</span>
-                    <span className="bg-yellow-100 px-1">{defName}</span>
-                    <span>Date of Loss:</span>
-                    <span className="bg-yellow-100 px-1">{dol}</span>
-                    <span>Claim No.:</span>
-                    <span className="bg-yellow-100 px-1">{claimNo}</span>
-                </div>
-            </div>
-
-            <p className="mb-6 text-justify leading-loose">
-                Please take notice that SAP Law has been retained by the above mentioned claimant(s) to prosecute or settle his/her claim
-                for personal injuries and/or property damage sustained in relation the above-captioned accident. Pursuant to the Illinois
-                Attorney Lien Act, you are hereby placed on notice that <span className="bg-yellow-100 font-bold">{clientName}</span> has
-                agreed to pay SAP Law for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered from suit or settlement,
-                and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
+            <p className="mb-8 text-justify leading-relaxed">
+                Please take notice that {attorneyFirm} has been retained by the above mentioned claimant(s) to prosecute or settle his/her
+                claim for personal injuries and/or property damage sustained in relation the above-captioned accident.{' '}
+                Pursuant to the Illinois Attorney Lien Act, you are hereby placed on notice that{' '}
+                <span className="bg-yellow-100 underline">{clientName}</span> has
+                agreed to pay {attorneyFirm} for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered
+                from suit or settlement, and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
             </p>
 
-            <div className="mt-12 mb-8">
+            <div className="mt-8 flex flex-col items-center">
+                {firmSignatureUrl && (
+                  <img src={firmSignatureUrl} alt="Attorney signature" className="h-16 object-contain mb-1" />
+                )}
                 <div className="border-t border-black w-64 mb-1"></div>
-                <p className="font-bold">{attorneyName}</p>
+                <p>{attorneyName}</p>
                 <p>{attorneyFirm}</p>
-                <p className="text-sm mt-1">Fed Tax ID: 93-2407864</p>
+                <p className="text-sm">Fed Tax ID: 93-2407864</p>
             </div>
 
-            <div className="mb-8 italic text-sm">
-                <p>Being first duly sworn, DEPOSES AND SAYS, that (s)he served the above Notice by faxing a copy of the same to the above-named party on <span className="bg-yellow-100 not-italic font-bold">{today}</span>.</p>
+            <div className="mt-16 mb-6">
+              <table className="text-[11pt]" style={{ borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr>
+                    <td className="pr-6 font-serif" style={{ width: '220px' }}>STATE OF ILLINOIS</td>
+                    <td className="font-serif">)</td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td className="font-serif font-bold">) SS</td>
+                  </tr>
+                  <tr>
+                    <td className="pr-6 font-serif">COOK COUNTY</td>
+                    <td className="font-serif">)</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div className="mt-8">
+
+            <p className="mb-8 text-justify leading-relaxed">
+                Being first duly sworn, DEPOSES AND SAYS, that (s)he served the above Notice by{' '}
+                <span className="underline">E-mailing</span> a copy of the same to the above-named party on{' '}
+                <span className="bg-yellow-100">{today}</span>.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center">
+                {firmSignatureUrl && (
+                  <img src={firmSignatureUrl} alt="Attorney signature" className="h-16 object-contain mb-1" />
+                )}
                 <div className="border-t border-black w-64 mb-1"></div>
-                <p className="font-bold">{attorneyName}</p>
+                <p>{attorneyName}</p>
                 <p>{attorneyFirm}</p>
+                <p className="text-sm">{attorneyAddress}, {attorneyCity}</p>
             </div>
         </div>
     </>
@@ -383,67 +430,114 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({ isOpen, on
         </div>
 
         <div className={paperClass}>
-            <div className={letterheadClass}>
-                <h1 className={lhTitle}>SAP LAW</h1>
-                <p className="text-sm font-sans font-bold">{attorneyAddress}, {attorneyCity}</p>
-                <p className="text-sm font-sans">Phone: {attorneyPhone} &nbsp;&nbsp; Fax: {attorneyFax}</p>
+            <div className="text-center font-bold uppercase mb-6">
+                <h2 className="text-base">NOTICE OF ATTORNEY'S LIEN</h2>
+                <p className="text-sm mt-0.5">(UNDER THE LAW OF 1909, AS AMENDED)</p>
             </div>
 
-            <div className="text-center font-bold uppercase mb-8 mt-4">
-                <h2 className="text-lg underline">Notice of Attorney's Lien</h2>
-                <p className="text-sm mt-1">(Under the Law of 1909, as Amended)</p>
+            <table className="mb-8 text-[11pt]" style={{ borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td className="pr-6 font-serif" style={{ width: '220px' }}>STATE OF ILLINOIS</td>
+                  <td className="font-serif">)</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="font-serif font-bold">) SS</td>
+                </tr>
+                <tr>
+                  <td className="pr-6 font-serif">COOK COUNTY</td>
+                  <td className="font-serif">)</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="mb-6 mt-8">
+                {clientClaimsEmail && <p className="italic underline mb-2">Via E-Mail: {clientClaimsEmail}</p>}
+                {!clientClaimsEmail && <p className="underline mb-2">Via Facsimile/Email</p>}
+                <p>{clientInsurer}</p>
+                {clientInsAddress && clientInsAddress.split(',').map((line: string, i: number) => (
+                  <p key={i}>{line.trim()}</p>
+                ))}
             </div>
 
-            <div className="mb-8 font-serif">
-                <p>STATE OF ILLINOIS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
-                <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) SS</p>
-                <p>COOK COUNTY &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</p>
-            </div>
+            <table className="mb-8 text-[11pt]" style={{ borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr>
+                  <td className="pr-4 align-top" style={{ width: '60px' }}>RE:</td>
+                  <td className="pr-4" style={{ width: '130px' }}>Our Client:</td>
+                  <td className="bg-yellow-100 px-1">{clientName}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="pr-4">Claim No.:</td>
+                  <td className="bg-yellow-100 px-1">{clientClaimNo}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="pr-4">Policy No.:</td>
+                  <td className="bg-yellow-100 px-1">{clientPolicyNo}</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td className="pr-4">Date of Loss:</td>
+                  <td className="bg-yellow-100 px-1">{dol}</td>
+                </tr>
+              </tbody>
+            </table>
 
-            <div className="mb-6">
-                {clientClaimsEmail && <p className="font-bold italic underline mb-2">Via E-Mail: <span className="not-italic">{clientClaimsEmail}</span></p>}
-                {!clientClaimsEmail && <p className="font-bold underline mb-2">Via Facsimile/Email</p>}
-                <p className="font-bold">{clientInsurer}</p>
-                <p>Claims Department</p>
-                {clientInsAddress && <p className="bg-yellow-50 px-1">{clientInsAddress}</p>}
-            </div>
-
-            <div className="grid grid-cols-[80px_1fr] gap-y-1 mb-8 font-bold">
-                <div>RE:</div>
-                <div className="grid grid-cols-[120px_1fr] gap-y-1">
-                    <span>Our Client:</span>
-                    <span className="bg-yellow-100 px-1">{clientName}</span>
-                    <span>Claim No.:</span>
-                    <span className="bg-yellow-100 px-1">{clientClaimNo}</span>
-                    <span>Policy No.:</span>
-                    <span className="bg-yellow-100 px-1">{clientPolicyNo}</span>
-                    <span>Date of Loss:</span>
-                    <span className="bg-yellow-100 px-1">{dol}</span>
-                </div>
-            </div>
-
-            <p className="mb-6 text-justify leading-loose">
-                Please take notice that SAP Law has been retained by the above mentioned claimant(s) to prosecute or settle his/her claim
-                for personal injuries and/or property damage sustained in relation the above-captioned accident. Pursuant to the Illinois
-                Attorney Lien Act, you are hereby placed on notice that <span className="bg-yellow-100 font-bold">{clientName}</span> has
-                agreed to pay SAP Law for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered from suit or settlement,
-                and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
+            <p className="mb-8 text-justify leading-relaxed">
+                Please take notice that {attorneyFirm} has been retained by the above mentioned claimant(s) to prosecute or settle his/her
+                claim for personal injuries and/or property damage sustained in relation the above-captioned accident.{' '}
+                Pursuant to the Illinois Attorney Lien Act, you are hereby placed on notice that{' '}
+                <span className="bg-yellow-100 underline">{clientName}</span> has
+                agreed to pay {attorneyFirm} for services as a fee, a sum no less than one-third (33%) of whatever amount may be recovered
+                from suit or settlement, and that we claim a <span className="font-bold underline">lien</span> upon said claim, demand or cause of action.
             </p>
 
-            <div className="mt-12 mb-8">
+            <div className="mt-8 flex flex-col items-center">
+                {firmSignatureUrl && (
+                  <img src={firmSignatureUrl} alt="Attorney signature" className="h-16 object-contain mb-1" />
+                )}
                 <div className="border-t border-black w-64 mb-1"></div>
-                <p className="font-bold">{attorneyName}</p>
+                <p>{attorneyName}</p>
                 <p>{attorneyFirm}</p>
-                <p className="text-sm mt-1">Fed Tax ID: 93-2407864</p>
+                <p className="text-sm">Fed Tax ID: 93-2407864</p>
             </div>
 
-            <div className="mb-8 italic text-sm">
-                <p>Being first duly sworn, DEPOSES AND SAYS, that (s)he served the above Notice by faxing a copy of the same to the above-named party on <span className="bg-yellow-100 not-italic font-bold">{today}</span>.</p>
+            <div className="mt-16 mb-6">
+              <table className="text-[11pt]" style={{ borderCollapse: 'collapse' }}>
+                <tbody>
+                  <tr>
+                    <td className="pr-6 font-serif" style={{ width: '220px' }}>STATE OF ILLINOIS</td>
+                    <td className="font-serif">)</td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td className="font-serif font-bold">) SS</td>
+                  </tr>
+                  <tr>
+                    <td className="pr-6 font-serif">COOK COUNTY</td>
+                    <td className="font-serif">)</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div className="mt-8">
+
+            <p className="mb-8 text-justify leading-relaxed">
+                Being first duly sworn, DEPOSES AND SAYS, that (s)he served the above Notice by{' '}
+                <span className="underline">E-mailing</span> a copy of the same to the above-named party on{' '}
+                <span className="bg-yellow-100">{today}</span>.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center">
+                {firmSignatureUrl && (
+                  <img src={firmSignatureUrl} alt="Attorney signature" className="h-16 object-contain mb-1" />
+                )}
                 <div className="border-t border-black w-64 mb-1"></div>
-                <p className="font-bold">{attorneyName}</p>
+                <p>{attorneyName}</p>
                 <p>{attorneyFirm}</p>
+                <p className="text-sm">{attorneyAddress}, {attorneyCity}</p>
             </div>
         </div>
     </>
