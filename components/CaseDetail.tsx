@@ -109,6 +109,10 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const [isEditing, setIsEditing] = useState(false);
   const [intakeSection, setIntakeSection] = useState<string | undefined>(undefined);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [caseData.id]);
+
   const navigateToIntake = (section: string) => {
     setIntakeSection(section);
     setActiveTab('extended');
