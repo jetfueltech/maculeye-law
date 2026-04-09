@@ -21,6 +21,7 @@ import { uploadDocument } from '../services/documentStorageService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 import { useFirm } from '../contexts/FirmContext';
 import { FormTemplate, getFormTemplates } from '../services/formTemplateService';
+import { CallHistoryPanel } from './CallHistoryPanel';
 
 const DOC_TYPE_ICONS: Record<string, { bg: string; text: string; icon: string; label: string }> = {
   retainer: { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', label: 'Retainer' },
@@ -45,13 +46,15 @@ function inferDocTypeFromName(filename: string): DocumentAttachment['type'] {
   return 'other';
 }
 
-type CaseDetailTab = 'overview' | 'extended' | 'medical' | 'documents' | 'evidence' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials';
+type CaseDetailTab = 'overview' | 'extended' | 'medical' | 'documents' | 'evidence' | 'ai_analysis' | 'activity_log' | 'coverage' | 'tasks' | 'financials' | 'communications';
 
 interface CaseDetailProps {
   caseData: CaseFile;
   onBack: () => void;
   onUpdateCase: (updatedCase: CaseFile) => void;
   defaultTab?: CaseDetailTab;
+  onStartCall?: (contactName: string, contactPhone: string) => void;
+  isCallActive?: boolean;
 }
 
 function migrateExtendedInsurance(c: CaseFile): CaseFile {
@@ -96,7 +99,7 @@ function migrateExtendedInsurance(c: CaseFile): CaseFile {
   return { ...c, insurance: ins };
 }
 
-export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase, defaultTab }) => {
+export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpdateCase, defaultTab, onStartCall, isCallActive }) => {
   const { profile } = useAuth();
   const { activeFirm } = useFirm();
   const [activeTab, setActiveTab] = useState<CaseDetailTab>(defaultTab || 'overview');
@@ -289,29 +292,12 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const [replyText, setReplyText] = useState('');
   const [replyMode, setReplyMode] = useState<'reply' | 'replyAll' | 'forward' | null>(null);
   
-  // RingCentral State
-  const [phoneModalOpen, setPhoneModalOpen] = useState(false);
-  const [phoneAction, setPhoneAction] = useState<'call' | 'sms' | null>(null);
-  const [callTimer, setCallTimer] = useState(0);
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [callNote, setCallNote] = useState('');
+  // SMS State
+  const [smsModalOpen, setSmsModalOpen] = useState(false);
   const [smsMessage, setSmsMessage] = useState('');
   const [smsSending, setSmsSending] = useState(false);
 
 
-
-  // Call Timer Effect
-  useEffect(() => {
-    let interval: any;
-    if (isCallActive) {
-        interval = setInterval(() => {
-            setCallTimer(prev => prev + 1);
-        }, 1000);
-    } else {
-        clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [isCallActive]);
 
   // Scroll Chat to Bottom
   useEffect(() => {
@@ -324,12 +310,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, [chatMenuId]);
-
-  const formatTime = (seconds: number) => {
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   const currentUserName = profile?.full_name || profile?.email || 'Unknown User';
 
@@ -474,43 +454,10 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       setReplyText('');
   };
 
-  const handlePhoneClick = () => {
-      setPhoneModalOpen(true);
-      setPhoneAction('call'); // Default to Call
-      setCallTimer(0);
-      setIsCallActive(false);
-      setCallNote('');
-      setSmsMessage('');
-  };
-
-  const handleStartCall = () => {
-      setIsCallActive(true);
-  };
-
-  const handleEndCall = () => {
-      setIsCallActive(false);
-  };
-
-  const handleSaveCall = () => {
-      const newLog: CommunicationLog = {
-          id: Math.random().toString(36).substr(2, 9),
-          type: 'call',
-          direction: 'outbound',
-          contactName: caseData.clientName,
-          contactPhone: caseData.clientPhone,
-          timestamp: new Date().toISOString(),
-          duration: formatTime(callTimer),
-          status: 'completed',
-          content: callNote || 'No notes provided.',
-          // Optional: Simulate transcript generation
-      };
-      let updatedCase = {
-          ...caseData,
-          communications: [newLog, ...(caseData.communications || [])]
-      };
-      updatedCase = addActivity(updatedCase, `Outbound call to ${caseData.clientName}`, 'user');
-      onUpdateCase(updatedCase);
-      setPhoneModalOpen(false);
+  const handlePhoneClick = (contactName?: string, contactPhone?: string) => {
+    if (onStartCall && !isCallActive) {
+      onStartCall(contactName || caseData.clientName, contactPhone || caseData.clientPhone);
+    }
   };
 
   const handleSendSMS = () => {
@@ -534,7 +481,8 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           updatedCase = addActivity(updatedCase, `SMS sent to ${caseData.clientName}`, 'user');
           onUpdateCase(updatedCase);
           setSmsSending(false);
-          setPhoneModalOpen(false);
+          setSmsModalOpen(false);
+          setSmsMessage('');
       }, 1000);
   };
 
@@ -811,6 +759,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                  Financials
                  {activeTab === 'financials' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
              </button>
+             <button onClick={() => setActiveTab('communications')} className={`pb-4 text-sm font-medium transition-colors relative flex items-center gap-1.5 whitespace-nowrap ${activeTab === 'communications' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
+                 Communications
+                 {(caseData.communications?.length || 0) > 0 && (
+                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${activeTab === 'communications' ? 'bg-blue-100 text-blue-600' : 'bg-stone-100 text-stone-500'}`}>{caseData.communications?.length}</span>
+                 )}
+                 {activeTab === 'communications' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
+             </button>
              <button onClick={() => setActiveTab('activity_log')} className={`pb-4 text-sm font-medium transition-colors relative whitespace-nowrap ${activeTab === 'activity_log' ? 'text-blue-600' : 'text-stone-500 hover:text-stone-700'}`}>
                  Activity Log
                  {activeTab === 'activity_log' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
@@ -894,6 +849,13 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   </div>
               )}
           </div>
+      ) : activeTab === 'communications' ? (
+          <div className="animate-fade-in bg-white rounded-2xl border border-stone-200 min-h-[400px]">
+            <CallHistoryPanel
+              communications={caseData.communications || []}
+              onCall={(name, phone) => handlePhoneClick(name, phone)}
+            />
+          </div>
       ) : activeTab === 'activity_log' ? (
           <div className="animate-fade-in p-8 bg-white rounded-2xl border border-stone-200 min-h-[400px]">
               <h3 className="font-bold text-lg text-stone-800 mb-6 flex items-center">
@@ -951,10 +913,23 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                         onSave={v => handleInlineFieldSave('clientPhone', v)}
                                         displayValue={
                                           caseData.clientPhone ? (
-                                            <button onClick={handlePhoneClick} className="text-base font-medium text-stone-700 hover:text-black flex items-center hover:underline">
-                                              {caseData.clientPhone}
-                                              <svg className="w-4 h-4 ml-2 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                              <button
+                                                onClick={() => handlePhoneClick()}
+                                                disabled={isCallActive}
+                                                className={`text-base font-medium flex items-center gap-1.5 transition-colors ${isCallActive ? 'text-stone-400 cursor-not-allowed' : 'text-stone-700 hover:text-blue-600 hover:underline'}`}
+                                              >
+                                                <svg className="w-4 h-4 opacity-60" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                                                {caseData.clientPhone}
+                                              </button>
+                                              <button
+                                                onClick={() => { setSmsModalOpen(true); setSmsMessage(''); }}
+                                                className="text-stone-400 hover:text-teal-600 transition-colors"
+                                                title="Send SMS"
+                                              >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                                              </button>
+                                            </div>
                                           ) : undefined
                                         }
                                       />
@@ -1281,7 +1256,10 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                   <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
                       <div className="px-8 py-6 border-b border-stone-100 flex justify-between items-center">
                           <h3 className="text-lg font-bold text-stone-800">Communication History</h3>
-                          <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">{threadedCommunications.length} Groups</span>
+                          <div className="flex items-center gap-3">
+                            <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">{threadedCommunications.length} Groups</span>
+                            <button onClick={() => setActiveTab('communications')} className="text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors">View All</button>
+                          </div>
                       </div>
                       <div className="divide-y divide-stone-100">
                           {threadedCommunications.length > 0 ? (
@@ -1409,6 +1387,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                         };
                         onUpdateCase({ ...caseData, adjusters: newAdj, extendedIntake: updatedIntake as ExtendedIntakeData });
                       }}
+                      onCall={(name, phone) => handlePhoneClick(name, phone)}
                     />
                   </div>
 
@@ -1603,125 +1582,46 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           </div>
       )}
 
-      {/* RingCentral Modal */}
-      {phoneModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white w-96 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                  {/* RC Header */}
-                  <div className="bg-black text-white p-4 flex justify-between items-start">
+      {/* SMS Modal */}
+      {smsModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setSmsModalOpen(false)}>
+              <div className="bg-white w-96 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                  <div className="bg-teal-600 text-white p-4 flex justify-between items-center">
                       <div>
-                          <div className="flex items-center space-x-2">
-                              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                              <span className="text-xs font-bold uppercase tracking-wider text-stone-400">RingCentral Connected</span>
-                          </div>
-                          <h3 className="text-lg font-bold mt-1">{caseData.clientName}</h3>
-                          <p className="text-sm text-stone-400">{caseData.clientPhone}</p>
+                          <h3 className="text-sm font-bold">{caseData.clientName}</h3>
+                          <p className="text-xs text-teal-200">{caseData.clientPhone}</p>
                       </div>
-                      <button onClick={() => setPhoneModalOpen(false)} className="text-stone-400 hover:text-white">
-                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      <button onClick={() => setSmsModalOpen(false)} className="text-teal-200 hover:text-white">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                   </div>
-
-                  {/* Tabs */}
-                  <div className="flex border-b border-stone-200">
-                      <button 
-                          className={`flex-1 py-3 text-sm font-bold transition-colors ${phoneAction === 'call' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-stone-500 hover:bg-stone-50'}`}
-                          onClick={() => setPhoneAction('call')}
+                  <div className="p-4 flex-1 overflow-y-auto">
+                      <div className="bg-stone-50 rounded-xl border border-stone-100 p-4 mb-4 min-h-[120px]">
+                          {(caseData.communications || []).filter(c => c.type === 'sms').slice(0, 5).reverse().map(c => (
+                            <div key={c.id} className={`mb-2 ${c.direction === 'outbound' ? 'text-right' : ''}`}>
+                              <div className={`inline-block p-2 rounded-lg text-xs max-w-[80%] ${c.direction === 'outbound' ? 'bg-teal-100 text-teal-900 rounded-br-none' : 'bg-white border border-stone-200 text-stone-700 rounded-bl-none'}`}>
+                                {c.content}
+                                <div className="text-[9px] opacity-50 mt-1">{new Date(c.timestamp).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+                          ))}
+                          {!(caseData.communications || []).some(c => c.type === 'sms') && (
+                            <p className="text-xs text-stone-400 text-center py-4">No messages yet</p>
+                          )}
+                      </div>
+                      <textarea
+                          className="w-full h-20 p-3 bg-white border border-stone-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-500 resize-none mb-3"
+                          placeholder="Type SMS message..."
+                          value={smsMessage}
+                          onChange={e => setSmsMessage(e.target.value)}
+                      />
+                      <button
+                          onClick={handleSendSMS}
+                          disabled={smsSending || !smsMessage.trim()}
+                          className={`w-full py-3 rounded-xl font-bold shadow-md flex items-center justify-center transition-all ${smsSending ? 'bg-teal-300 text-white cursor-wait' : 'bg-teal-600 text-white hover:bg-teal-700 shadow-teal-200'}`}
                       >
-                          Phone Call
+                          {smsSending ? 'Sending...' : 'Send Message'}
                       </button>
-                      <button 
-                          className={`flex-1 py-3 text-sm font-bold transition-colors ${phoneAction === 'sms' ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50' : 'text-stone-500 hover:bg-stone-50'}`}
-                          onClick={() => setPhoneAction('sms')}
-                      >
-                          SMS Message
-                      </button>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-6 flex-1 overflow-y-auto">
-                      {phoneAction === 'call' ? (
-                          <div className="flex flex-col items-center">
-                              <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 transition-all duration-500 ${isCallActive ? 'bg-green-100 ring-8 ring-green-50' : 'bg-stone-100'}`}>
-                                  <svg className={`w-10 h-10 ${isCallActive ? 'text-green-600' : 'text-stone-400'}`} fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                              </div>
-                              
-                              <h4 className="text-2xl font-mono font-bold text-stone-800 mb-1">
-                                  {isCallActive ? formatTime(callTimer) : 'Ready to Call'}
-                              </h4>
-                              <p className="text-sm text-stone-500 mb-8">{isCallActive ? 'Call in progress...' : 'Click start to dial'}</p>
-
-                              <div className="w-full space-y-4">
-                                  {isCallActive ? (
-                                      <button 
-                                          onClick={handleEndCall}
-                                          className="w-full py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-200 transition-all flex items-center justify-center"
-                                      >
-                                          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.996.996 0 0 1 0-1.41C2.74 9.32 7.13 8 12 8c4.87 0 9.26 1.32 11.71 3.67.39.39.39 1.02 0 1.41l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 0 0-2.66-1.85.995.995 0 0 1-.57-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-                                          End Call
-                                      </button>
-                                  ) : (
-                                      <button 
-                                          onClick={handleStartCall}
-                                          className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-bold shadow-lg shadow-green-200 transition-all flex items-center justify-center"
-                                      >
-                                          <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                                          Start Call
-                                      </button>
-                                  )}
-                                  
-                                  <div>
-                                      <label className="block text-xs font-bold text-stone-500 uppercase mb-2">Call Notes</label>
-                                      <textarea 
-                                          className="w-full h-24 p-3 bg-stone-50 border border-stone-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                          placeholder="Enter call details here..."
-                                          value={callNote}
-                                          onChange={e => setCallNote(e.target.value)}
-                                      ></textarea>
-                                  </div>
-
-                                  {!isCallActive && callTimer > 0 && (
-                                      <button 
-                                          onClick={handleSaveCall}
-                                          className="w-full py-2 bg-black text-white rounded-lg font-bold text-sm hover:bg-stone-800 transition-colors"
-                                      >
-                                          Save Call Log
-                                      </button>
-                                  )}
-                              </div>
-                          </div>
-                      ) : (
-                          <div className="flex flex-col h-full">
-                              <div className="flex-1 bg-stone-50 rounded-xl border border-stone-100 p-4 mb-4 overflow-y-auto">
-                                  {/* Simulated History for Context */}
-                                  <div className="flex flex-col space-y-3">
-                                      <div className="self-end bg-teal-100 text-teal-900 p-2 rounded-lg rounded-br-none text-xs max-w-[80%]">
-                                          Hi {caseData.clientName.split(' ')[0]}, just checking in on your treatment.
-                                          <div className="text-[9px] opacity-50 mt-1 text-right">Yesterday</div>
-                                      </div>
-                                      <div className="self-start bg-white border border-stone-200 text-stone-700 p-2 rounded-lg rounded-bl-none text-xs max-w-[80%]">
-                                          Going well, thanks for asking.
-                                          <div className="text-[9px] opacity-50 mt-1">Yesterday</div>
-                                      </div>
-                                  </div>
-                              </div>
-                              <div>
-                                  <textarea 
-                                      className="w-full h-20 p-3 bg-white border border-stone-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-500 resize-none mb-3"
-                                      placeholder="Type SMS message..."
-                                      value={smsMessage}
-                                      onChange={e => setSmsMessage(e.target.value)}
-                                  ></textarea>
-                                  <button 
-                                      onClick={handleSendSMS}
-                                      disabled={smsSending || !smsMessage.trim()}
-                                      className={`w-full py-3 rounded-xl font-bold shadow-md flex items-center justify-center transition-all ${smsSending ? 'bg-teal-300 text-white cursor-wait' : 'bg-teal-600 text-white hover:bg-teal-700 shadow-teal-200'}`}
-                                  >
-                                      {smsSending ? 'Sending...' : 'Send Message'}
-                                  </button>
-                              </div>
-                          </div>
-                      )}
                   </div>
               </div>
           </div>

@@ -12,11 +12,12 @@ import { Analytics } from './components/Analytics';
 import { Settings } from './components/Settings';
 import { Inbox } from './components/Inbox';
 import { Directory } from './components/Directory';
-import { CaseFile, CaseStatus, Email, DocumentAttachment } from './types';
+import { CaseFile, CaseStatus, Email, DocumentAttachment, CommunicationLog } from './types';
 import { TasksView } from './components/TasksView';
 import { Workspace } from './components/Workspace';
 import { ActivityFeed } from './components/ActivityFeed';
 import { FormsPanel } from './components/FormsPanel';
+import { FloatingCallBar, ActiveCallInfo } from './components/FloatingCallBar';
 import { classifyAttachmentType } from './services/geminiService';
 import { applyWorkflowToCase } from './services/workflowEngine';
 import { getCasesByFirm, upsertCase, generateCaseNumber, deleteCase } from './services/caseService';
@@ -96,6 +97,7 @@ function AppContent() {
   const [emails, setEmails] = useState<Email[]>(MOCK_EMAILS);
 
   const [cases, setCases] = useState<CaseFile[]>([]);
+  const [activeCall, setActiveCall] = useState<ActiveCallInfo | null>(null);
 
   const activeFirmIdRef = React.useRef<string | null>(null);
   const loadedFirmIdRef = React.useRef<string | null>(null);
@@ -278,6 +280,45 @@ function AppContent() {
     }));
   };
 
+  const handleStartCall = (contactName: string, contactPhone: string, caseId: string, caseName: string) => {
+    setActiveCall({ contactName, contactPhone, caseId, caseName });
+  };
+
+  const handleCallEnd = (log: Omit<CommunicationLog, 'id'>) => {
+    if (!activeCall) return;
+    const fullLog: CommunicationLog = {
+      ...log,
+      id: Math.random().toString(36).substr(2, 9),
+    };
+    setCases(prev => prev.map(c => {
+      if (c.id === activeCall.caseId) {
+        const newLog = {
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'user' as const,
+          message: `Outbound call to ${activeCall.contactName} (${fullLog.duration || '0:00'})`,
+          timestamp: new Date().toISOString(),
+          author: currentUserName,
+        };
+        const updatedCase = {
+          ...c,
+          communications: [fullLog, ...(c.communications || [])],
+          activityLog: [newLog, ...c.activityLog],
+        };
+        if (activeFirm) {
+          upsertCase(updatedCase, activeFirm.id);
+        }
+        setSelectedCase(prev => prev?.id === updatedCase.id ? updatedCase : prev);
+        return updatedCase;
+      }
+      return c;
+    }));
+    setActiveCall(null);
+  };
+
+  const handleCallDismiss = () => {
+    setActiveCall(null);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-stone-100 flex items-center justify-center">
@@ -354,6 +395,8 @@ function AppContent() {
               onBack={() => { setSelectedCase(null); setCaseDefaultTab(undefined); }}
               onUpdateCase={handleCaseUpdate}
               defaultTab={caseDefaultTab as any}
+              onStartCall={(contactName, contactPhone) => handleStartCall(contactName, contactPhone, selectedCase.id, selectedCase.clientName)}
+              isCallActive={!!activeCall}
             />
           )}
 
@@ -408,6 +451,14 @@ function AppContent() {
           )}
         </div>
       </main>
+
+      {activeCall && (
+        <FloatingCallBar
+          activeCall={activeCall}
+          onEndCall={handleCallEnd}
+          onDismiss={handleCallDismiss}
+        />
+      )}
     </div>
   );
 }
