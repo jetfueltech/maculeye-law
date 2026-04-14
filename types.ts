@@ -275,6 +275,23 @@ export interface EmailAttachment {
   name: string;
   type: 'pdf' | 'image' | 'doc';
   size: string;
+  storagePath?: string;
+  contentType?: string;
+  attachmentId?: string;
+}
+
+export interface EmailThread {
+  threadId: string;
+  subject: string;
+  participants: string[];
+  latestDate: string;
+  unreadCount: number;
+  messageCount: number;
+  messages: Email[];
+  linkedCaseId?: string;
+  category?: EmailCategory;
+  hasAttachments: boolean;
+  totalAttachments: number;
 }
 
 export interface EmailMatchAnalysis {
