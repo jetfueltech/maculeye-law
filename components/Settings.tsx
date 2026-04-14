@@ -1,7 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FirmManagement } from './settings/FirmManagement';
 import { useAuth } from '../contexts/AuthContext';
+import { useFirm } from '../contexts/FirmContext';
 import { supabase } from '../services/supabaseClient';
+import { getOutlookConnection, startOutlookAuth, syncOutlookEmails, disconnectOutlook, type OutlookConnection } from '../services/outlookService';
 
 type SettingsTab = 'profile' | 'firms' | 'integrations' | 'notifications';
 
@@ -169,6 +171,129 @@ const ProfileSettings: React.FC = () => {
   );
 };
 
+const OutlookIntegrationCard: React.FC = () => {
+  const { profile } = useAuth();
+  const { activeFirm } = useFirm();
+  const [connection, setConnection] = useState<OutlookConnection | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const loadConnection = async () => {
+    if (!activeFirm) return;
+    setLoading(true);
+    const conn = await getOutlookConnection(activeFirm.id);
+    setConnection(conn);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadConnection();
+  }, [activeFirm?.id]);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'outlook_connected') {
+        loadConnection();
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [activeFirm?.id]);
+
+  const handleConnect = async () => {
+    if (!activeFirm || !profile) return;
+    setConnecting(true);
+    const authUrl = await startOutlookAuth(activeFirm.id, profile.id);
+    setConnecting(false);
+    if (authUrl) {
+      window.open(authUrl, 'outlook_auth', 'width=600,height=700,scrollbars=yes');
+    }
+  };
+
+  const handleSync = async () => {
+    if (!activeFirm) return;
+    setSyncing(true);
+    setSyncMsg('');
+    const result = await syncOutlookEmails(activeFirm.id);
+    setSyncing(false);
+    if (result.error) {
+      setSyncMsg(result.error);
+    } else {
+      setSyncMsg(`Synced ${result.synced} emails.`);
+      setTimeout(() => setSyncMsg(''), 5000);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!activeFirm) return;
+    setDisconnecting(true);
+    await disconnectOutlook(activeFirm.id);
+    setConnection(null);
+    setDisconnecting(false);
+  };
+
+  const isConnected = !!connection;
+
+  return (
+    <div className={`flex items-center justify-between p-4 border rounded-xl transition-colors ${isConnected ? 'border-emerald-200 bg-emerald-50/30' : 'border-stone-200 hover:bg-stone-50'}`}>
+      <div className="flex items-center space-x-4">
+        <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-stone-200 shadow-sm">
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="2" width="9" height="9" fill="#F25022"/>
+            <rect x="13" y="2" width="9" height="9" fill="#7FBA00"/>
+            <rect x="2" y="13" width="9" height="9" fill="#00A4EF"/>
+            <rect x="13" y="13" width="9" height="9" fill="#FFB900"/>
+          </svg>
+        </div>
+        <div>
+          <h4 className="font-bold text-stone-900">Microsoft Outlook</h4>
+          {isConnected ? (
+            <p className="text-xs text-emerald-600 font-medium">{connection.email_address || 'Connected'}</p>
+          ) : (
+            <p className="text-xs text-stone-500">Sync emails, calendar events, and contacts.</p>
+          )}
+          {syncMsg && (
+            <p className={`text-xs mt-1 ${syncMsg.includes('error') || syncMsg.includes('Error') || syncMsg.includes('failed') ? 'text-rose-600' : 'text-emerald-600'}`}>{syncMsg}</p>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {loading ? (
+          <div className="w-5 h-5 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
+        ) : isConnected ? (
+          <>
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {syncing ? 'Syncing...' : 'Sync Now'}
+            </button>
+            <button
+              onClick={handleDisconnect}
+              disabled={disconnecting}
+              className="text-xs font-medium text-stone-500 hover:text-rose-600 px-2 py-1.5 transition-colors"
+            >
+              Disconnect
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleConnect}
+            disabled={connecting}
+            className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
+          >
+            {connecting ? 'Loading...' : 'Connect'}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const Settings: React.FC = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -232,23 +357,7 @@ export const Settings: React.FC = () => {
               <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">Connected</span>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-stone-200 shadow-sm">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                    <rect x="2" y="2" width="9" height="9" fill="#F25022"/>
-                    <rect x="13" y="2" width="9" height="9" fill="#7FBA00"/>
-                    <rect x="2" y="13" width="9" height="9" fill="#00A4EF"/>
-                    <rect x="13" y="13" width="9" height="9" fill="#FFB900"/>
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-bold text-stone-900">Microsoft Outlook</h4>
-                  <p className="text-xs text-stone-500">Sync emails, calendar events, and contacts.</p>
-                </div>
-              </div>
-              <button className="text-sm font-medium text-stone-600 hover:text-blue-600">Connect</button>
-            </div>
+            <OutlookIntegrationCard />
 
             <div className="flex items-center justify-between p-4 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer">
               <div className="flex items-center space-x-4">

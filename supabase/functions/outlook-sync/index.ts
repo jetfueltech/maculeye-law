@@ -1,0 +1,242 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.95.3";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, X-Client-Info, Apikey",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+async function getSecrets(keys: string[]): Promise<Record<string, string>> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const { data } = await supabase
+    .from("app_secrets")
+    .select("key, value")
+    .in("key", keys);
+  const result: Record<string, string> = {};
+  for (const row of data || []) {
+    result[row.key] = row.value;
+  }
+  return result;
+}
+
+interface GraphMessage {
+  id: string;
+  conversationId?: string;
+  from?: { emailAddress?: { name?: string; address?: string } };
+  toRecipients?: Array<{ emailAddress?: { name?: string; address?: string } }>;
+  subject?: string;
+  bodyPreview?: string;
+  body?: { content?: string; contentType?: string };
+  isRead?: boolean;
+  hasAttachments?: boolean;
+  receivedDateTime?: string;
+  attachments?: Array<{ name?: string; contentType?: string; size?: number }>;
+}
+
+async function refreshAccessToken(
+  refreshToken: string,
+  clientId: string,
+  clientSecret: string,
+  tenantId: string
+): Promise<{ access_token: string; refresh_token: string; expires_in: number } | null> {
+  const res = await fetch(
+    `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+        scope: "openid profile email offline_access Mail.Read Mail.ReadWrite User.Read",
+      }),
+    }
+  );
+  const data = await res.json();
+  if (data.error) return null;
+  return data;
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  try {
+    const secrets = await getSecrets([
+      "MICROSOFT_CLIENT_ID",
+      "MICROSOFT_CLIENT_SECRET",
+      "MICROSOFT_TENANT_ID",
+    ]);
+    const clientId = secrets["MICROSOFT_CLIENT_ID"];
+    const clientSecret = secrets["MICROSOFT_CLIENT_SECRET"];
+    const tenantId = secrets["MICROSOFT_TENANT_ID"];
+
+    if (!clientId || !clientSecret || !tenantId) {
+      return new Response(
+        JSON.stringify({ error: "Microsoft credentials not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Missing Authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const supabaseUser = createClient(SUPABASE_URL, authHeader.replace("Bearer ", ""), {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const url = new URL(req.url);
+    const firmId = url.searchParams.get("firm_id");
+    if (!firmId) {
+      return new Response(
+        JSON.stringify({ error: "firm_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: tokenRow, error: tokenError } = await supabaseAdmin
+      .from("outlook_oauth_tokens")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("firm_id", firmId)
+      .maybeSingle();
+
+    if (tokenError || !tokenRow) {
+      return new Response(
+        JSON.stringify({ error: "No Outlook connection found. Please connect first." }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    let accessToken = tokenRow.access_token;
+    const now = new Date();
+    const expiresAt = new Date(tokenRow.expires_at);
+
+    if (now >= expiresAt) {
+      const refreshed = await refreshAccessToken(
+        tokenRow.refresh_token,
+        clientId,
+        clientSecret,
+        tenantId
+      );
+      if (!refreshed) {
+        await supabaseAdmin
+          .from("outlook_oauth_tokens")
+          .delete()
+          .eq("id", tokenRow.id);
+
+        return new Response(
+          JSON.stringify({ error: "Token expired and refresh failed. Please reconnect Outlook." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      accessToken = refreshed.access_token;
+      const newExpiry = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
+
+      await supabaseAdmin
+        .from("outlook_oauth_tokens")
+        .update({
+          access_token: refreshed.access_token,
+          refresh_token: refreshed.refresh_token,
+          expires_at: newExpiry,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", tokenRow.id);
+    }
+
+    const graphUrl =
+      "https://graph.microsoft.com/v1.0/me/messages?$top=50&$orderby=receivedDateTime desc&$select=id,conversationId,from,toRecipients,subject,bodyPreview,body,isRead,hasAttachments,receivedDateTime";
+
+    const graphRes = await fetch(graphUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!graphRes.ok) {
+      const errBody = await graphRes.text();
+      return new Response(
+        JSON.stringify({ error: `Microsoft Graph error: ${graphRes.status}`, details: errBody }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const graphData = await graphRes.json();
+    const messages: GraphMessage[] = graphData.value || [];
+
+    const connectedEmail = tokenRow.email_address?.toLowerCase() || "";
+
+    const emailRows = messages.map((msg) => {
+      const fromEmail = msg.from?.emailAddress?.address?.toLowerCase() || "";
+      const direction = fromEmail === connectedEmail ? "outbound" : "inbound";
+
+      const toList = (msg.toRecipients || [])
+        .map((r) => r.emailAddress?.address || "")
+        .filter(Boolean)
+        .join(", ");
+
+      const attachmentsMeta: Array<{ name: string; type: string; size: string }> = [];
+
+      return {
+        firm_id: firmId,
+        user_id: user.id,
+        microsoft_id: msg.id,
+        conversation_id: msg.conversationId || "",
+        from_name: msg.from?.emailAddress?.name || "",
+        from_email: fromEmail,
+        to_recipients: toList,
+        subject: msg.subject || "(No Subject)",
+        body_preview: (msg.bodyPreview || "").substring(0, 500),
+        body_html: msg.body?.content || "",
+        direction,
+        is_read: msg.isRead ?? false,
+        has_attachments: msg.hasAttachments ?? false,
+        received_at: msg.receivedDateTime || new Date().toISOString(),
+        attachments_meta: attachmentsMeta,
+      };
+    });
+
+    if (emailRows.length > 0) {
+      const { error: insertError } = await supabaseAdmin
+        .from("synced_emails")
+        .upsert(emailRows, { onConflict: "microsoft_id", ignoreDuplicates: false });
+
+      if (insertError) {
+        return new Response(
+          JSON.stringify({ error: `Failed to save emails: ${insertError.message}` }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    return new Response(
+      JSON.stringify({ synced: emailRows.length, message: `Synced ${emailRows.length} emails from Outlook.` }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ error: (err as Error).message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

@@ -21,6 +21,7 @@ import { FloatingCallBar, ActiveCallInfo } from './components/FloatingCallBar';
 import { classifyAttachmentType } from './services/geminiService';
 import { applyWorkflowToCase } from './services/workflowEngine';
 import { getCasesByFirm, upsertCase, generateCaseNumber, deleteCase } from './services/caseService';
+import { updateSyncedEmail } from './services/outlookService';
 
 // Initial Mock Emails moved from Inbox to App for persistence
 const MOCK_EMAILS: Email[] = [
@@ -190,10 +191,13 @@ function AppContent() {
   };
 
   const handleLinkEmail = async (caseId: string, email: Email) => {
-      // 1. Optimistically update Email State to reflect it is linked immediately
-      setEmails(prevEmails => prevEmails.map(e => 
+      setEmails(prevEmails => prevEmails.map(e =>
           e.id === email.id ? { ...e, linkedCaseId: caseId } : e
       ));
+
+      if (!email.id.startsWith('e')) {
+        updateSyncedEmail(email.id, { linked_case_id: caseId });
+      }
 
       // 2. Process attachments with AI (Async)
       // We map the mock attachments to classified document types
@@ -376,6 +380,7 @@ function AppContent() {
                 setEmails={setEmails}
                 onLinkCase={handleLinkEmail}
                 onProcessAttachment={handleProcessAttachment}
+                firmId={activeFirm?.id}
               />
           )}
 
