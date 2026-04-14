@@ -309,6 +309,7 @@ export interface Email {
   bodyHtml?: string;
   toRecipients?: string;
   date: string;
+  receivedAt?: string;
   isRead: boolean;
   direction: 'inbound' | 'outbound';
   threadId?: string;

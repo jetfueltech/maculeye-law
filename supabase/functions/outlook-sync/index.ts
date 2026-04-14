@@ -29,7 +29,9 @@ interface GraphMessage {
   id: string;
   conversationId?: string;
   from?: { emailAddress?: { name?: string; address?: string } };
-  toRecipients?: Array<{ emailAddress?: { name?: string; address?: string } }>;
+  toRecipients?: Array<{
+    emailAddress?: { name?: string; address?: string };
+  }>;
   subject?: string;
   bodyPreview?: string;
   body?: { content?: string; contentType?: string };
@@ -120,31 +122,32 @@ async function fetchAttachments(
   accessToken: string,
   messageId: string
 ): Promise<GraphAttachment[]> {
+  const results: GraphAttachment[] = [];
+
   const listRes = await fetch(
-    `https://graph.microsoft.com/v1.0/me/messages/${messageId}/attachments?$select=id,name,contentType,size,microsoft.graph.fileAttachment/contentBytes`,
+    `https://graph.microsoft.com/v1.0/me/messages/${messageId}/attachments`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   if (!listRes.ok) return [];
   const listData = await listRes.json();
-  const items = (listData.value || []).filter(
+  const items: GraphAttachment[] = (listData.value || []).filter(
     (a: GraphAttachment) =>
       a["@odata.type"] === "#microsoft.graph.fileAttachment"
   );
 
-  const results: GraphAttachment[] = [];
   for (const item of items) {
-    if (item.contentBytes) {
+    if (item.contentBytes && item.contentBytes.length > 0) {
       results.push(item);
-      continue;
-    }
-    const detailRes = await fetch(
-      `https://graph.microsoft.com/v1.0/me/messages/${messageId}/attachments/${item.id}`,
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-    if (!detailRes.ok) continue;
-    const detail: GraphAttachment = await detailRes.json();
-    if (detail.contentBytes) {
-      results.push(detail);
+    } else {
+      const detailRes = await fetch(
+        `https://graph.microsoft.com/v1.0/me/messages/${messageId}/attachments/${item.id}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (!detailRes.ok) continue;
+      const detail: GraphAttachment = await detailRes.json();
+      if (detail.contentBytes && detail.contentBytes.length > 0) {
+        results.push(detail);
+      }
     }
   }
   return results;
@@ -163,6 +166,68 @@ function base64ToUint8Array(base64: string): Uint8Array {
     bytes[i] = binary.charCodeAt(i);
   }
   return bytes;
+}
+
+async function saveAttachmentsForEmail(
+  supabaseAdmin: ReturnType<typeof createClient>,
+  accessToken: string,
+  microsoftId: string,
+  emailDbId: string,
+  firmId: string
+): Promise<number> {
+  let saved = 0;
+
+  const { count: existingCount } = await supabaseAdmin
+    .from("email_attachments")
+    .select("id", { count: "exact", head: true })
+    .eq("email_id", emailDbId);
+
+  if ((existingCount ?? 0) > 0) return 0;
+
+  const graphAtts = await fetchAttachments(accessToken, microsoftId);
+
+  for (const ga of graphAtts) {
+    if (!ga.contentBytes) continue;
+
+    const safeName = ga.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const storagePath = `${firmId}/${emailDbId}/${ga.id}_${safeName}`;
+    const fileBytes = base64ToUint8Array(ga.contentBytes);
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("email-attachments")
+      .upload(storagePath, fileBytes, {
+        contentType: ga.contentType,
+        upsert: true,
+      });
+
+    if (uploadError) continue;
+
+    await supabaseAdmin.from("email_attachments").insert({
+      email_id: emailDbId,
+      firm_id: firmId,
+      microsoft_attachment_id: ga.id,
+      name: ga.name,
+      content_type: ga.contentType,
+      size_bytes: ga.size,
+      storage_path: storagePath,
+    });
+
+    saved++;
+  }
+
+  const metaList = graphAtts.map((a) => ({
+    name: a.name,
+    type: a.contentType,
+    size: formatFileSize(a.size),
+  }));
+  if (metaList.length > 0) {
+    await supabaseAdmin
+      .from("synced_emails")
+      .update({ attachments_meta: metaList })
+      .eq("id", emailDbId);
+  }
+
+  return saved;
 }
 
 Deno.serve(async (req: Request) => {
@@ -329,28 +394,6 @@ Deno.serve(async (req: Request) => {
 
     const connectedEmail = tokenRow.email_address?.toLowerCase() || "";
 
-    const messagesWithAttachments = messages.filter((m) => m.hasAttachments);
-
-    const attachmentMap = new Map<
-      string,
-      Array<{ name: string; type: string; size: string; graphAttachment: GraphAttachment }>
-    >();
-
-    for (const msg of messagesWithAttachments) {
-      const graphAtts = await fetchAttachments(accessToken, msg.id);
-      if (graphAtts.length > 0) {
-        attachmentMap.set(
-          msg.id,
-          graphAtts.map((a) => ({
-            name: a.name,
-            type: a.contentType,
-            size: formatFileSize(a.size),
-            graphAttachment: a,
-          }))
-        );
-      }
-    }
-
     const emailRows = messages.map((msg) => {
       const fromEmail =
         msg.from?.emailAddress?.address?.toLowerCase() || "";
@@ -360,13 +403,6 @@ Deno.serve(async (req: Request) => {
         .map((r) => r.emailAddress?.address || "")
         .filter(Boolean)
         .join(", ");
-
-      const atts = attachmentMap.get(msg.id) || [];
-      const attsMeta = atts.map((a) => ({
-        name: a.name,
-        type: a.type,
-        size: a.size,
-      }));
 
       return {
         firm_id: firmId,
@@ -383,7 +419,6 @@ Deno.serve(async (req: Request) => {
         is_read: msg.isRead ?? false,
         has_attachments: msg.hasAttachments ?? false,
         received_at: msg.receivedDateTime || new Date().toISOString(),
-        attachments_meta: attsMeta,
       };
     });
 
@@ -414,53 +449,23 @@ Deno.serve(async (req: Request) => {
     }
 
     let attachmentsSaved = 0;
-    for (const msg of messagesWithAttachments) {
-      const atts = attachmentMap.get(msg.id);
-      if (!atts || atts.length === 0) continue;
 
-      const { data: emailRow } = await supabaseAdmin
-        .from("synced_emails")
-        .select("id")
-        .eq("microsoft_id", msg.id)
-        .maybeSingle();
+    const { data: emailsNeedingAttachments } = await supabaseAdmin
+      .from("synced_emails")
+      .select("id, microsoft_id")
+      .eq("firm_id", firmId)
+      .eq("user_id", user.id)
+      .eq("has_attachments", true);
 
-      if (!emailRow) continue;
-
-      const { count: existingCount } = await supabaseAdmin
-        .from("email_attachments")
-        .select("id", { count: "exact", head: true })
-        .eq("email_id", emailRow.id);
-
-      if ((existingCount ?? 0) > 0) continue;
-
-      for (const att of atts) {
-        const ga = att.graphAttachment;
-        if (!ga.contentBytes) continue;
-
-        const storagePath = `${firmId}/${emailRow.id}/${ga.id}_${att.name}`;
-        const fileBytes = base64ToUint8Array(ga.contentBytes);
-
-        const { error: uploadError } = await supabaseAdmin.storage
-          .from("email-attachments")
-          .upload(storagePath, fileBytes, {
-            contentType: ga.contentType,
-            upsert: true,
-          });
-
-        if (uploadError) continue;
-
-        await supabaseAdmin.from("email_attachments").insert({
-          email_id: emailRow.id,
-          firm_id: firmId,
-          microsoft_attachment_id: ga.id,
-          name: att.name,
-          content_type: ga.contentType,
-          size_bytes: ga.size,
-          storage_path: storagePath,
-        });
-
-        attachmentsSaved++;
-      }
+    for (const row of emailsNeedingAttachments || []) {
+      const saved = await saveAttachmentsForEmail(
+        supabaseAdmin,
+        accessToken,
+        row.microsoft_id,
+        row.id,
+        firmId
+      );
+      attachmentsSaved += saved;
     }
 
     await supabaseAdmin
@@ -475,7 +480,7 @@ Deno.serve(async (req: Request) => {
         initial: isInitialSync,
         message: isInitialSync
           ? `Initial sync complete. Imported ${emailRows.length} emails from the last 30 days.`
-          : `Synced ${emailRows.length} new emails.`,
+          : `Synced ${emailRows.length} new emails with ${attachmentsSaved} attachments.`,
       }),
       {
         status: 200,

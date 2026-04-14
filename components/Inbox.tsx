@@ -293,13 +293,14 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
           {filteredThreads.map(thread => {
             const latest = thread.messages[0];
             const isSelected = selectedThreadId === thread.threadId;
+            const isUnread = thread.unreadCount > 0;
 
             return (
               <div
                 key={thread.threadId}
                 onClick={() => {
                   setSelectedThreadId(thread.threadId);
-                  if (thread.unreadCount > 0) {
+                  if (isUnread) {
                     setEmails(prev => prev.map(e =>
                       e.threadId === thread.threadId || (thread.messages.some(m => m.id === e.id))
                         ? { ...e, isRead: true }
@@ -307,53 +308,61 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                     ));
                   }
                 }}
-                className={`p-4 border-b border-stone-100 cursor-pointer transition-colors hover:bg-stone-50 ${isSelected ? 'bg-blue-50 border-l-4 border-l-blue-600' : 'border-l-4 border-l-transparent'}`}
+                className={`px-4 py-3 border-b border-stone-100 cursor-pointer transition-all ${isSelected ? 'bg-blue-50/80 border-l-[3px] border-l-blue-600' : 'border-l-[3px] border-l-transparent hover:bg-stone-50/80'}`}
               >
-                <div className="flex justify-between mb-1">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className={`text-sm truncate ${thread.unreadCount > 0 ? 'font-bold text-stone-900' : 'font-semibold text-stone-600'}`}>
-                      {thread.participants.length > 2
-                        ? `${thread.participants[0]} +${thread.participants.length - 1}`
-                        : thread.participants.join(', ')}
-                    </span>
-                    {thread.messageCount > 1 && (
-                      <span className="text-[10px] font-bold text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                        {thread.messageCount}
-                      </span>
+                <div className="flex items-start gap-2.5">
+                  {isUnread && (
+                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline mb-0.5">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className={`text-[13px] truncate ${isUnread ? 'font-bold text-stone-900' : 'font-medium text-stone-700'}`}>
+                          {thread.participants.length > 2
+                            ? `${thread.participants[0]} +${thread.participants.length - 1}`
+                            : thread.participants.join(', ')}
+                        </span>
+                        {thread.messageCount > 1 && (
+                          <span className="text-[10px] font-semibold text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                            {thread.messageCount}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] text-stone-400 whitespace-nowrap ml-2 flex-shrink-0 tabular-nums">{thread.latestDate}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <h3 className={`text-[13px] truncate flex-1 ${isUnread ? 'font-semibold text-stone-800' : 'text-stone-600'}`}>
+                        {thread.subject}
+                      </h3>
+                      {thread.hasAttachments && (
+                        <svg className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-stone-400 truncate leading-snug">{latest?.body}</p>
+
+                    {(thread.linkedCaseId || latest?.aiMatch?.suggestedCaseId || thread.category) && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {thread.linkedCaseId ? (
+                          <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                            {getCaseTag(thread.linkedCaseId)}
+                          </div>
+                        ) : latest?.aiMatch?.suggestedCaseId ? (
+                          <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Review ({latest.aiMatch.confidenceScore}%)
+                          </div>
+                        ) : null}
+                        {thread.category && (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${CATEGORY_COLORS[thread.category]}`}>
+                            {EMAIL_CATEGORY_LABELS[thread.category]}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                  <span className="text-xs text-stone-400 whitespace-nowrap ml-2">{thread.latestDate}</span>
-                </div>
-                <h3 className={`text-sm mb-1 truncate ${thread.unreadCount > 0 ? 'font-bold text-stone-800' : 'font-medium text-stone-600'}`}>
-                  {thread.subject}
-                </h3>
-                <p className="text-xs text-stone-500 truncate">{latest?.body}</p>
-
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {thread.linkedCaseId ? (
-                    <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200 animate-scale-in">
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                      {getCaseTag(thread.linkedCaseId)}
-                    </div>
-                  ) : latest?.aiMatch?.suggestedCaseId ? (
-                    <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Review ({latest.aiMatch.confidenceScore}%)
-                    </div>
-                  ) : null}
-
-                  {thread.category && (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${CATEGORY_COLORS[thread.category]}`}>
-                      {EMAIL_CATEGORY_LABELS[thread.category]}
-                    </span>
-                  )}
-
-                  {thread.hasAttachments && (
-                    <div className="inline-flex items-center text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded">
-                      <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                      {thread.totalAttachments}
-                    </div>
-                  )}
                 </div>
               </div>
             );
