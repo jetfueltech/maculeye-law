@@ -3,6 +3,7 @@ import type { Email, EmailThread, CaseFile, EmailCategory } from '../../types';
 import { EMAIL_CATEGORY_LABELS } from '../../types';
 import { getAttachmentDownloadUrl, copyAttachmentToCaseDocuments } from '../../services/outlookService';
 import { ComposeEmail, ComposeMode } from './ComposeEmail';
+import { AttachmentHub } from './AttachmentHub';
 
 interface ThreadDetailProps {
   thread: EmailThread;
@@ -257,6 +258,18 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
     setAddingToDocuments(false);
   };
 
+  const handleHubAddToCase = (email: Email, attachmentIndex: number) => {
+    const attKey = `${email.id}-${attachmentIndex}`;
+    if (thread.linkedCaseId && onProcessAttachment) {
+      setProcessingAttachment(attKey);
+      onProcessAttachment(thread.linkedCaseId, email, attachmentIndex);
+      setTimeout(() => {
+        setProcessedAttachments(prev => new Set(prev).add(attKey));
+        setProcessingAttachment(null);
+      }, 800);
+    }
+  };
+
   const latestEmail = thread.messages[0];
   const aiSuggestion = latestEmail?.aiMatch;
 
@@ -360,6 +373,20 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
             )}
           </div>
         </div>
+
+        {thread.totalAttachments > 0 && (
+          <AttachmentHub
+            thread={thread}
+            linkedCaseId={thread.linkedCaseId}
+            onPreview={handlePreview}
+            onDownload={handleDownload}
+            onAddToCase={handleHubAddToCase}
+            processedAttachments={processedAttachments}
+            processingAttachment={processingAttachment}
+            downloadingAttachment={downloadingAtt}
+            loadingPreview={loadingPreview}
+          />
+        )}
 
         <div className="px-6 pb-6 space-y-3 min-w-0">
           {thread.messages.map((email) => {
