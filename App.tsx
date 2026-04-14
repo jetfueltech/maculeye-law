@@ -191,57 +191,82 @@ function AppContent() {
   };
 
   const handleLinkEmail = async (caseId: string, email: Email) => {
-      setEmails(prevEmails => prevEmails.map(e =>
-          e.id === email.id ? { ...e, linkedCaseId: caseId } : e
-      ));
+    setEmails(prevEmails => prevEmails.map(e => {
+      if (e.id === email.id) return { ...e, linkedCaseId: caseId };
+      if (e.threadId && e.threadId === email.threadId) return { ...e, linkedCaseId: caseId };
+      return e;
+    }));
 
-      if (!email.id.startsWith('e')) {
-        updateSyncedEmail(email.id, { linked_case_id: caseId });
+    if (!email.id.startsWith('e')) {
+      try {
+        await updateSyncedEmail(email.id, { linked_case_id: caseId });
+      } catch (err) {
+        console.error('Failed to persist email link:', err);
       }
+    }
 
-      // 2. Process attachments with AI (Async)
-      // We map the mock attachments to classified document types
-      const classifiedDocs: DocumentAttachment[] = await Promise.all(email.attachments.map(async (att) => {
+    const linkLog = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'user' as const,
+      message: `Linked email "${email.subject}" from ${email.from}.`,
+      timestamp: new Date().toISOString(),
+      author: currentUserName,
+    };
+
+    setCases(prevCases => prevCases.map(c => {
+      if (c.id !== caseId) return c;
+      const currentEmails = c.linkedEmails || [];
+      const alreadyLinked = currentEmails.some(e => e.id === email.id);
+      const updatedCase = {
+        ...c,
+        activityLog: [linkLog, ...c.activityLog],
+        linkedEmails: alreadyLinked ? currentEmails : [email, ...currentEmails],
+      };
+      if (activeFirm) {
+        upsertCase(updatedCase, activeFirm.id);
+      }
+      return updatedCase;
+    }));
+
+    try {
+      const classifiedDocs: DocumentAttachment[] = await Promise.all(
+        email.attachments.map(async (att) => {
           const docType = await classifyAttachmentType(att.name, email.subject, email.body);
           return {
-              type: docType, // AI determined type
-              fileName: att.name,
-              fileData: null, // placeholder since we don't have real files
-              mimeType: att.type === 'pdf' ? 'application/pdf' : 'image/jpeg',
-              source: `Email: ${email.subject}`,
-              tags: ['Email Attachment']
+            type: docType,
+            fileName: att.name,
+            fileData: null,
+            mimeType: att.type === 'pdf' ? 'application/pdf' : 'image/jpeg',
+            source: `Email: ${email.subject}`,
+            tags: ['Email Attachment'],
           };
-      }));
+        })
+      );
 
-      // 3. Update Case with new documents and logs
-      setCases(prevCases => {
-        const updated = prevCases.map(c => {
-          if (c.id === caseId) {
-            const newLog = {
-              id: Math.random().toString(36).substr(2, 9),
-              type: 'user' as const,
-              message: `Linked email "${email.subject}" from ${email.from}. Added ${classifiedDocs.length} attachment(s).`,
-              timestamp: new Date().toISOString(),
-              author: currentUserName,
-            };
-            const currentEmails = c.linkedEmails || [];
-            const alreadyLinked = currentEmails.some(e => e.id === email.id);
-            const newLinkedEmails = alreadyLinked ? currentEmails : [email, ...currentEmails];
-            const updatedCase = {
-              ...c,
-              documents: [...c.documents, ...classifiedDocs],
-              activityLog: [newLog, ...c.activityLog],
-              linkedEmails: newLinkedEmails
-            };
-            if (activeFirm) {
-              upsertCase(updatedCase, activeFirm.id);
-            }
-            return updatedCase;
+      if (classifiedDocs.length > 0) {
+        setCases(prevCases => prevCases.map(c => {
+          if (c.id !== caseId) return c;
+          const docLog = {
+            id: Math.random().toString(36).substr(2, 9),
+            type: 'user' as const,
+            message: `Classified ${classifiedDocs.length} attachment(s) from "${email.subject}".`,
+            timestamp: new Date().toISOString(),
+            author: currentUserName,
+          };
+          const updatedCase = {
+            ...c,
+            documents: [...c.documents, ...classifiedDocs],
+            activityLog: [docLog, ...c.activityLog],
+          };
+          if (activeFirm) {
+            upsertCase(updatedCase, activeFirm.id);
           }
-          return c;
-        });
-        return updated;
-      });
+          return updatedCase;
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to classify attachments:', err);
+    }
   };
 
   const handleProcessAttachment = async (caseId: string, email: Email, attachmentIndex: number) => {
