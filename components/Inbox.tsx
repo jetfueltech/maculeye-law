@@ -72,8 +72,9 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
           const newEmails = synced.filter(e => !existingIds.has(e.id));
           return [...newEmails, ...prev];
         });
-      } else if (conn) {
-        await runSync();
+      }
+      if (conn) {
+        await runSync(synced.length > 0);
       }
     })();
   }, [firmId]);
