@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Email, EmailThread, CaseFile, EmailCategory } from '../../types';
 import { EMAIL_CATEGORY_LABELS } from '../../types';
-import { getAttachmentDownloadUrl } from '../../services/outlookService';
+import { getAttachmentDownloadUrl, copyAttachmentToCaseDocuments } from '../../services/outlookService';
 import { ComposeEmail, ComposeMode } from './ComposeEmail';
 
 interface ThreadDetailProps {
@@ -163,7 +163,10 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewName, setPreviewName] = useState<string>('');
   const [previewContentType, setPreviewContentType] = useState<string>('');
+  const [previewStoragePath, setPreviewStoragePath] = useState<string>('');
   const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
+  const [addingToDocuments, setAddingToDocuments] = useState(false);
+  const [addedToDocuments, setAddedToDocuments] = useState(false);
   const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
   const [composeTargetEmail, setComposeTargetEmail] = useState<Email | null>(null);
 
@@ -219,8 +222,39 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
       setPreviewUrl(url);
       setPreviewName(att.name);
       setPreviewContentType(att.contentType || '');
+      setPreviewStoragePath(att.storagePath);
+      setAddedToDocuments(false);
     }
     setLoadingPreview(null);
+  };
+
+  const handleAddToDocuments = async () => {
+    if (!previewStoragePath || !thread.linkedCaseId) return;
+    setAddingToDocuments(true);
+    const result = await copyAttachmentToCaseDocuments(
+      previewStoragePath,
+      thread.linkedCaseId,
+      previewName,
+      previewContentType || 'application/octet-stream'
+    );
+    if ('error' in result) {
+      console.error('Failed to add to documents:', result.error);
+    } else {
+      const linkedCase = cases.find(c => c.id === thread.linkedCaseId);
+      if (linkedCase && onProcessAttachment) {
+        const msg = thread.messages.find(m =>
+          m.attachments?.some(a => a.storagePath === previewStoragePath)
+        );
+        if (msg) {
+          const attIdx = msg.attachments!.findIndex(a => a.storagePath === previewStoragePath);
+          if (attIdx >= 0) {
+            onProcessAttachment(thread.linkedCaseId, msg, attIdx);
+          }
+        }
+      }
+      setAddedToDocuments(true);
+    }
+    setAddingToDocuments(false);
   };
 
   const latestEmail = thread.messages[0];
@@ -592,8 +626,28 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                   Open
                 </a>
+                {thread.linkedCaseId && previewStoragePath && (
+                  <button
+                    onClick={handleAddToDocuments}
+                    disabled={addingToDocuments || addedToDocuments}
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                      addedToDocuments
+                        ? 'text-green-700 bg-green-50 border border-green-200'
+                        : 'text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300'
+                    } disabled:opacity-60`}
+                  >
+                    {addingToDocuments ? (
+                      <div className="w-3.5 h-3.5 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                    ) : addedToDocuments ? (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    )}
+                    {addedToDocuments ? 'Added' : 'Add to Documents'}
+                  </button>
+                )}
                 <button
-                  onClick={() => { setPreviewUrl(null); setPreviewName(''); setPreviewContentType(''); }}
+                  onClick={() => { setPreviewUrl(null); setPreviewName(''); setPreviewContentType(''); setPreviewStoragePath(''); }}
                   className="p-1.5 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
