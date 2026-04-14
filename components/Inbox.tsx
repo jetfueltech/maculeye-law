@@ -3,6 +3,7 @@ import { Email, CaseFile, EmailCategory, EMAIL_CATEGORY_LABELS, EmailThread } fr
 import { matchEmailToCase } from '../services/geminiService';
 import { getSyncedEmails, syncOutlookEmails, updateSyncedEmail, getOutlookConnection, groupEmailsIntoThreads } from '../services/outlookService';
 import { ThreadDetail } from './inbox/ThreadDetail';
+import { ComposeEmail } from './inbox/ComposeEmail';
 
 interface InboxProps {
   cases: CaseFile[];
@@ -23,6 +24,8 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [isSyncingOutlook, setIsSyncingOutlook] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [showNewCompose, setShowNewCompose] = useState(false);
+  const [connectedEmail, setConnectedEmail] = useState('');
   const hasLoadedSynced = useRef(false);
   const autoSyncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -59,6 +62,7 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
     (async () => {
       const conn = await getOutlookConnection(firmId);
       setOutlookConnected(!!conn);
+      if (conn?.email_address) setConnectedEmail(conn.email_address);
 
       const synced = await getSyncedEmails(firmId);
       if (synced.length > 0) {
@@ -207,6 +211,20 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
 
   const selectedLatestEmail = selectedThread?.messages[0] || null;
 
+  const handleEmailSent = async () => {
+    if (firmId) {
+      setSyncMessage('Email sent');
+      setTimeout(() => setSyncMessage(''), 3000);
+      const synced = await getSyncedEmails(firmId);
+      if (synced.length > 0) {
+        setEmails(prev => {
+          const mockEmails = prev.filter(e => e.id.startsWith('e'));
+          return [...synced, ...mockEmails];
+        });
+      }
+    }
+  };
+
   const handleConfirmLink = (caseId: string) => {
     if (selectedThread && selectedLatestEmail) {
       performLink(caseId, selectedLatestEmail);
@@ -251,6 +269,13 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
                   )}
                 </button>
               )}
+              <button
+                onClick={() => setShowNewCompose(true)}
+                className="text-xs font-bold px-3 py-1.5 rounded-full flex items-center transition-all bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+              >
+                <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Compose
+              </button>
               <button
                 onClick={runAIAutoSort}
                 disabled={isSorting}
@@ -387,12 +412,32 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
           getCaseTag={getCaseTag}
           performLink={performLink}
           CATEGORY_COLORS={CATEGORY_COLORS}
+          firmId={firmId}
+          senderEmail={connectedEmail}
+          onEmailSent={handleEmailSent}
         />
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-stone-400">
           <svg className="w-16 h-16 mb-4 text-stone-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
           <p className="font-medium">Select a conversation to view</p>
           <p className="text-xs mt-1 text-stone-300">Emails are grouped by conversation thread</p>
+        </div>
+      )}
+
+      {showNewCompose && firmId && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden mb-8 animate-slide-up">
+            <ComposeEmail
+              mode="new"
+              firmId={firmId}
+              senderEmail={connectedEmail}
+              onClose={() => setShowNewCompose(false)}
+              onSent={() => {
+                setShowNewCompose(false);
+                handleEmailSent();
+              }}
+            />
+          </div>
         </div>
       )}
 

@@ -261,6 +261,35 @@ export async function copyAttachmentToCaseDocuments(
   return { url: urlData.publicUrl, path: destPath };
 }
 
+export interface SendEmailParams {
+  to: string[];
+  cc?: string[];
+  subject: string;
+  bodyHtml: string;
+  replyToMessageId?: string;
+  firmId: string;
+}
+
+export async function sendOutlookEmail(params: SendEmailParams): Promise<{ success: boolean; error?: string }> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return { success: false, error: 'Not authenticated' };
+
+  const res = await fetch(
+    `${SUPABASE_URL}/functions/v1/send-email`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(params),
+    }
+  );
+  const data = await res.json();
+  if (!res.ok || data.error) return { success: false, error: data.error || 'Failed to send' };
+  return { success: true };
+}
+
 export async function updateSyncedEmail(emailId: string, updates: {
   linked_case_id?: string | null;
   category?: string | null;

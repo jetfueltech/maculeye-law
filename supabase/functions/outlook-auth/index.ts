@@ -62,6 +62,7 @@ Deno.serve(async (req: Request) => {
       "offline_access",
       "Mail.Read",
       "Mail.ReadWrite",
+      "Mail.Send",
       "User.Read",
     ];
 

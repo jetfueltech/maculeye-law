@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { Email, EmailThread, CaseFile, EmailCategory } from '../../types';
 import { EMAIL_CATEGORY_LABELS } from '../../types';
 import { getAttachmentDownloadUrl } from '../../services/outlookService';
+import { ComposeEmail, ComposeMode } from './ComposeEmail';
 
 interface ThreadDetailProps {
   thread: EmailThread;
@@ -11,6 +12,9 @@ interface ThreadDetailProps {
   getCaseTag: (caseId: string) => string;
   performLink: (caseId: string, email: Email) => void;
   CATEGORY_COLORS: Record<EmailCategory, string>;
+  firmId?: string;
+  senderEmail?: string;
+  onEmailSent?: () => void;
 }
 
 function formatFullDateTime(isoOrRelative: string, receivedAt?: string): string {
@@ -146,6 +150,9 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
   getCaseTag,
   performLink,
   CATEGORY_COLORS,
+  firmId,
+  senderEmail,
+  onEmailSent,
 }) => {
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(
     new Set([thread.messages[0]?.id])
@@ -157,6 +164,18 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
   const [previewName, setPreviewName] = useState<string>('');
   const [previewContentType, setPreviewContentType] = useState<string>('');
   const [loadingPreview, setLoadingPreview] = useState<string | null>(null);
+  const [composeMode, setComposeMode] = useState<ComposeMode | null>(null);
+  const [composeTargetEmail, setComposeTargetEmail] = useState<Email | null>(null);
+
+  const openCompose = (mode: ComposeMode, email?: Email) => {
+    setComposeMode(mode);
+    setComposeTargetEmail(email || thread.messages[0] || null);
+  };
+
+  const closeCompose = () => {
+    setComposeMode(null);
+    setComposeTargetEmail(null);
+  };
 
   const toggleMessage = (id: string) => {
     setExpandedMessages(prev => {
@@ -210,10 +229,17 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
   return (
     <div className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
       <div className="px-6 py-3 border-b border-stone-100 flex justify-between items-center bg-stone-50/50">
-        <div className="flex items-center gap-2">
-          <button className="p-1.5 hover:bg-stone-100 rounded-lg text-stone-500 transition-colors" title="Reply">
+        <div className="flex items-center gap-1">
+          <button onClick={() => openCompose('reply')} className="p-1.5 hover:bg-stone-100 rounded-lg text-stone-500 transition-colors" title="Reply">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
           </button>
+          <button onClick={() => openCompose('replyAll')} className="p-1.5 hover:bg-stone-100 rounded-lg text-stone-500 transition-colors" title="Reply All">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 10h10a8 8 0 018 8v2" opacity="0.4" /></svg>
+          </button>
+          <button onClick={() => openCompose('forward')} className="p-1.5 hover:bg-stone-100 rounded-lg text-stone-500 transition-colors" title="Forward">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+          </button>
+          <div className="w-px h-4 bg-stone-200 mx-0.5" />
           <button className="p-1.5 hover:bg-stone-100 rounded-lg text-stone-500 transition-colors" title="Delete">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
           </button>
@@ -372,6 +398,30 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
                       <EmailBodyRenderer email={email} />
                     </div>
 
+                    <div className="mt-4 pt-3 border-t border-stone-100 flex items-center gap-2">
+                      <button
+                        onClick={() => openCompose('reply', email)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                        Reply
+                      </button>
+                      <button
+                        onClick={() => openCompose('replyAll', email)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 10h10a8 8 0 018 8v2" opacity="0.4" /></svg>
+                        Reply All
+                      </button>
+                      <button
+                        onClick={() => openCompose('forward', email)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-stone-600 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 hover:border-stone-300 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        Forward
+                      </button>
+                    </div>
+
                     {email.attachments.length > 0 && (
                       <div className="mt-5 pt-4 border-t border-stone-100">
                         <h5 className="text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2.5 flex items-center">
@@ -481,6 +531,20 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
           })}
         </div>
       </div>
+
+      {composeMode && firmId && (
+        <ComposeEmail
+          mode={composeMode}
+          originalEmail={composeTargetEmail || undefined}
+          firmId={firmId}
+          senderEmail={senderEmail}
+          onClose={closeCompose}
+          onSent={() => {
+            closeCompose();
+            onEmailSent?.();
+          }}
+        />
+      )}
 
       {previewUrl && (
         <div

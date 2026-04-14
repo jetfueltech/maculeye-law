@@ -75,7 +75,7 @@ async function refreshAccessToken(
         refresh_token: refreshToken,
         grant_type: "refresh_token",
         scope:
-          "openid profile email offline_access Mail.Read Mail.ReadWrite User.Read",
+          "openid profile email offline_access Mail.Read Mail.ReadWrite Mail.Send User.Read",
       }),
     }
   );
