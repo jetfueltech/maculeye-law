@@ -27,6 +27,30 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
   const [isSyncingOutlook, setIsSyncingOutlook] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
   const hasLoadedSynced = useRef(false);
+  const autoSyncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const runSync = async (silent = false) => {
+    if (!firmId) return;
+    if (!silent) setIsSyncingOutlook(true);
+    setSyncMessage(silent ? '' : 'Syncing...');
+    const result = await syncOutlookEmails(firmId);
+    if (result.error) {
+      if (!silent) setSyncMessage(result.error);
+    } else {
+      const synced = await getSyncedEmails(firmId);
+      if (synced.length > 0) {
+        setEmails(prev => {
+          const mockEmails = prev.filter(e => e.id.startsWith('e'));
+          return [...synced, ...mockEmails];
+        });
+      }
+      if (!silent) {
+        setSyncMessage(result.synced > 0 ? `Synced ${result.synced} emails` : 'Up to date');
+        setTimeout(() => setSyncMessage(''), 4000);
+      }
+    }
+    if (!silent) setIsSyncingOutlook(false);
+  };
 
   useEffect(() => {
     if (!firmId || hasLoadedSynced.current) return;
@@ -43,31 +67,32 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
           const newEmails = synced.filter(e => !existingIds.has(e.id));
           return [...newEmails, ...prev];
         });
+      } else if (conn) {
+        await runSync();
       }
     })();
   }, [firmId]);
 
-  const handleOutlookSync = async () => {
-    if (!firmId) return;
-    setIsSyncingOutlook(true);
-    setSyncMessage('');
-    const result = await syncOutlookEmails(firmId);
-    if (result.error) {
-      setSyncMessage(result.error);
-    } else {
-      const synced = await getSyncedEmails(firmId);
-      if (synced.length > 0) {
-        setEmails(prev => {
-          const mockIds = new Set(prev.filter(e => e.id.startsWith('e')).map(e => e.id));
-          const mockEmails = prev.filter(e => mockIds.has(e.id));
-          return [...synced, ...mockEmails];
-        });
+  useEffect(() => {
+    if (!outlookConnected || !firmId) return;
+    autoSyncInterval.current = setInterval(() => runSync(true), 5 * 60 * 1000);
+    return () => {
+      if (autoSyncInterval.current) clearInterval(autoSyncInterval.current);
+    };
+  }, [outlookConnected, firmId]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'outlook_connected') {
+        setOutlookConnected(true);
+        runSync();
       }
-      setSyncMessage(`Synced ${result.synced} emails`);
-      setTimeout(() => setSyncMessage(''), 4000);
-    }
-    setIsSyncingOutlook(false);
-  };
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [firmId]);
+
+  const handleOutlookSync = () => runSync(false);
 
   const hasSimulatedRef = useRef(false);
 
