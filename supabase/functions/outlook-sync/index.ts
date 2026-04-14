@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 async function getSecrets(keys: string[]): Promise<Record<string, string>> {
@@ -145,13 +146,9 @@ Deno.serve(async (req: Request) => {
 
     const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const supabaseUser = createClient(
-      SUPABASE_URL,
-      authHeader.replace("Bearer ", ""),
-      {
-        global: { headers: { Authorization: authHeader } },
-      }
-    );
+    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
     const {
       data: { user },
       error: userError,
