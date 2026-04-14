@@ -73,20 +73,25 @@ const EmailBodyRenderer: React.FC<{ email: Email }> = ({ email }) => {
         <head>
           <meta charset="utf-8">
           <style>
-            body {
+            html, body {
               margin: 0;
-              padding: 16px;
+              padding: 0;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
               font-size: 14px;
               line-height: 1.6;
               color: #1c1917;
               word-wrap: break-word;
               overflow-wrap: break-word;
+              max-width: 100%;
+              overflow-x: hidden;
             }
+            body { padding: 16px; box-sizing: border-box; }
+            * { max-width: 100%; box-sizing: border-box; }
             img { max-width: 100%; height: auto; }
-            a { color: #2563eb; }
-            table { max-width: 100%; }
-            pre, code { white-space: pre-wrap; word-wrap: break-word; }
+            a { color: #2563eb; word-break: break-all; }
+            table { max-width: 100%; table-layout: fixed; overflow-wrap: break-word; }
+            td, th { overflow-wrap: break-word; word-break: break-word; }
+            pre, code { white-space: pre-wrap; word-wrap: break-word; overflow-x: auto; }
             blockquote {
               border-left: 3px solid #d6d3d1;
               margin: 8px 0;
@@ -203,7 +208,7 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
   const aiSuggestion = latestEmail?.aiMatch;
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex-1 flex flex-col bg-white min-w-0 overflow-hidden">
       <div className="px-6 py-3 border-b border-stone-100 flex justify-between items-center bg-stone-50/50">
         <div className="flex items-center gap-2">
           <button className="p-1.5 hover:bg-stone-100 rounded-lg text-stone-500 transition-colors" title="Reply">
@@ -272,7 +277,7 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
         <div className="px-6 pt-5 pb-3">
           <h1 className="text-lg font-bold text-stone-900 leading-tight">{thread.subject}</h1>
           <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -296,7 +301,7 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
           </div>
         </div>
 
-        <div className="px-6 pb-6 space-y-3">
+        <div className="px-6 pb-6 space-y-3 min-w-0">
           {thread.messages.map((email) => {
             const isExpanded = expandedMessages.has(email.id);
             const fullDate = formatFullDateTime(email.date, email.receivedAt);
@@ -343,18 +348,18 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
                 </div>
 
                 {isExpanded && (
-                  <div className="px-5 pb-5 border-t border-stone-100">
+                  <div className="px-5 pb-5 border-t border-stone-100 min-w-0 overflow-hidden">
                     <div className="py-3 space-y-1.5">
-                      <div className="flex items-start">
+                      <div className="flex items-start min-w-0">
                         <span className="text-[11px] text-stone-400 w-12 flex-shrink-0 pt-px">From</span>
-                        <span className="text-[11px] text-stone-700 font-medium">
+                        <span className="text-[11px] text-stone-700 font-medium break-all min-w-0">
                           {email.from} &lt;{email.fromEmail}&gt;
                         </span>
                       </div>
                       {email.toRecipients && (
-                        <div className="flex items-start">
+                        <div className="flex items-start min-w-0">
                           <span className="text-[11px] text-stone-400 w-12 flex-shrink-0 pt-px">To</span>
-                          <span className="text-[11px] text-stone-600">{email.toRecipients}</span>
+                          <span className="text-[11px] text-stone-600 break-words min-w-0">{email.toRecipients}</span>
                         </div>
                       )}
                       <div className="flex items-start">
@@ -363,7 +368,7 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
                       </div>
                     </div>
 
-                    <div className="border-t border-stone-100 pt-4">
+                    <div className="border-t border-stone-100 pt-4 overflow-hidden">
                       <EmailBodyRenderer email={email} />
                     </div>
 
