@@ -34,7 +34,7 @@ export async function startOutlookAuth(firmId: string, userId: string): Promise<
   return data.url || null;
 }
 
-export async function syncOutlookEmails(firmId: string): Promise<{ synced: number; error?: string }> {
+export async function syncOutlookEmails(firmId: string): Promise<{ synced: number; attachments?: number; error?: string }> {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return { synced: 0, error: 'Not authenticated' };
 
@@ -49,7 +49,7 @@ export async function syncOutlookEmails(firmId: string): Promise<{ synced: numbe
   );
   const data = await res.json();
   if (data.error) return { synced: 0, error: data.error };
-  return { synced: data.synced || 0 };
+  return { synced: data.synced || 0, attachments: data.attachments || 0 };
 }
 
 export async function disconnectOutlook(firmId: string): Promise<void> {
@@ -222,6 +222,43 @@ export async function getAttachmentDownloadUrl(storagePath: string): Promise<str
     .from('email-attachments')
     .createSignedUrl(storagePath, 3600);
   return data?.signedUrl || null;
+}
+
+export async function copyAttachmentToCaseDocuments(
+  storagePath: string,
+  caseId: string,
+  fileName: string,
+  contentType: string
+): Promise<{ url: string; path: string } | { error: string }> {
+  const { data: fileData, error: dlError } = await supabase.storage
+    .from('email-attachments')
+    .download(storagePath);
+
+  if (dlError || !fileData) {
+    return { error: dlError?.message || 'Failed to download attachment' };
+  }
+
+  const timestamp = Date.now();
+  const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const destPath = `${caseId}/${timestamp}_${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('case-documents')
+    .upload(destPath, fileData, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: contentType || 'application/octet-stream',
+    });
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const { data: urlData } = supabase.storage
+    .from('case-documents')
+    .getPublicUrl(destPath);
+
+  return { url: urlData.publicUrl, path: destPath };
 }
 
 export async function updateSyncedEmail(emailId: string, updates: {

@@ -21,7 +21,7 @@ import { FloatingCallBar, ActiveCallInfo } from './components/FloatingCallBar';
 import { classifyAttachmentType } from './services/geminiService';
 import { applyWorkflowToCase } from './services/workflowEngine';
 import { getCasesByFirm, upsertCase, generateCaseNumber, deleteCase } from './services/caseService';
-import { updateSyncedEmail } from './services/outlookService';
+import { updateSyncedEmail, copyAttachmentToCaseDocuments } from './services/outlookService';
 
 // Initial Mock Emails moved from Inbox to App for persistence
 const MOCK_EMAILS: Email[] = [
@@ -249,13 +249,34 @@ function AppContent() {
     if (!att) return;
 
     const docType = await classifyAttachmentType(att.name, email.subject, email.body);
+    const contentType = att.contentType || (att.type === 'pdf' ? 'application/pdf' : att.type === 'image' ? 'image/jpeg' : 'application/octet-stream');
+
+    let storagePath: string | undefined;
+    let storageUrl: string | undefined;
+
+    if (att.storagePath) {
+      const result = await copyAttachmentToCaseDocuments(
+        att.storagePath,
+        caseId,
+        att.name,
+        contentType
+      );
+      if ('url' in result) {
+        storagePath = result.path;
+        storageUrl = result.url;
+      }
+    }
+
     const newDoc: DocumentAttachment = {
       type: docType,
       fileName: att.name,
       fileData: null,
-      mimeType: att.type === 'pdf' ? 'application/pdf' : 'image/jpeg',
+      mimeType: contentType,
       source: `Email: ${email.subject}`,
       tags: ['Email Attachment'],
+      uploadedAt: new Date().toISOString(),
+      ...(storagePath ? { storagePath } : {}),
+      ...(storageUrl ? { storageUrl } : {}),
     };
 
     setCases(prevCases => prevCases.map(c => {
@@ -266,7 +287,7 @@ function AppContent() {
         const log = {
           id: Math.random().toString(36).substr(2, 9),
           type: 'user' as const,
-          message: `Processed attachment "${att.name}" from email "${email.subject}" into case documents.`,
+          message: `Ingested attachment "${att.name}" from email "${email.subject}" into case documents.`,
           timestamp: new Date().toISOString(),
           author: currentUserName,
         };

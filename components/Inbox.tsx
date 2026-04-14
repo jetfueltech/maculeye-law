@@ -42,8 +42,11 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
         });
       }
       if (!silent) {
-        setSyncMessage(result.synced > 0 ? `Synced ${result.synced} emails` : 'Up to date');
-        setTimeout(() => setSyncMessage(''), 4000);
+        const parts: string[] = [];
+        if (result.synced > 0) parts.push(`${result.synced} emails`);
+        if (result.attachments && result.attachments > 0) parts.push(`${result.attachments} attachments`);
+        setSyncMessage(parts.length > 0 ? `Synced ${parts.join(', ')}` : 'Up to date');
+        setTimeout(() => setSyncMessage(''), 5000);
       }
     }
     if (!silent) setIsSyncingOutlook(false);
