@@ -120,16 +120,34 @@ async function fetchAttachments(
   accessToken: string,
   messageId: string
 ): Promise<GraphAttachment[]> {
-  const res = await fetch(
-    `https://graph.microsoft.com/v1.0/me/messages/${messageId}/attachments`,
+  const listRes = await fetch(
+    `https://graph.microsoft.com/v1.0/me/messages/${messageId}/attachments?$select=id,name,contentType,size,microsoft.graph.fileAttachment/contentBytes`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return (data.value || []).filter(
+  if (!listRes.ok) return [];
+  const listData = await listRes.json();
+  const items = (listData.value || []).filter(
     (a: GraphAttachment) =>
-      a["@odata.type"] === "#microsoft.graph.fileAttachment" && a.contentBytes
+      a["@odata.type"] === "#microsoft.graph.fileAttachment"
   );
+
+  const results: GraphAttachment[] = [];
+  for (const item of items) {
+    if (item.contentBytes) {
+      results.push(item);
+      continue;
+    }
+    const detailRes = await fetch(
+      `https://graph.microsoft.com/v1.0/me/messages/${messageId}/attachments/${item.id}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!detailRes.ok) continue;
+    const detail: GraphAttachment = await detailRes.json();
+    if (detail.contentBytes) {
+      results.push(detail);
+    }
+  }
+  return results;
 }
 
 function formatFileSize(bytes: number): string {

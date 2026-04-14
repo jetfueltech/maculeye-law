@@ -306,6 +306,8 @@ export interface Email {
   fromEmail: string;
   subject: string;
   body: string;
+  bodyHtml?: string;
+  toRecipients?: string;
   date: string;
   isRead: boolean;
   direction: 'inbound' | 'outbound';

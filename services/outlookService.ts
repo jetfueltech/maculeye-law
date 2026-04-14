@@ -114,6 +114,8 @@ function mapRowToEmail(row: SyncedEmailRow, dbAttachments?: AttachmentRow[]): Em
     fromEmail: row.from_email,
     subject: row.subject,
     body: row.body_preview || stripHtml(row.body_html),
+    bodyHtml: row.body_html || undefined,
+    toRecipients: row.to_recipients || undefined,
     date: formatEmailDate(row.received_at),
     isRead: row.is_read,
     direction: (row.direction === 'outbound' ? 'outbound' : 'inbound') as 'inbound' | 'outbound',

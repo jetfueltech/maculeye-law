@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import type { Email, EmailThread, CaseFile, DocumentAttachment, EmailCategory } from '../../types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import type { Email, EmailThread, CaseFile, EmailCategory } from '../../types';
 import { EMAIL_CATEGORY_LABELS } from '../../types';
 import { getAttachmentDownloadUrl } from '../../services/outlookService';
 
@@ -12,6 +12,94 @@ interface ThreadDetailProps {
   performLink: (caseId: string, email: Email) => void;
   CATEGORY_COLORS: Record<EmailCategory, string>;
 }
+
+const EmailBodyRenderer: React.FC<{ email: Email }> = ({ email }) => {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeHeight, setIframeHeight] = useState(200);
+
+  const hasHtml = !!email.bodyHtml && email.bodyHtml.trim().length > 0 &&
+    email.bodyHtml !== email.body;
+
+  const adjustHeight = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe?.contentDocument?.body) return;
+    const h = iframe.contentDocument.body.scrollHeight;
+    if (h > 0) setIframeHeight(Math.min(h + 32, 800));
+  }, []);
+
+  useEffect(() => {
+    if (!hasHtml) return;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const writeContent = () => {
+      const doc = iframe.contentDocument;
+      if (!doc) return;
+
+      const wrappedHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {
+              margin: 0;
+              padding: 16px;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              font-size: 14px;
+              line-height: 1.6;
+              color: #1c1917;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+            }
+            img { max-width: 100%; height: auto; }
+            a { color: #2563eb; }
+            table { max-width: 100%; }
+            pre, code { white-space: pre-wrap; word-wrap: break-word; }
+            blockquote {
+              border-left: 3px solid #d6d3d1;
+              margin: 8px 0;
+              padding: 4px 12px;
+              color: #57534e;
+            }
+          </style>
+        </head>
+        <body>${email.bodyHtml}</body>
+        </html>
+      `;
+
+      doc.open();
+      doc.write(wrappedHtml);
+      doc.close();
+
+      setTimeout(adjustHeight, 100);
+      setTimeout(adjustHeight, 500);
+    };
+
+    if (iframe.contentDocument?.readyState === 'complete') {
+      writeContent();
+    } else {
+      iframe.addEventListener('load', writeContent, { once: true });
+    }
+  }, [email.bodyHtml, hasHtml, adjustHeight]);
+
+  if (hasHtml) {
+    return (
+      <iframe
+        ref={iframeRef}
+        sandbox="allow-same-origin"
+        style={{ width: '100%', height: iframeHeight, border: 'none', display: 'block' }}
+        title="Email content"
+      />
+    );
+  }
+
+  return (
+    <div className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap font-sans">
+      {email.body}
+    </div>
+  );
+};
 
 export const ThreadDetail: React.FC<ThreadDetailProps> = ({
   thread,
@@ -138,13 +226,9 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <div className="mb-4">
           <h1 className="text-xl font-bold text-stone-900">{thread.subject}</h1>
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
             <span className="text-xs text-stone-500">
               {thread.messageCount} message{thread.messageCount !== 1 ? 's' : ''}
-            </span>
-            <span className="text-xs text-stone-400">|</span>
-            <span className="text-xs text-stone-500">
-              {thread.participants.join(', ')}
             </span>
             {thread.totalAttachments > 0 && (
               <>
@@ -166,7 +250,6 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
         <div className="space-y-2">
           {thread.messages.map((email, idx) => {
             const isExpanded = expandedMessages.has(email.id);
-            const isLatest = idx === 0;
 
             return (
               <div
@@ -189,7 +272,10 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
                         <span className="text-[10px] font-medium text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">Sent</span>
                       )}
                       {!isExpanded && email.attachments.length > 0 && (
-                        <svg className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                        <span className="inline-flex items-center gap-0.5 text-stone-400">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                          <span className="text-[10px]">{email.attachments.length}</span>
+                        </span>
                       )}
                     </div>
                     {!isExpanded && (
@@ -204,15 +290,27 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
 
                 {isExpanded && (
                   <div className="px-4 pb-4 border-t border-stone-100">
-                    <div className="flex items-center justify-between py-2 mb-2">
-                      <p className="text-xs text-stone-500">
-                        <span className="font-medium text-stone-600">{email.from}</span>
-                        {' '}&lt;{email.fromEmail}&gt;
-                      </p>
-                      <span className="text-xs text-stone-400">{email.date}</span>
+                    <div className="py-3 mb-1 space-y-1">
+                      <div className="flex items-start gap-2">
+                        <span className="text-[11px] text-stone-400 w-10 flex-shrink-0 pt-0.5">From</span>
+                        <span className="text-[11px] text-stone-700 font-medium">
+                          {email.from} &lt;{email.fromEmail}&gt;
+                        </span>
+                      </div>
+                      {email.toRecipients && (
+                        <div className="flex items-start gap-2">
+                          <span className="text-[11px] text-stone-400 w-10 flex-shrink-0 pt-0.5">To</span>
+                          <span className="text-[11px] text-stone-700">{email.toRecipients}</span>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-2">
+                        <span className="text-[11px] text-stone-400 w-10 flex-shrink-0 pt-0.5">Date</span>
+                        <span className="text-[11px] text-stone-700">{email.date}</span>
+                      </div>
                     </div>
-                    <div className="prose prose-sm max-w-none text-stone-700 whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                      {email.body}
+
+                    <div className="border-t border-stone-100 pt-3">
+                      <EmailBodyRenderer email={email} />
                     </div>
 
                     {email.attachments.length > 0 && (
