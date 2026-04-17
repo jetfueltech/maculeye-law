@@ -21,7 +21,9 @@ import { uploadDocument } from '../services/documentStorageService';
 import { generateDocumentNameWithExt } from '../services/documentNamingService';
 import { useFirm } from '../contexts/FirmContext';
 import { FormTemplate, getFormTemplates } from '../services/formTemplateService';
+import { sendRingCentralSms, getRingCentralConnection } from '../services/ringcentralService';
 import { CallHistoryPanel } from './CallHistoryPanel';
+import { EmailThreadView } from './inbox/EmailThreadView';
 
 const DOC_TYPE_ICONS: Record<string, { bg: string; text: string; icon: string; label: string }> = {
   retainer: { bg: 'bg-emerald-50', text: 'text-emerald-600', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', label: 'Retainer' },
@@ -186,6 +188,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   const [showDocGenerator, setShowDocGenerator] = useState(false);
   const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   const [docContext, setDocContext] = useState<DocumentContext | undefined>(undefined);
+  // Full-page legal docs experience: lets user pick multiple forms and queue them.
+  const [showLegalDocsPage, setShowLegalDocsPage] = useState(false);
+  const [selectedForms, setSelectedForms] = useState<DocumentFormType[]>([]);
+  const [docQueue, setDocQueue] = useState<DocumentFormType[]>([]);
+  const [docQueueIndex, setDocQueueIndex] = useState(0);
   const overviewFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOverviewDocDragOver = useCallback((e: React.DragEvent) => {
@@ -464,30 +471,53 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
     }
   };
 
-  const handleSendSMS = () => {
+  const handleSendSMS = async () => {
       if (!smsMessage.trim()) return;
       setSmsSending(true);
-      setTimeout(() => {
-          const newLog: CommunicationLog = {
-              id: Math.random().toString(36).substr(2, 9),
-              type: 'sms',
-              direction: 'outbound',
-              contactName: caseData.clientName,
-              contactPhone: caseData.clientPhone,
-              timestamp: new Date().toISOString(),
-              status: 'sent',
-              content: smsMessage
-          };
-          let updatedCase = {
-              ...caseData,
-              communications: [newLog, ...(caseData.communications || [])]
-          };
-          updatedCase = addActivity(updatedCase, `SMS sent to ${caseData.clientName}`, 'user');
-          onUpdateCase(updatedCase);
-          setSmsSending(false);
-          setSmsModalOpen(false);
-          setSmsMessage('');
-      }, 1000);
+
+      // If RingCentral is connected for this user+firm, send through RC.
+      // Otherwise fall back to logging the SMS locally (existing mock behavior).
+      let sentViaRc = false;
+      if (activeFirm?.id && profile?.id && caseData.clientPhone) {
+        try {
+          const rcConn = await getRingCentralConnection(activeFirm.id, profile.id);
+          if (rcConn) {
+            const result = await sendRingCentralSms({
+              firmId: activeFirm.id,
+              userId: profile.id,
+              toNumber: caseData.clientPhone,
+              body: smsMessage,
+              caseId: caseData.id,
+            });
+            if (!result.error) sentViaRc = true;
+            else {
+              alert(`RingCentral SMS failed:\n\n${result.error}\n\nMessage was logged locally.`);
+            }
+          }
+        } catch (err) {
+          console.warn('RingCentral SMS error:', err);
+        }
+      }
+
+      const newLog: CommunicationLog = {
+          id: Math.random().toString(36).substr(2, 9),
+          type: 'sms',
+          direction: 'outbound',
+          contactName: caseData.clientName,
+          contactPhone: caseData.clientPhone,
+          timestamp: new Date().toISOString(),
+          status: 'sent',
+          content: smsMessage
+      };
+      let updatedCase = {
+          ...caseData,
+          communications: [newLog, ...(caseData.communications || [])]
+      };
+      updatedCase = addActivity(updatedCase, `SMS ${sentViaRc ? 'sent via RingCentral' : 'logged'} to ${caseData.clientName}`, 'user');
+      onUpdateCase(updatedCase);
+      setSmsSending(false);
+      setSmsModalOpen(false);
+      setSmsMessage('');
   };
 
   const runAIAnalysis = async () => {
@@ -609,16 +639,31 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
       emailThreads.get(key)?.push(email);
   });
 
+  // Pick the best available timestamp from an Email. `receivedAt` is the
+  // reliable ISO string from Outlook sync; `date` can be a display string
+  // like "10:45 AM" or "Just Now" for mock emails.
+  const emailTimestamp = (e: Email): string => {
+    if (e.receivedAt) {
+      const d = new Date(e.receivedAt);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    const d2 = new Date(e.date);
+    if (!isNaN(d2.getTime())) return d2.toISOString();
+    return new Date().toISOString();
+  };
+
   const threadedCommunications = [
       ...Array.from(emailThreads.entries()).map(([key, emails]) => {
-          const sortedThread = [...emails].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          const sortedThread = [...emails].sort((a, b) =>
+            new Date(emailTimestamp(a)).getTime() - new Date(emailTimestamp(b)).getTime()
+          );
           const latestEmail = sortedThread[sortedThread.length - 1];
           return {
               id: key,
               type: 'email-thread',
               direction: latestEmail.direction,
               contactName: latestEmail.from,
-              timestamp: latestEmail.date.includes('Just') ? new Date().toISOString() : latestEmail.date,
+              timestamp: emailTimestamp(latestEmail),
               content: latestEmail.subject,
               threadMessages: sortedThread,
               count: emails.length
@@ -632,6 +677,324 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
   ].sort((a, b) => {
       return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
   });
+
+  // Full-page legal docs selection page. Short-circuits the case detail view.
+  if (showLegalDocsPage) {
+    // LOR templates (all variants and custom ones) are consolidated under the combined LOR card.
+    const isLorTemplate = (t: { form_key: string; name: string }) => {
+      if (t.form_key === 'rep_lien_1p' || t.form_key === 'rep_lien_3p') return true;
+      const n = (t.name || '').toLowerCase();
+      return n.startsWith('letter of representation') || n.startsWith('lor ') || n.startsWith('lor&') || n.includes('lor & lien') || n.includes('lor + lien');
+    };
+    const customOptions = formTemplates.filter(t => t.is_active && !isLorTemplate(t) && t.form_key !== 'intake_summary')
+      .map(t => ({ key: t.form_key as DocumentFormType, title: t.name, desc: t.description || '' }));
+
+    // The built-in option set (shown when no custom templates exist). Client Intake Summary removed.
+    const builtInOptions = [
+      { key: 'foia' as DocumentFormType, title: 'Chicago FOIA Package', desc: 'Request letter, CPD form, and crash report attachment placeholder.' },
+      { key: 'preservation_of_evidence' as DocumentFormType, title: 'Preservation of Evidence', desc: 'Formal demand to preserve surveillance footage near the accident location.' },
+      { key: 'sap_intake_form' as DocumentFormType, title: 'SAP Intake Form', desc: 'Auto-populated intake spreadsheet with all case data, providers, and insurance.' },
+      { key: 'bill_request' as DocumentFormType, title: 'Medical Records & Bills Request', desc: 'Rush request for all medical records and itemized bills with HIPAA authorization attached.' },
+    ];
+    const nonLorOptions = customOptions.length > 0 ? customOptions : builtInOptions;
+
+    // Title lookup covers LOR variants + the custom/built-in options.
+    const titleFor = (key: DocumentFormType): string | undefined => {
+      if (key === 'rep_lien_1p') return 'Letter of Representation + Lien — 1P (Client Insurance)';
+      if (key === 'rep_lien_3p') return 'Letter of Representation + Lien — 3P (Defendant Insurance)';
+      const match = customOptions.find(o => o.key === key) || builtInOptions.find(o => o.key === key);
+      return match?.title;
+    };
+
+    const lorSelected = selectedForms.includes('rep_lien_1p') || selectedForms.includes('rep_lien_3p');
+    const lor1pSelected = selectedForms.includes('rep_lien_1p');
+    const lor3pSelected = selectedForms.includes('rep_lien_3p');
+
+    const toggleForm = (key: DocumentFormType) => {
+      setSelectedForms(prev => prev.includes(key) ? prev.filter(f => f !== key) : [...prev, key]);
+    };
+    const toggleLorCard = () => {
+      if (lorSelected) {
+        // Unselecting clears both variants.
+        setSelectedForms(prev => prev.filter(f => f !== 'rep_lien_1p' && f !== 'rep_lien_3p'));
+      } else {
+        // Selecting the card defaults to 3P (most common) — user can toggle to add 1P.
+        setSelectedForms(prev => [...prev, 'rep_lien_3p' as DocumentFormType]);
+      }
+    };
+    const toggleLorVariant = (variant: 'rep_lien_1p' | 'rep_lien_3p') => {
+      setSelectedForms(prev => {
+        const hasIt = prev.includes(variant);
+        if (hasIt) {
+          // Prevent unselecting the last variant while the card is "on" — force the card off.
+          const afterRemove = prev.filter(f => f !== variant);
+          const stillHasOther = afterRemove.includes('rep_lien_1p') || afterRemove.includes('rep_lien_3p');
+          if (!stillHasOther) {
+            // Keep at least one variant selected; ignore the click.
+            return prev;
+          }
+          return afterRemove;
+        }
+        return [...prev, variant];
+      });
+    };
+
+    // Requirements / disabled checks
+    const billRequestRequiresProvider = selectedForms.includes('bill_request') && !selectedProviderId;
+
+    const startGeneration = () => {
+      if (selectedForms.length === 0) return;
+      // Build the queue, skipping preservation (it has its own dedicated tab).
+      const queue = selectedForms.filter(f => f !== 'preservation_of_evidence');
+      if (queue.length === 0) {
+        // Only preservation was selected — nothing to queue here.
+        setShowLegalDocsPage(false);
+        return;
+      }
+      setDocQueue(queue);
+      setDocQueueIndex(0);
+      const first = queue[0];
+      setSelectedForm(first);
+      setSelectedFormTitle(titleFor(first));
+      if (first === 'bill_request') {
+        const provider = caseData.medicalProviders?.find(p => p.id === selectedProviderId);
+        setDocContext(provider ? { provider } : undefined);
+      } else {
+        setDocContext(undefined);
+      }
+      setShowDocGenerator(true);
+    };
+
+    const formCardClass = (selected: boolean) => `flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${selected ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50'}`;
+
+    return (
+      <div className="animate-fade-in pb-20">
+        <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+          <div className="px-8 py-5 border-b border-stone-100 flex items-center justify-between bg-stone-50">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowLegalDocsPage(false)}
+                className="p-2 hover:bg-stone-100 rounded-full text-stone-500 hover:text-stone-700 transition-colors"
+                title="Back to case"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+              </button>
+              <div>
+                <h2 className="text-xl font-bold text-stone-900">Generate Legal Documents</h2>
+                <p className="text-xs text-stone-500 mt-0.5">Select one or more documents. Each will open in a preview window where you can print or save to case documents.</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-stone-400 uppercase tracking-wide font-bold">Client</div>
+              <div className="text-sm font-semibold text-stone-800">{caseData.clientName}</div>
+              {caseData.caseNumber && <div className="text-[11px] text-stone-500">#{caseData.caseNumber}</div>}
+            </div>
+          </div>
+
+          <div className="p-8 space-y-6">
+            {/* Form grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Letter of Representation + Lien — combined card with 1P/3P sub-toggles */}
+              <label className={formCardClass(lorSelected) + ' md:col-span-2'}>
+                <input
+                  type="checkbox"
+                  className="mt-1 w-5 h-5 text-blue-600 rounded border-stone-300 focus:ring-blue-500 cursor-pointer"
+                  checked={lorSelected}
+                  onChange={toggleLorCard}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-bold text-stone-900">Letter of Representation + Lien</span>
+                  </div>
+                  <p className="text-xs text-stone-500 mt-1">Generate LOR + lien for the client's own insurance (1P), the defendant's insurance (3P), or both.</p>
+                  {lorSelected && (
+                    <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
+                      <p className="text-[11px] font-bold text-stone-600 uppercase tracking-wide mb-2">Recipient(s)</p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); toggleLorVariant('rep_lien_1p'); }}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${lor1pSelected ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-white text-stone-500 border-stone-200 hover:border-stone-300'}`}
+                        >
+                          <span className={`w-4 h-4 rounded flex items-center justify-center ${lor1pSelected ? 'bg-emerald-500' : 'border border-stone-300'}`}>
+                            {lor1pSelected && (
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            )}
+                          </span>
+                          1P · Client Insurance
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); toggleLorVariant('rep_lien_3p'); }}
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${lor3pSelected ? 'bg-indigo-50 text-indigo-700 border-indigo-300' : 'bg-white text-stone-500 border-stone-200 hover:border-stone-300'}`}
+                        >
+                          <span className={`w-4 h-4 rounded flex items-center justify-center ${lor3pSelected ? 'bg-indigo-500' : 'border border-stone-300'}`}>
+                            {lor3pSelected && (
+                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                            )}
+                          </span>
+                          3P · Defendant Insurance
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-stone-400 mt-2">Selecting both generates two documents, one at a time.</p>
+                    </div>
+                  )}
+                </div>
+              </label>
+
+              {nonLorOptions.map(opt => {
+                const selected = selectedForms.includes(opt.key);
+                const isPreservation = opt.key === 'preservation_of_evidence';
+                // Preservation of Evidence isn't a queue-able form — it has a dedicated builder.
+                // Clicking its card closes the picker and jumps to the Preservation tab.
+                if (isPreservation) {
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => {
+                        setShowLegalDocsPage(false);
+                        setActiveTab('evidence');
+                      }}
+                      className={formCardClass(false) + ' text-left w-full'}
+                    >
+                      <div className="mt-1 w-5 h-5 rounded-md border-2 border-stone-300 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-stone-900">{opt.title}</span>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide border bg-stone-100 text-stone-600 border-stone-200">Opens builder</span>
+                        </div>
+                        <p className="text-xs text-stone-500 mt-1">{opt.desc}</p>
+                      </div>
+                    </button>
+                  );
+                }
+
+                return (
+                  <label key={opt.key} className={formCardClass(selected)}>
+                    <input
+                      type="checkbox"
+                      className="mt-1 w-5 h-5 text-blue-600 rounded border-stone-300 focus:ring-blue-500 cursor-pointer"
+                      checked={selected}
+                      onChange={() => toggleForm(opt.key)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-stone-900">{opt.title}</span>
+                      </div>
+                      <p className="text-xs text-stone-500 mt-1">{opt.desc}</p>
+                      {opt.key === 'bill_request' && selected && (
+                        <div className="mt-3 p-3 bg-blue-50/50 rounded-lg border border-blue-200">
+                          <label className="block text-xs font-bold text-stone-700 mb-1.5">Select Medical Provider</label>
+                          {(caseData.medicalProviders?.length || 0) > 0 ? (
+                            <select
+                              value={selectedProviderId}
+                              onChange={(e) => setSelectedProviderId(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                              <option value="">-- Choose a provider --</option>
+                              {caseData.medicalProviders!.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}{p.type ? ` (${p.type})` : ''}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded">No medical providers on this case. Add providers in the Medical tab first.</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+
+            {/* Bottom action bar */}
+            <div className="sticky bottom-0 -mx-8 -mb-8 px-8 py-4 bg-white border-t border-stone-100 flex items-center justify-between">
+              <div className="text-sm text-stone-600">
+                <span className="font-bold text-stone-900">{selectedForms.length}</span> document{selectedForms.length !== 1 ? 's' : ''} selected
+                {selectedForms.length > 1 && <span className="text-xs text-stone-400 ml-2">· Opens one at a time</span>}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowLegalDocsPage(false)}
+                  className="px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={startGeneration}
+                  disabled={selectedForms.length === 0 || billRequestRequiresProvider}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold shadow-md hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                  {selectedForms.length > 1 ? `Generate ${selectedForms.length} Documents` : 'Generate Document'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DocumentGenerator queue — stays mounted even when picker page is in front. */}
+        <DocumentGenerator
+          isOpen={showDocGenerator}
+          onClose={() => {
+            // Advance to next in queue, or close everything.
+            const nextIndex = docQueueIndex + 1;
+            if (nextIndex < docQueue.length) {
+              const nextForm = docQueue[nextIndex];
+              setDocQueueIndex(nextIndex);
+              setSelectedForm(nextForm);
+              setSelectedFormTitle(titleFor(nextForm));
+              if (nextForm === 'bill_request') {
+                const provider = caseData.medicalProviders?.find(p => p.id === selectedProviderId);
+                setDocContext(provider ? { provider } : undefined);
+              } else {
+                setDocContext(undefined);
+              }
+              // Brief close-then-reopen so DocumentGenerator re-renders for the new form.
+              setShowDocGenerator(false);
+              setTimeout(() => setShowDocGenerator(true), 80);
+            } else {
+              setShowDocGenerator(false);
+              setDocContext(undefined);
+              setSelectedFormTitle(undefined);
+              setDocQueue([]);
+              setDocQueueIndex(0);
+            }
+          }}
+          caseData={caseData}
+          formType={selectedForm}
+          formTitle={selectedFormTitle}
+          context={docContext}
+          onSaveToDocuments={async (docName: string, docFormType: DocumentFormType, htmlContent: string) => {
+            const fileName = `${docName} — ${caseData.clientName} — ${new Date().toISOString().split('T')[0]}.html`;
+            const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${docName}</title><link href="https://cdn.jsdelivr.net/npm/tailwindcss@3/dist/tailwind.min.css" rel="stylesheet"><style>body{background:#e7e5e4;padding:2rem;font-family:Georgia,serif}</style></head><body>${htmlContent}</body></html>`;
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const file = new File([blob], fileName, { type: 'text/html' });
+            const result = await uploadDocument(caseData.id, file);
+            const newDoc: DocumentAttachment = {
+              type: 'other',
+              fileData: null,
+              fileName,
+              mimeType: 'text/html',
+              source: 'Generated',
+              category: 'intake',
+              generatedFormType: docFormType,
+              uploadedAt: new Date().toISOString(),
+              storagePath: 'error' in result ? undefined : result.path,
+              storageUrl: 'error' in result ? undefined : result.url,
+            };
+            const updatedCase = { ...caseData, documents: [...(caseData.documents || []), newDoc] };
+            const withActivity = addActivity(updatedCase, `${docName} generated and saved to documents.`, authorName);
+            onUpdateCase(withActivity);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in pb-20 relative">
@@ -696,11 +1059,11 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
 
              <div className="flex items-center gap-3 mt-4 md:mt-0">
                         <button
-                          onClick={() => setIsFormModalOpen(true)}
+                          onClick={() => { setSelectedForms([]); setShowLegalDocsPage(true); }}
                           className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors shadow-sm flex items-center gap-1.5"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                            Generate Forms
+                            Generate Legal Docs
                         </button>
                         {caseData.status === CaseStatus.NEW && !analyzing && (
                             <button 
@@ -857,6 +1220,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
           <div className="animate-fade-in bg-white rounded-2xl border border-stone-200 min-h-[400px]">
             <CallHistoryPanel
               communications={caseData.communications || []}
+              linkedEmails={caseData.linkedEmails || []}
               onCall={(name, phone) => handlePhoneClick(name, phone)}
             />
           </div>
@@ -961,11 +1325,26 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                               updated[i] = { ...updated[i], value: v };
                                               onUpdateCase({ ...caseData, contactPhones: updated });
                                             }}
+                                            displayValue={
+                                              p.value ? (
+                                                <div className="flex items-center gap-2">
+                                                  <button
+                                                    onClick={() => handlePhoneClick(`${caseData.clientName} (${p.type})`, p.value)}
+                                                    disabled={isCallActive}
+                                                    title={isCallActive ? 'Another call is active' : `Call ${p.type.toLowerCase()}`}
+                                                    className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${isCallActive ? 'text-stone-400 cursor-not-allowed' : 'text-stone-700 hover:text-blue-600 hover:underline'}`}
+                                                  >
+                                                    <svg className="w-3.5 h-3.5 opacity-60" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+                                                    {p.value}
+                                                  </button>
+                                                </div>
+                                              ) : undefined
+                                            }
                                           />
                                           <button onClick={() => {
                                             const updated = (caseData.contactPhones || []).filter((_, idx) => idx !== i);
                                             onUpdateCase({ ...caseData, contactPhones: updated });
-                                          }} className="text-stone-300 hover:text-red-500 transition-colors">
+                                          }} className="text-stone-300 hover:text-red-500 transition-colors" title="Remove phone">
                                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                                           </button>
                                         </div>
@@ -1344,8 +1723,23 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseData, onBack, onUpda
                                       </div>
                                       
                                       {expandedItemId === comm.id && (
-                                          <div className="px-6 pb-6 pl-6 animate-fade-in cursor-auto border-t border-stone-100 bg-white" onClick={(e) => e.stopPropagation()}>
-                                              {/* Expanded Item content omitted for brevity as it is unchanged */}
+                                          <div className="px-6 pb-6 pl-17 animate-fade-in cursor-auto border-t border-stone-100 bg-white" onClick={(e) => e.stopPropagation()}>
+                                              {comm.type === 'email-thread' && comm.threadMessages.length > 0 ? (
+                                                  <div className="mt-4">
+                                                      <EmailThreadView messages={comm.threadMessages} showSubject />
+                                                  </div>
+                                              ) : (
+                                                  <div className="mt-4 pl-11 space-y-2 text-xs text-stone-600">
+                                                      {comm.contactPhone && <p><span className="font-bold text-stone-400 uppercase text-[10px] tracking-wider mr-2">Phone</span>{comm.contactPhone}</p>}
+                                                      {comm.duration && <p><span className="font-bold text-stone-400 uppercase text-[10px] tracking-wider mr-2">Duration</span>{comm.duration}</p>}
+                                                      {comm.content && (
+                                                          <div>
+                                                              <span className="font-bold text-stone-400 uppercase text-[10px] tracking-wider">Notes</span>
+                                                              <p className="mt-1 whitespace-pre-wrap text-stone-700">{comm.content}</p>
+                                                          </div>
+                                                      )}
+                                                  </div>
+                                              )}
                                           </div>
                                       )}
                                   </div>

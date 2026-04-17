@@ -298,6 +298,9 @@ export interface EmailMatchAnalysis {
   suggestedCaseId: string | null;
   confidenceScore: number;
   reasoning: string;
+  suggestedCategory?: EmailCategory;
+  categoryConfidence?: number;
+  categoryReasoning?: string;
 }
 
 export interface Email {
@@ -442,6 +445,12 @@ export interface Insurance {
   policyLimitsAmount?: string;
   policyLimitsRequestDate?: string;
   policyLimitsReceivedDate?: string;
+  /** Uninsured/Underinsured Motorist coverage limits — captured on the client's (1P)
+   * policy when the defendant (3P) is uninsured. */
+  umCoverageLimits?: string;
+  /** Whether the client's 1P policy has UM/UIM coverage. Useful when the defendant is
+   * uninsured — absence of UM can be a material case issue. */
+  umCoverageStatus?: 'has_um' | 'no_um' | 'unknown';
 }
 
 export interface VehicleInfo {
@@ -475,6 +484,9 @@ export interface ExtendedIntakeData {
       date?: string;
       location?: 'Office' | 'Field';
       time?: string;
+      call_completed?: boolean;
+      call_completed_at?: string;
+      notes?: string;
     };
   };
   accident?: {

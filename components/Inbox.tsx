@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Email, CaseFile, EmailCategory, EMAIL_CATEGORY_LABELS, EmailThread } from '../types';
 import { matchEmailToCase } from '../services/geminiService';
-import { getSyncedEmails, syncOutlookEmails, updateSyncedEmail, getOutlookConnection, groupEmailsIntoThreads } from '../services/outlookService';
-import { ThreadDetail } from './inbox/ThreadDetail';
+import { groupEmailsIntoThreads, updateSyncedEmail } from '../services/outlookService';
+import { ThreadDetail, IntakePrefill } from './inbox/ThreadDetail';
 import { ComposeEmail } from './inbox/ComposeEmail';
 
 interface InboxProps {
@@ -11,92 +11,38 @@ interface InboxProps {
   setEmails: React.Dispatch<React.SetStateAction<Email[]>>;
   onLinkCase: (caseId: string, email: Email) => void;
   onProcessAttachment?: (caseId: string, email: Email, attachmentIndex: number) => void;
+  onCreateCaseFromEmail?: (prefill: IntakePrefill) => void;
   firmId?: string;
+  // Outlook sync state is owned by App.tsx so it keeps running when the user
+  // navigates away from the inbox. These props expose it for the Inbox UI.
+  outlookConnected: boolean;
+  isSyncingOutlook: boolean;
+  syncMessage: string;
+  connectedEmail: string;
+  runSync: (silent?: boolean) => Promise<void>;
 }
 
-export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCase, onProcessAttachment, firmId }) => {
+export const Inbox: React.FC<InboxProps> = ({
+  cases,
+  emails,
+  setEmails,
+  onLinkCase,
+  onProcessAttachment,
+  onCreateCaseFromEmail,
+  firmId,
+  outlookConnected,
+  isSyncingOutlook,
+  syncMessage,
+  connectedEmail,
+  runSync,
+}) => {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSorting, setIsSorting] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
+  const [caseFilter, setCaseFilter] = useState<string>('ALL');
   const [caseSearchTerm, setCaseSearchTerm] = useState('');
-
-  const [outlookConnected, setOutlookConnected] = useState(false);
-  const [isSyncingOutlook, setIsSyncingOutlook] = useState(false);
-  const [syncMessage, setSyncMessage] = useState('');
   const [showNewCompose, setShowNewCompose] = useState(false);
-  const [connectedEmail, setConnectedEmail] = useState('');
-  const hasLoadedSynced = useRef(false);
-  const autoSyncInterval = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const runSync = async (silent = false) => {
-    if (!firmId) return;
-    if (!silent) setIsSyncingOutlook(true);
-    setSyncMessage(silent ? '' : 'Syncing...');
-    const result = await syncOutlookEmails(firmId);
-    if (result.error) {
-      if (!silent) setSyncMessage(result.error);
-    } else {
-      const synced = await getSyncedEmails(firmId);
-      if (synced.length > 0) {
-        setEmails(prev => {
-          const mockEmails = prev.filter(e => e.id.startsWith('e'));
-          return [...synced, ...mockEmails];
-        });
-      }
-      if (!silent) {
-        const parts: string[] = [];
-        if (result.synced > 0) parts.push(`${result.synced} emails`);
-        if (result.attachments && result.attachments > 0) parts.push(`${result.attachments} attachments`);
-        setSyncMessage(parts.length > 0 ? `Synced ${parts.join(', ')}` : 'Up to date');
-        setTimeout(() => setSyncMessage(''), 5000);
-      }
-    }
-    if (!silent) setIsSyncingOutlook(false);
-  };
-
-  useEffect(() => {
-    if (!firmId || hasLoadedSynced.current) return;
-    hasLoadedSynced.current = true;
-
-    (async () => {
-      const conn = await getOutlookConnection(firmId);
-      setOutlookConnected(!!conn);
-      if (conn?.email_address) setConnectedEmail(conn.email_address);
-
-      const synced = await getSyncedEmails(firmId);
-      if (synced.length > 0) {
-        setEmails(prev => {
-          const existingIds = new Set(prev.map(e => e.id));
-          const newEmails = synced.filter(e => !existingIds.has(e.id));
-          return [...newEmails, ...prev];
-        });
-      }
-      if (conn) {
-        await runSync(synced.length > 0);
-      }
-    })();
-  }, [firmId]);
-
-  useEffect(() => {
-    if (!outlookConnected || !firmId) return;
-    autoSyncInterval.current = setInterval(() => runSync(true), 5 * 60 * 1000);
-    return () => {
-      if (autoSyncInterval.current) clearInterval(autoSyncInterval.current);
-    };
-  }, [outlookConnected, firmId]);
-
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'outlook_connected') {
-        setOutlookConnected(true);
-        runSync();
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [firmId]);
 
   const hasSimulatedRef = useRef(false);
 
@@ -197,15 +143,26 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
 
   const threads = useMemo(() => groupEmailsIntoThreads(emails), [emails]);
 
+  // Cases sorted alphabetically by client last name for the case filter dropdown.
+  const sortedCases = useMemo(() => {
+    return [...cases].sort((a, b) => {
+      const lastA = (a.clientName || '').split(' ').pop() || '';
+      const lastB = (b.clientName || '').split(' ').pop() || '';
+      return lastA.localeCompare(lastB);
+    });
+  }, [cases]);
+
   const filteredThreads = useMemo(() => {
     return threads.filter(t => {
       const matchSearch =
         t.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.participants.some(p => p.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchCategory = categoryFilter === 'ALL' || t.category === categoryFilter;
-      return matchSearch && matchCategory;
+      const matchCase =
+        caseFilter === 'ALL' ||
+        (caseFilter === 'UNLINKED' ? !t.linkedCaseId : t.linkedCaseId === caseFilter);
+      return matchSearch && matchCase;
     });
-  }, [threads, searchTerm, categoryFilter]);
+  }, [threads, searchTerm, caseFilter]);
 
   const selectedThread = selectedThreadId
     ? threads.find(t => t.threadId === selectedThreadId) || null
@@ -215,14 +172,23 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
 
   const handleEmailSent = async () => {
     if (firmId) {
-      setSyncMessage('Email sent');
-      setTimeout(() => setSyncMessage(''), 3000);
-      const synced = await getSyncedEmails(firmId);
-      if (synced.length > 0) {
-        setEmails(prev => {
-          const mockEmails = prev.filter(e => e.id.startsWith('e'));
-          return [...synced, ...mockEmails];
-        });
+      // App-level hook owns sync state; trigger a silent sync so the sent
+      // message and any fresh inbound emails land in the list.
+      await runSync(true);
+    }
+  };
+
+  const handleSetCategory = (thread: EmailThread, category: EmailCategory | null) => {
+    // Apply to every message in the thread so the grouping picks it up on re-group.
+    const msgIds = new Set(thread.messages.map(m => m.id));
+    setEmails(prev => prev.map(e => msgIds.has(e.id) ? { ...e, category: category || undefined } : e));
+    // Persist synced (Supabase-backed) emails. Local mock emails are skipped.
+    for (const msg of thread.messages) {
+      if (!msg.id.startsWith('e')) {
+        // Synced emails use UUIDs; mock emails start with "e".
+        updateSyncedEmail(msg.id, { category: category || null }).catch(err =>
+          console.warn('Failed to persist email category:', err)
+        );
       }
     }
   };
@@ -309,12 +275,14 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
           </div>
           <select
             className="w-full bg-white border border-stone-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            value={caseFilter}
+            onChange={(e) => setCaseFilter(e.target.value)}
           >
-            <option value="ALL">All Categories</option>
-            {Object.entries(EMAIL_CATEGORY_LABELS).map(([val, label]) => (
-              <option key={val} value={val}>{label}</option>
+            <option value="ALL">All Cases</option>
+            <option value="UNLINKED">Unlinked (no case)</option>
+            <option disabled value="__divider__">──────────</option>
+            {sortedCases.map(c => (
+              <option key={c.id} value={c.id}>{getCaseTag(c.id)}</option>
             ))}
           </select>
         </div>
@@ -417,6 +385,8 @@ export const Inbox: React.FC<InboxProps> = ({ cases, emails, setEmails, onLinkCa
           firmId={firmId}
           senderEmail={connectedEmail}
           onEmailSent={handleEmailSent}
+          onCreateCaseFromEmail={onCreateCaseFromEmail}
+          onSetCategory={handleSetCategory}
         />
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-stone-400">

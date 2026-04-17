@@ -137,7 +137,9 @@ export const matchEmailToCase = async (email: Email, cases: CaseFile[]): Promise
   ).join('\n---\n');
 
   const prompt = `
-    You are a legal intake assistant. Your task is to match an incoming email to one of the active cases in our system.
+    You are a legal intake assistant. Your job has TWO parts:
+    (A) match an incoming email to one of the active cases in our system, AND
+    (B) classify the email into one of our standard categories.
 
     INCOMING EMAIL:
     From: ${email.from} (${email.fromEmail})
@@ -148,14 +150,34 @@ export const matchEmailToCase = async (email: Email, cases: CaseFile[]): Promise
     ACTIVE CASES:
     ${casesSummary}
 
-    INSTRUCTIONS:
-    1. Compare the email content (sender, subject, body, attachment names) against the Active Cases.
-    2. Look for matching Client Names, Case IDs, Dates of Loss, or specific context (e.g. medical records matching a client's injury).
+    PART A — CASE MATCHING
+    1. Compare email content (sender, subject, body, attachments) against the Active Cases.
+    2. Look for Client Names, Case IDs, Dates of Loss, or specific context
+       (e.g. medical records matching a client's injury, adjuster at the insurer on file).
     3. Assign a Confidence Score from 0 to 100.
-       - 90-100: Certain match (e.g., exact Case ID or full name + unique context).
-       - 70-89: Likely match (e.g., matching name but generic subject).
+       - 90-100: Certain match (exact Case ID or full name + unique context).
+       - 70-89: Likely match (matching name but generic subject).
        - 0-69: Unsure or no match.
     4. If no case matches, return null for suggestedCaseId.
+
+    PART B — EMAIL CATEGORIZATION
+    Classify the email using EXACTLY ONE of these category keys. Pick the
+    MOST specific one that fits; fall back to 'general' only if nothing else
+    fits.
+
+      - offer                   → Insurance carrier extends a settlement offer.
+      - counteroffer            → Party responds with a different offer amount.
+      - coverage_response       → Insurer confirms/denies coverage or insured status.
+      - liability_decision      → Insurer accepts, denies, or disputes liability.
+      - policy_limits_response  → Insurer responds to a policy limits request
+                                  (discloses limits or refuses disclosure).
+      - medical_records         → Medical records (not bills) sent by a provider.
+      - medical_bills           → Medical bills, invoices, or ledgers from a provider.
+      - client_communication    → Email from the client themselves (status, questions, evidence).
+      - attorney_correspondence → Email from defense counsel, co-counsel, or outside attorney.
+      - general                 → Anything else (spam, newsletters, scheduling, unclear).
+
+    Give a categoryConfidence from 0-100 and a one-sentence categoryReasoning.
 
     Return JSON format only.
   `;
@@ -175,10 +197,28 @@ export const matchEmailToCase = async (email: Email, cases: CaseFile[]): Promise
           type: Type.OBJECT,
           properties: {
             suggestedCaseId: { type: Type.STRING, nullable: true, description: "The ID of the matched case, or null if no match found." },
-            confidenceScore: { type: Type.NUMBER, description: "0-100 confidence score." },
-            reasoning: { type: Type.STRING, description: "Brief explanation of why this match was chosen." }
+            confidenceScore: { type: Type.NUMBER, description: "0-100 confidence score for the case match." },
+            reasoning: { type: Type.STRING, description: "Brief explanation of why this case match was chosen." },
+            suggestedCategory: {
+              type: Type.STRING,
+              description: "Email category key. One of: offer, counteroffer, coverage_response, liability_decision, medical_records, medical_bills, policy_limits_response, client_communication, attorney_correspondence, general.",
+              enum: [
+                "offer",
+                "counteroffer",
+                "coverage_response",
+                "liability_decision",
+                "medical_records",
+                "medical_bills",
+                "policy_limits_response",
+                "client_communication",
+                "attorney_correspondence",
+                "general",
+              ],
+            },
+            categoryConfidence: { type: Type.NUMBER, description: "0-100 confidence score for the category classification." },
+            categoryReasoning: { type: Type.STRING, description: "One-sentence explanation of the category choice." }
           },
-          required: ["confidenceScore", "reasoning"]
+          required: ["confidenceScore", "reasoning", "suggestedCategory", "categoryConfidence", "categoryReasoning"]
         }
       }
     });

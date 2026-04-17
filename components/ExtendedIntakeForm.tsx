@@ -15,9 +15,11 @@ interface InsuranceBlockProps {
   onFieldChange: (fields: Partial<Insurance>) => void;
   inputClass: string;
   labelClass: string;
+  partyLabel?: '1P' | '3P';
+  showUmCoverage?: boolean;
 }
 
-const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColor, ins, onFieldChange, inputClass, labelClass }) => {
+const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColor, ins, onFieldChange, inputClass, labelClass, partyLabel, showUmCoverage }) => {
   const [newAdj, setNewAdj] = useState({ name: '', phone: '', email: '' });
   const [carrierSearch, setCarrierSearch] = useState('');
   const [suggestions, setSuggestions] = useState<DirectoryInsuranceCompany[]>([]);
@@ -183,6 +185,10 @@ const InsuranceBlock: React.FC<InsuranceBlockProps> = ({ label, badge, badgeColo
             onChange={(field, value) => onFieldChange({ [field]: value } as Partial<Insurance>)}
             onBatchChange={fields => onFieldChange(fields as Partial<Insurance>)}
             accentColor={badgeColor}
+            partyLabel={partyLabel}
+            showUmCoverage={showUmCoverage}
+            umCoverageLimits={ins.umCoverageLimits}
+            umCoverageStatus={ins.umCoverageStatus}
           />
         </div>
       </div>
@@ -628,6 +634,54 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                            </select>
                        </div>
                    </div>
+                   <div className="col-span-2 mt-4 p-4 bg-stone-50 border border-stone-200 rounded-lg">
+                       <div className="flex items-start justify-between gap-4 mb-3">
+                           <div>
+                               <h4 className="text-sm font-bold text-stone-800">Intake Interview</h4>
+                               <p className="text-xs text-stone-500 mt-0.5">Confirm the intake interview call and capture notes from the conversation.</p>
+                           </div>
+                           {(() => {
+                               const completed = !!formData.intake_admin?.interview?.call_completed;
+                               const toggle = () => {
+                                   const next = !completed;
+                                   handleChange('intake_admin', 'interview', next, 'call_completed');
+                                   handleChange('intake_admin', 'interview', next ? new Date().toISOString() : '', 'call_completed_at');
+                               };
+                               return (
+                                   <button
+                                       type="button"
+                                       onClick={toggle}
+                                       className={`flex-shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${completed ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-white text-stone-600 border-stone-300 hover:bg-stone-50'}`}
+                                   >
+                                       {completed ? (
+                                           <>
+                                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                                               Call Completed
+                                           </>
+                                       ) : (
+                                           <>
+                                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                                               Mark Call Completed
+                                           </>
+                                       )}
+                                   </button>
+                               );
+                           })()}
+                       </div>
+                       {formData.intake_admin?.interview?.call_completed_at && (
+                           <p className="text-[11px] text-emerald-700 mb-2">
+                               Confirmed {new Date(formData.intake_admin.interview.call_completed_at).toLocaleString()}
+                           </p>
+                       )}
+                       <label className={labelClass}>Interview Notes</label>
+                       <textarea
+                           rows={5}
+                           placeholder="Summarize the conversation, client's account of the incident, injuries reported, concerns, follow-ups needed..."
+                           className={inputClass + ' resize-y'}
+                           value={formData.intake_admin?.interview?.notes || ''}
+                           onChange={e => handleChange('intake_admin', 'interview', e.target.value, 'notes')}
+                       />
+                   </div>
                </div>
            </div>
        )}
@@ -940,6 +994,8 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                          onFieldChange={fields => handleInsuranceFieldChange('Client', fields)}
                          inputClass={inputClass}
                          labelClass={labelClass}
+                         partyLabel="1P"
+                         showUmCoverage={defIns.insuredStatus === 'uninsured'}
                        />
                        <div className="grid grid-cols-2 gap-3 mt-3">
                          <div className="col-span-2">
@@ -1227,6 +1283,7 @@ export const ExtendedIntakeForm: React.FC<ExtendedIntakeFormProps> = ({ caseData
                    onFieldChange={fields => handleInsuranceFieldChange('Defendant', fields)}
                    inputClass={inputClass}
                    labelClass={labelClass}
+                   partyLabel="3P"
                  />
                </div>
            </div>

@@ -4,6 +4,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { useFirm } from '../contexts/FirmContext';
 import { supabase } from '../services/supabaseClient';
 import { getOutlookConnection, startOutlookAuth, syncOutlookEmails, disconnectOutlook, type OutlookConnection } from '../services/outlookService';
+import {
+  getRingCentralConnection,
+  startRingCentralAuth,
+  syncRingCentral,
+  disconnectRingCentral,
+  setRingCentralCallbackPhone,
+  type RingCentralConnection,
+} from '../services/ringcentralService';
 
 type SettingsTab = 'profile' | 'firms' | 'integrations' | 'notifications';
 
@@ -294,6 +302,188 @@ const OutlookIntegrationCard: React.FC = () => {
   );
 };
 
+const RingCentralIntegrationCard: React.FC = () => {
+  const { profile } = useAuth();
+  const { activeFirm } = useFirm();
+  const [connection, setConnection] = useState<RingCentralConnection | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [connecting, setConnecting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [callbackPhoneInput, setCallbackPhoneInput] = useState('');
+  const [savingCallback, setSavingCallback] = useState(false);
+  const [callbackSaved, setCallbackSaved] = useState(false);
+
+  const loadConnection = async () => {
+    if (!activeFirm || !profile) return;
+    setLoading(true);
+    const conn = await getRingCentralConnection(activeFirm.id, profile.id);
+    setConnection(conn);
+    setCallbackPhoneInput(conn?.callback_phone || '');
+    setLoading(false);
+  };
+
+  const handleSaveCallbackPhone = async () => {
+    if (!activeFirm || !profile) return;
+    setSavingCallback(true);
+    setCallbackSaved(false);
+    const trimmed = callbackPhoneInput.trim();
+    const result = await setRingCentralCallbackPhone(activeFirm.id, profile.id, trimmed);
+    setSavingCallback(false);
+    if (result.error) {
+      setSyncMsg(result.error);
+    } else {
+      setCallbackSaved(true);
+      setTimeout(() => setCallbackSaved(false), 2500);
+      loadConnection();
+    }
+  };
+
+  useEffect(() => {
+    loadConnection();
+  }, [activeFirm?.id, profile?.id]);
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'ringcentral_connected') {
+        loadConnection();
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [activeFirm?.id, profile?.id]);
+
+  const handleConnect = async () => {
+    if (!activeFirm || !profile) return;
+    setConnecting(true);
+    const result = await startRingCentralAuth(activeFirm.id, profile.id);
+    setConnecting(false);
+    if (result.url) {
+      window.open(result.url, 'ringcentral_auth', 'width=600,height=700,scrollbars=yes');
+    } else {
+      setSyncMsg(result.error || 'Unable to start RingCentral auth.');
+    }
+  };
+
+  const handleSync = async () => {
+    if (!activeFirm || !profile) return;
+    setSyncing(true);
+    setSyncMsg('');
+    const result = await syncRingCentral(activeFirm.id, profile.id);
+    setSyncing(false);
+    if (result.error) {
+      setSyncMsg(result.error);
+    } else {
+      const parts: string[] = [];
+      if (result.calls > 0) parts.push(`${result.calls} calls`);
+      if (result.sms > 0) parts.push(`${result.sms} SMS`);
+      setSyncMsg(parts.length > 0 ? `Synced ${parts.join(', ')}.` : 'Up to date.');
+      setTimeout(() => setSyncMsg(''), 5000);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!activeFirm || !profile) return;
+    setDisconnecting(true);
+    await disconnectRingCentral(activeFirm.id, profile.id);
+    setConnection(null);
+    setDisconnecting(false);
+  };
+
+  const isConnected = !!connection;
+  const hasCallbackPhone = !!(connection?.callback_phone && connection.callback_phone.trim().length > 0);
+
+  return (
+    <div className={`p-4 border rounded-xl transition-colors ${isConnected ? 'border-emerald-200 bg-emerald-50/30' : 'border-stone-200 hover:bg-stone-50'}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-stone-200 shadow-sm text-orange-500">
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.5 14H15v-2.5h-1.5V16h-3v-1.5H8v-3h2.5V10H8V8.5h2.5V6h1.5v2.5h3V6h1.5v2.5h2.5v1.5h-2.5v3h2.5v1.5h-2.5V16z" />
+            </svg>
+          </div>
+          <div>
+            <h4 className="font-bold text-stone-900">RingCentral</h4>
+            {isConnected ? (
+              <p className="text-xs text-emerald-600 font-medium">
+                {connection.owner_name || connection.owner_email || 'Connected'}
+                {connection.rc_phone_number ? ` · ${connection.rc_phone_number}` : ''}
+              </p>
+            ) : (
+              <p className="text-xs text-stone-500">Click-to-call, SMS, and call log sync.</p>
+            )}
+            {syncMsg && (
+              <p className={`text-xs mt-1 ${syncMsg.toLowerCase().includes('error') || syncMsg.toLowerCase().includes('failed') || syncMsg.toLowerCase().includes('unable') ? 'text-rose-600' : 'text-emerald-600'}`}>{syncMsg}</p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-stone-300 border-t-stone-600 rounded-full animate-spin" />
+          ) : isConnected ? (
+            <>
+              <button
+                onClick={handleSync}
+                disabled={syncing}
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {syncing ? 'Syncing...' : 'Sync Now'}
+              </button>
+              <button
+                onClick={handleDisconnect}
+                disabled={disconnecting}
+                className="text-xs font-medium text-stone-500 hover:text-rose-600 px-2 py-1.5 transition-colors"
+              >
+                Disconnect
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleConnect}
+              disabled={connecting}
+              className="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 shadow-sm"
+            >
+              {connecting ? 'Loading...' : 'Connect'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isConnected && (
+        <div className={`mt-4 pt-4 border-t ${hasCallbackPhone ? 'border-emerald-200' : 'border-amber-300'}`}>
+          <div className="flex items-start gap-2 mb-2">
+            <label className="text-xs font-bold text-stone-700 uppercase tracking-wide">Your Callback Phone</label>
+            {!hasCallbackPhone && (
+              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full">Required for click-to-call</span>
+            )}
+          </div>
+          <p className="text-xs text-stone-500 mb-2.5">
+            When you click-to-call, RingCentral rings this number first (your cell or desk phone), then bridges you to the contact. Recipients still see your RC number on caller ID.
+          </p>
+          <div className="flex items-center gap-2 max-w-md">
+            <input
+              type="tel"
+              inputMode="tel"
+              placeholder="+1 312 555 1234"
+              value={callbackPhoneInput}
+              onChange={e => setCallbackPhoneInput(e.target.value)}
+              className="flex-1 px-3 py-2 text-sm border border-stone-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            />
+            <button
+              onClick={handleSaveCallbackPhone}
+              disabled={savingCallback || callbackPhoneInput.trim() === (connection?.callback_phone || '').trim()}
+              className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {savingCallback ? 'Saving...' : callbackSaved ? '✓ Saved' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const Settings: React.FC = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
@@ -359,20 +549,7 @@ export const Settings: React.FC = () => {
 
             <OutlookIntegrationCard />
 
-            <div className="flex items-center justify-between p-4 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center border border-stone-200 shadow-sm text-orange-500">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.5 14H15v-2.5h-1.5V16h-3v-1.5H8v-3h2.5V10H8V8.5h2.5V6h1.5v2.5h3V6h1.5v2.5h2.5v1.5h-2.5v3h2.5v1.5h-2.5V16z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="font-bold text-stone-900">RingCentral</h4>
-                  <p className="text-xs text-stone-500">Log calls, SMS, and link voicemails to cases.</p>
-                </div>
-              </div>
-              <button className="text-sm font-medium text-stone-600 hover:text-blue-600">Connect</button>
-            </div>
+            <RingCentralIntegrationCard />
 
             <div className="flex items-center justify-between p-4 border border-stone-200 rounded-xl hover:bg-stone-50 transition-colors cursor-pointer">
               <div className="flex items-center space-x-4">

@@ -55,9 +55,32 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
   const { profile } = useAuth();
   const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editingClient, setEditingClient] = useState(false);
 
   const defInsurance = (caseData.insurance || []).filter(i => i.type === 'Defendant');
+  const clientInsurance = (caseData.insurance || []).find(i => i.type === 'Client');
+  const defendantUninsured =
+    defInsurance.length === 0 ||
+    defInsurance.every(ins => ins.insuredStatus === 'uninsured' || !ins.provider);
   const inputClass = "w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+
+  const updateClientInsurance = (updates: Partial<Insurance>) => {
+    const allIns = [...(caseData.insurance || [])];
+    const cIdx = allIns.findIndex(i => i.type === 'Client');
+    if (cIdx >= 0) {
+      allIns[cIdx] = { ...allIns[cIdx], ...updates };
+    } else {
+      allIns.push({ type: 'Client', provider: '', ...updates } as Insurance);
+    }
+    let updated = { ...caseData, insurance: allIns };
+    if (updates.umCoverageStatus && updates.umCoverageStatus !== clientInsurance?.umCoverageStatus) {
+      const label = updates.umCoverageStatus === 'has_um' ? 'Has UM/UIM'
+        : updates.umCoverageStatus === 'no_um' ? 'No UM/UIM'
+        : 'Unknown';
+      updated = addActivity(updated, `Client UM/UIM coverage status set to "${label}"`, authorName);
+    }
+    onUpdateCase(updated);
+  };
 
   const updateInsurance = (idx: number, updates: Partial<Insurance>) => {
     const allIns = [...(caseData.insurance || [])];
@@ -114,6 +137,161 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
         </div>
       )}
 
+      {/* 1P · Client Coverage card */}
+      <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+        <div className="px-6 py-5 border-b border-stone-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide border bg-emerald-50 text-emerald-700 border-emerald-200">
+              1P · Client
+            </span>
+            <div>
+              <h4 className="font-bold text-stone-900 text-base">{clientInsurance?.provider || 'Client Insurance'}</h4>
+              <div className="flex items-center gap-3 mt-1 text-xs text-stone-500">
+                {clientInsurance?.policyNumber && <span>Policy: {clientInsurance.policyNumber}</span>}
+                {clientInsurance?.claimNumber && <span>Claim: {clientInsurance.claimNumber}</span>}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => setEditingClient(v => !v)}
+            className="px-4 py-2 text-sm font-medium text-stone-700 bg-white border border-stone-200 rounded-lg hover:bg-stone-50 transition-colors"
+          >
+            {editingClient ? 'Done' : 'Update'}
+          </button>
+        </div>
+
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-3">
+            <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider pb-1 border-b border-stone-100">Insurance Status</h5>
+            {editingClient ? (
+              <select
+                className={inputClass}
+                value={clientInsurance?.insuredStatus || ''}
+                onChange={e => updateClientInsurance({ insuredStatus: (e.target.value || undefined) as Insurance['insuredStatus'] })}
+              >
+                <option value="">Select...</option>
+                <option value="insured">Insured</option>
+                <option value="uninsured">Uninsured</option>
+              </select>
+            ) : (
+              <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full border ${
+                clientInsurance?.insuredStatus === 'insured' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : clientInsurance?.insuredStatus === 'uninsured' ? 'bg-rose-50 text-rose-700 border-rose-200'
+                : 'bg-stone-50 text-stone-600 border-stone-200'
+              }`}>
+                {clientInsurance?.insuredStatus === 'insured' ? 'Insured'
+                  : clientInsurance?.insuredStatus === 'uninsured' ? 'Uninsured'
+                  : 'Not Set'}
+              </span>
+            )}
+          </div>
+          <div className="space-y-3">
+            <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider pb-1 border-b border-stone-100">Coverage Type</h5>
+            {editingClient ? (
+              <select
+                className={inputClass}
+                value={clientInsurance?.coverageType || ''}
+                onChange={e => updateClientInsurance({ coverageType: (e.target.value || undefined) as Insurance['coverageType'] })}
+              >
+                <option value="">Select...</option>
+                <option value="liability">Liability</option>
+                <option value="full_coverage">Full Coverage</option>
+              </select>
+            ) : (
+              <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full border ${
+                clientInsurance?.coverageType === 'full_coverage' ? 'bg-blue-50 text-blue-700 border-blue-200'
+                : clientInsurance?.coverageType === 'liability' ? 'bg-stone-100 text-stone-600 border-stone-200'
+                : 'bg-stone-50 text-stone-400 border-stone-200'
+              }`}>
+                {clientInsurance?.coverageType === 'full_coverage' ? 'Full Coverage'
+                  : clientInsurance?.coverageType === 'liability' ? 'Liability'
+                  : 'Not Set'}
+              </span>
+            )}
+          </div>
+          <div className="space-y-3">
+            <h5 className="text-xs font-bold text-stone-400 uppercase tracking-wider pb-1 border-b border-stone-100">Coverage Limits</h5>
+            {editingClient ? (
+              <input
+                className={inputClass}
+                value={clientInsurance?.coverageLimits || ''}
+                onChange={e => updateClientInsurance({ coverageLimits: e.target.value })}
+                placeholder="e.g. 100/300/100"
+              />
+            ) : clientInsurance?.coverageLimits ? (
+              <span className="bg-stone-50 border border-stone-200 text-stone-700 px-2 py-1 rounded font-mono text-sm font-bold inline-block">
+                {clientInsurance.coverageLimits}
+              </span>
+            ) : (
+              <span className="text-xs text-stone-400">Not Set</span>
+            )}
+          </div>
+        </div>
+
+        {/* UM/UIM section — only when defendant is uninsured or missing */}
+        {defendantUninsured && (
+          <div className="mx-6 mb-6 p-4 rounded-lg border bg-amber-50/70 border-amber-200">
+            <div className="flex items-start gap-3 mb-3">
+              <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div className="flex-1">
+                <h5 className="text-sm font-bold text-amber-900">Uninsured Motorist (UM/UIM) Coverage</h5>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Defendant has no insurance. The client's UM/UIM coverage may be the only avenue for recovery — confirm and track it here.
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] font-bold text-stone-500 uppercase mb-1">UM Coverage Status</label>
+                {editingClient ? (
+                  <select
+                    className={inputClass}
+                    value={clientInsurance?.umCoverageStatus || ''}
+                    onChange={e => updateClientInsurance({ umCoverageStatus: (e.target.value || undefined) as Insurance['umCoverageStatus'] })}
+                  >
+                    <option value="">Select...</option>
+                    <option value="has_um">Has UM/UIM</option>
+                    <option value="no_um">No UM/UIM</option>
+                    <option value="unknown">Unknown</option>
+                  </select>
+                ) : (
+                  <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full border ${
+                    clientInsurance?.umCoverageStatus === 'has_um' ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : clientInsurance?.umCoverageStatus === 'no_um' ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-stone-50 text-stone-600 border-stone-200'
+                  }`}>
+                    {clientInsurance?.umCoverageStatus === 'has_um' ? 'Has UM/UIM'
+                      : clientInsurance?.umCoverageStatus === 'no_um' ? 'No UM/UIM'
+                      : clientInsurance?.umCoverageStatus === 'unknown' ? 'Unknown'
+                      : 'Not Set'}
+                  </span>
+                )}
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-stone-500 uppercase mb-1">UM Coverage Limits</label>
+                {editingClient ? (
+                  <input
+                    className={inputClass}
+                    value={clientInsurance?.umCoverageLimits || ''}
+                    onChange={e => updateClientInsurance({ umCoverageLimits: e.target.value })}
+                    placeholder="e.g. 100/300"
+                    disabled={clientInsurance?.umCoverageStatus === 'no_um'}
+                  />
+                ) : clientInsurance?.umCoverageLimits && clientInsurance?.umCoverageStatus !== 'no_um' ? (
+                  <span className="bg-stone-50 border border-stone-200 text-stone-700 px-2 py-1 rounded font-mono text-sm font-bold inline-block">
+                    UM: {clientInsurance.umCoverageLimits}
+                  </span>
+                ) : (
+                  <span className="text-xs text-stone-400">Not Set</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {defInsurance.length === 0 ? (
         <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center">
           <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -132,11 +310,16 @@ export const CoverageTracker: React.FC<CoverageTrackerProps> = ({ caseData, onUp
           return (
             <div key={idx} className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
               <div className="px-6 py-5 border-b border-stone-100 flex items-center justify-between">
-                <div>
-                  <h4 className="font-bold text-stone-900 text-base">{ins.provider || 'Unknown Insurer'}</h4>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-stone-500">
-                    {ins.claimNumber && <span>Claim: {ins.claimNumber}</span>}
-                    {ins.adjuster && <span>Adjuster: {ins.adjuster}</span>}
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide border bg-indigo-50 text-indigo-700 border-indigo-200">
+                    3P · Defendant
+                  </span>
+                  <div>
+                    <h4 className="font-bold text-stone-900 text-base">{ins.provider || 'Unknown Insurer'}</h4>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-stone-500">
+                      {ins.claimNumber && <span>Claim: {ins.claimNumber}</span>}
+                      {ins.adjuster && <span>Adjuster: {ins.adjuster}</span>}
+                    </div>
                   </div>
                 </div>
                 <button

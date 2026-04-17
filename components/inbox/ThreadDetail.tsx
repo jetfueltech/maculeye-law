@@ -4,6 +4,13 @@ import { EMAIL_CATEGORY_LABELS } from '../../types';
 import { getAttachmentDownloadUrl, copyAttachmentToCaseDocuments } from '../../services/outlookService';
 import { ComposeEmail, ComposeMode } from './ComposeEmail';
 import { AttachmentHub } from './AttachmentHub';
+import type { PendingDocument } from '../intake/DocumentUploadStep';
+
+export interface IntakePrefill {
+  clientNames: string[];
+  pendingDocs: PendingDocument[];
+  sourceEmailId?: string;
+}
 
 interface ThreadDetailProps {
   thread: EmailThread;
@@ -16,6 +23,120 @@ interface ThreadDetailProps {
   firmId?: string;
   senderEmail?: string;
   onEmailSent?: () => void;
+  onCreateCaseFromEmail?: (prefill: IntakePrefill) => void;
+  onSetCategory?: (thread: EmailThread, category: EmailCategory | null) => void;
+}
+
+const INTAKE_TRIGGER_PHRASE = 'please complete intake process';
+
+function findIntakeTriggerEmail(thread: EmailThread): Email | null {
+  const withTrigger = thread.messages.find(m =>
+    (m.body || '').toLowerCase().includes(INTAKE_TRIGGER_PHRASE) ||
+    (m.bodyHtml || '').toLowerCase().includes(INTAKE_TRIGGER_PHRASE)
+  );
+  if (withTrigger) return withTrigger;
+  // Fallback: newest inbound message with attachments
+  const inboundWithAttachments = thread.messages.find(m => m.direction === 'inbound' && m.attachments.length > 0);
+  if (inboundWithAttachments) return inboundWithAttachments;
+  return thread.messages[0] || null;
+}
+
+function stripHtmlToText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#39;/gi, "'")
+    .replace(/&quot;/gi, '"');
+}
+
+function cleanNamePart(raw: string): string {
+  return raw
+    .trim()
+    .replace(/\s{2,}/g, ' ')
+    .replace(/[.,;:]+$/, '')
+    .trim();
+}
+
+function extractClientNames(email: Email): string[] {
+  const bodyText = email.body || '';
+  const htmlText = email.bodyHtml ? stripHtmlToText(email.bodyHtml) : '';
+  const corpus = `${bodyText}\n${htmlText}`;
+  const names: string[] = [];
+  const add = (candidate: string) => {
+    const cleaned = cleanNamePart(candidate);
+    if (!cleaned) return;
+    if (cleaned.length > 80) return;
+    if (!names.includes(cleaned)) names.push(cleaned);
+  };
+
+  // 1. Separate first / last name fields — preferred when available.
+  const firstRe = /(?:first\s*name|first|given\s*name)\s*[:\-]\s*([^\n\r;,<]+)/i;
+  const lastRe = /(?:last\s*name|last|surname|family\s*name)\s*[:\-]\s*([^\n\r;,<]+)/i;
+  const firstMatch = corpus.match(firstRe);
+  const lastMatch = corpus.match(lastRe);
+  if (firstMatch?.[1] && lastMatch?.[1]) {
+    const first = cleanNamePart(firstMatch[1]);
+    const last = cleanNamePart(lastMatch[1]);
+    if (first && last) add(`${first} ${last}`);
+  } else if (firstMatch?.[1]) {
+    add(firstMatch[1]);
+  } else if (lastMatch?.[1]) {
+    add(lastMatch[1]);
+  }
+
+  // 2. Combined-name fields.
+  const combinedPatterns: RegExp[] = [
+    /full\s*name\s*[:\-]\s*([^\n\r;,<]+)/i,
+    /client\s*name\s*[:\-]\s*([^\n\r;,<]+)/i,
+    /\bclient\s*[:\-]\s*([^\n\r;,<]+)/i,
+    /\bname\s*[:\-]\s*([^\n\r;,<]+)/i,
+    /for\s+client\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+)+)/,
+    /intake\s+(?:for|:)\s+([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+)+)/i,
+  ];
+  for (const re of combinedPatterns) {
+    const m = corpus.match(re);
+    if (m?.[1]) add(m[1]);
+  }
+
+  // 3. Subject line fallback.
+  const subjectMatch = (email.subject || '').match(/intake\s*[:\-]\s*([A-Z][A-Za-z'.-]+(?:\s+[A-Z][A-Za-z'.-]+)+)/i);
+  if (subjectMatch?.[1]) add(subjectMatch[1]);
+
+  return names;
+}
+
+async function downloadAttachmentAsPendingDoc(att: Email['attachments'][0]): Promise<PendingDocument | null> {
+  if (!att.storagePath) return null;
+  const signedUrl = await getAttachmentDownloadUrl(att.storagePath);
+  if (!signedUrl) return null;
+  try {
+    const res = await fetch(signedUrl);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const fallbackMime = att.contentType
+      || (att.type === 'pdf' ? 'application/pdf'
+        : att.type === 'image' ? (blob.type || 'image/jpeg')
+        : 'application/octet-stream');
+    const mimeType = blob.type || fallbackMime;
+    const file = new File([blob], att.name, { type: mimeType });
+    const fileData: string = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return { file, fileData, mimeType };
+  } catch (err) {
+    console.error('Failed to download attachment for intake:', att.name, err);
+    return null;
+  }
 }
 
 function formatFullDateTime(isoOrRelative: string, receivedAt?: string): string {
@@ -154,7 +275,56 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
   firmId,
   senderEmail,
   onEmailSent,
+  onCreateCaseFromEmail,
+  onSetCategory,
 }) => {
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [isCreatingCase, setIsCreatingCase] = useState(false);
+  const [createCaseError, setCreateCaseError] = useState<string | null>(null);
+
+  const handleCreateCaseFromEmail = async () => {
+    if (!onCreateCaseFromEmail || isCreatingCase) return;
+    setCreateCaseError(null);
+    const target = findIntakeTriggerEmail(thread);
+    if (!target) {
+      setCreateCaseError('No email found to start intake from.');
+      return;
+    }
+
+    setIsCreatingCase(true);
+    try {
+      // Collect attachments from every email in the thread, deduped by storage path
+      // (falls back to name+size when storage path is missing).
+      const seen = new Set<string>();
+      const allAttachments: Email['attachments'] = [];
+      for (const msg of thread.messages) {
+        for (const att of msg.attachments || []) {
+          const key = att.storagePath || `${att.name}::${att.size}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          allAttachments.push(att);
+        }
+      }
+
+      const pendingDocsResults = await Promise.all(
+        allAttachments.map(att => downloadAttachmentAsPendingDoc(att))
+      );
+      const pendingDocs = pendingDocsResults.filter((d): d is PendingDocument => d !== null);
+      const clientNames = extractClientNames(target);
+
+      onCreateCaseFromEmail({
+        clientNames: clientNames.length > 0 ? clientNames : [''],
+        pendingDocs,
+        sourceEmailId: target.id,
+      });
+    } catch (err) {
+      console.error('Create case from email failed:', err);
+      setCreateCaseError('Failed to prepare intake. Try again.');
+    } finally {
+      setIsCreatingCase(false);
+    }
+  };
+
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(
     new Set([thread.messages[0]?.id])
   );
@@ -307,24 +477,54 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
             </div>
           )}
         </div>
-        <button
-          onClick={onOpenLinkModal}
-          disabled={!!thread.linkedCaseId}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center transition-colors ${thread.linkedCaseId ? 'bg-blue-50 text-blue-700 cursor-default border border-blue-100' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'}`}
-        >
-          {thread.linkedCaseId ? (
-            <>
-              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-              {getCaseTag(thread.linkedCaseId)}
-            </>
-          ) : (
-            <>
-              <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-              Tag to Case
-            </>
+        <div className="flex items-center gap-2">
+          {onCreateCaseFromEmail && !thread.linkedCaseId && (
+            <button
+              onClick={handleCreateCaseFromEmail}
+              disabled={isCreatingCase}
+              title="Start a new client intake using this thread's attachments"
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center transition-colors border ${isCreatingCase ? 'bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed' : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 shadow-sm'}`}
+            >
+              {isCreatingCase ? (
+                <>
+                  <svg className="animate-spin w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Preparing...
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Create new case
+                </>
+              )}
+            </button>
           )}
-        </button>
+          <button
+            onClick={onOpenLinkModal}
+            disabled={!!thread.linkedCaseId}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center transition-colors ${thread.linkedCaseId ? 'bg-blue-50 text-blue-700 cursor-default border border-blue-100' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm'}`}
+          >
+            {thread.linkedCaseId ? (
+              <>
+                <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                {getCaseTag(thread.linkedCaseId)}
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                Tag to Case
+              </>
+            )}
+          </button>
+        </div>
       </div>
+      {createCaseError && (
+        <div className="mx-6 mt-3 p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700">
+          {createCaseError}
+        </div>
+      )}
 
       {aiSuggestion && !thread.linkedCaseId && aiSuggestion.suggestedCaseId && (
         <div className="mx-6 mt-4 p-4 bg-gradient-to-r from-blue-50 to-sky-50 border border-blue-100 rounded-xl flex items-start justify-between animate-fade-in">
@@ -350,6 +550,33 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
         </div>
       )}
 
+      {/* AI-suggested category — shown when no category is set yet and AI confidence is meaningful */}
+      {aiSuggestion?.suggestedCategory && !thread.category && (aiSuggestion.categoryConfidence ?? 0) >= 60 && onSetCategory && (
+        <div className="mx-6 mt-3 p-3 bg-gradient-to-r from-violet-50 to-fuchsia-50 border border-violet-100 rounded-xl flex items-start justify-between animate-fade-in">
+          <div className="min-w-0 flex-1">
+            <h4 className="text-xs font-bold text-violet-900 flex items-center">
+              <svg className="w-3.5 h-3.5 mr-1.5 text-violet-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+              AI Suggested Category
+            </h4>
+            {aiSuggestion.categoryReasoning && (
+              <p className="text-[11px] text-violet-700 mt-1 max-w-lg">{aiSuggestion.categoryReasoning}</p>
+            )}
+            <div className="text-[11px] font-semibold text-violet-800 flex items-center mt-1.5">
+              <span className={`px-2 py-0.5 rounded border mr-2 ${CATEGORY_COLORS[aiSuggestion.suggestedCategory]}`}>
+                {EMAIL_CATEGORY_LABELS[aiSuggestion.suggestedCategory]}
+              </span>
+              {aiSuggestion.categoryConfidence ?? 0}% confident
+            </div>
+          </div>
+          <button
+            onClick={() => onSetCategory(thread, aiSuggestion.suggestedCategory!)}
+            className="px-3 py-1.5 bg-violet-600 text-white text-[11px] font-bold rounded-lg hover:bg-violet-700 transition-colors shadow-sm whitespace-nowrap ml-3"
+          >
+            Apply Category
+          </button>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
         <div className="px-6 pt-5 pb-3">
           <h1 className="text-lg font-bold text-stone-900 leading-tight">{thread.subject}</h1>
@@ -366,11 +593,46 @@ export const ThreadDetail: React.FC<ThreadDetailProps> = ({
                 </span>
               </>
             )}
-            {thread.category && (
+            {/* Category pill with built-in dropdown picker. Click to change. */}
+            {onSetCategory ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowCategoryPicker(v => !v)}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold border transition-colors ${thread.category ? CATEGORY_COLORS[thread.category] : 'bg-stone-50 text-stone-400 border-stone-200 hover:bg-stone-100'}`}
+                >
+                  {thread.category ? EMAIL_CATEGORY_LABELS[thread.category] : 'Set category'}
+                  <svg className="w-2.5 h-2.5 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                {showCategoryPicker && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowCategoryPicker(false)} />
+                    <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-stone-200 rounded-lg shadow-lg py-1 min-w-[180px] max-h-[280px] overflow-y-auto">
+                      <button
+                        onClick={() => { onSetCategory(thread, null); setShowCategoryPicker(false); }}
+                        className="w-full text-left px-3 py-1.5 text-[11px] text-stone-500 hover:bg-stone-50"
+                      >
+                        Clear category
+                      </button>
+                      <div className="border-t border-stone-100 my-1" />
+                      {(Object.entries(EMAIL_CATEGORY_LABELS) as [EmailCategory, string][]).map(([val, label]) => (
+                        <button
+                          key={val}
+                          onClick={() => { onSetCategory(thread, val); setShowCategoryPicker(false); }}
+                          className={`w-full text-left px-3 py-1.5 text-[11px] hover:bg-stone-50 flex items-center gap-2 ${thread.category === val ? 'font-bold text-stone-900' : 'text-stone-700'}`}
+                        >
+                          <span className={`w-2 h-2 rounded-full ${CATEGORY_COLORS[val].split(' ')[0].replace('bg-', 'bg-')}`} />
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : thread.category ? (
               <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${CATEGORY_COLORS[thread.category]}`}>
                 {EMAIL_CATEGORY_LABELS[thread.category]}
               </span>
-            )}
+            ) : null}
           </div>
         </div>
 

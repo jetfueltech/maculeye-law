@@ -8,6 +8,10 @@ import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { CaseDetail } from './components/CaseDetail';
 import { NewIntakePage } from './components/NewIntakePage';
+import type { IntakePrefill } from './components/inbox/ThreadDetail';
+import { useOutlookSync } from './hooks/useOutlookSync';
+import { useRingCentralSync } from './hooks/useRingCentralSync';
+import { placeRingOut } from './services/ringcentralService';
 import { Analytics } from './components/Analytics';
 import { Settings } from './components/Settings';
 import { Inbox } from './components/Inbox';
@@ -93,12 +97,25 @@ function AppContent() {
   const [caseDefaultTab, setCaseDefaultTab] = useState<string | undefined>(undefined);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [casesLoading, setCasesLoading] = useState(true);
+  const [intakePrefill, setIntakePrefill] = useState<IntakePrefill | null>(null);
+
+  const handleCreateCaseFromEmail = useCallback((prefill: IntakePrefill) => {
+    setIntakePrefill(prefill);
+    setSelectedCase(null);
+    setCurrentView('new-intake');
+  }, []);
 
   // Lifted State for Persistence
   const [emails, setEmails] = useState<Email[]>(MOCK_EMAILS);
 
   const [cases, setCases] = useState<CaseFile[]>([]);
   const [activeCall, setActiveCall] = useState<ActiveCallInfo | null>(null);
+
+  // App-level Outlook sync — runs on mount and every 5 minutes regardless of view.
+  const outlookSync = useOutlookSync(activeFirm?.id, setEmails);
+
+  // App-level RingCentral sync — keeps call logs and SMS fresh regardless of view.
+  const rcSync = useRingCentralSync(activeFirm?.id, profile?.id);
 
   const activeFirmIdRef = React.useRef<string | null>(null);
   const loadedFirmIdRef = React.useRef<string | null>(null);
@@ -330,8 +347,19 @@ function AppContent() {
     }));
   };
 
-  const handleStartCall = (contactName: string, contactPhone: string, caseId: string, caseName: string) => {
+  const handleStartCall = async (contactName: string, contactPhone: string, caseId: string, caseName: string) => {
     setActiveCall({ contactName, contactPhone, caseId, caseName });
+    // When RingCentral is connected, also place a real RingOut. RC dials the
+    // user's configured callback phone first, then bridges to the contact.
+    if (rcSync.connection && activeFirm?.id && profile?.id && contactPhone) {
+      const result = await placeRingOut(activeFirm.id, profile.id, contactPhone);
+      if (result.error) {
+        alert(`RingCentral could not place the call:\n\n${result.error}`);
+      }
+    } else if (!rcSync.connection) {
+      // Optional: surface that call is simulated until RC is connected.
+      console.info('Call is being simulated — connect RingCentral in Settings for real calls.');
+    }
   };
 
   const handleCallEnd = (log: Omit<CommunicationLog, 'id'>) => {
@@ -426,17 +454,29 @@ function AppContent() {
                 setEmails={setEmails}
                 onLinkCase={handleLinkEmail}
                 onProcessAttachment={handleProcessAttachment}
+                onCreateCaseFromEmail={handleCreateCaseFromEmail}
                 firmId={activeFirm?.id}
+                outlookConnected={outlookSync.outlookConnected}
+                isSyncingOutlook={outlookSync.isSyncing}
+                syncMessage={outlookSync.syncMessage}
+                connectedEmail={outlookSync.connectedEmail}
+                runSync={outlookSync.runSync}
               />
           )}
 
           {!casesLoading && currentView === 'new-intake' && !selectedCase && (
             <NewIntakePage
-              onBack={() => setCurrentView('dashboard')}
-              onSubmit={async (c) => {
-                await handleNewCase(c);
+              onBack={() => {
+                setIntakePrefill(null);
                 setCurrentView('dashboard');
               }}
+              onSubmit={async (c) => {
+                await handleNewCase(c);
+                setIntakePrefill(null);
+                setCurrentView('dashboard');
+              }}
+              initialClientNames={intakePrefill?.clientNames}
+              initialPendingDocs={intakePrefill?.pendingDocs}
             />
           )}
 

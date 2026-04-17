@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "rc:deploy": "npx supabase link --project-ref fdrfzspkzbaoqbyvsgsw && npx supabase db push && npx supabase functions deploy ringcentral-auth ringcentral-callback ringcentral-ringout ringcentral-sms ringcentral-sync"
   },
   "dependencies": {
     "@google/genai": "^1.38.0",

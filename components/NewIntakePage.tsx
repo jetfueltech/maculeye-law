@@ -12,16 +12,20 @@ import { useAuth } from '../contexts/AuthContext';
 interface NewIntakePageProps {
   onBack: () => void;
   onSubmit: (newCase: CaseFile) => void;
+  initialClientNames?: string[];
+  initialPendingDocs?: PendingDocument[];
 }
 
 type IntakeMode = 'extraction' | 'manual';
 
-export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }) => {
+export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit, initialClientNames, initialPendingDocs }) => {
   const { profile } = useAuth();
   const authorName = profile?.full_name || profile?.email || 'Unknown User';
   const [mode, setMode] = useState<IntakeMode>('extraction');
   const [step, setStep] = useState<1 | 2>(1);
-  const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
+  const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>(() =>
+    initialPendingDocs && initialPendingDocs.length > 0 ? initialPendingDocs : []
+  );
   const [identifiedDocs, setIdentifiedDocs] = useState<IdentifiedDocument[]>([]);
   const [isExtracting, setIsExtracting] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,7 +36,9 @@ export const NewIntakePage: React.FC<NewIntakePageProps> = ({ onBack, onSubmit }
   const [scanningIndex, setScanningIndex] = useState(-1);
   const [extractionPhase, setExtractionPhase] = useState(false);
   const [liveExtractedData, setLiveExtractedData] = useState<ExtractedIntakeData>({});
-  const [clientNames, setClientNames] = useState<string[]>(['']);
+  const [clientNames, setClientNames] = useState<string[]>(() =>
+    initialClientNames && initialClientNames.length > 0 ? initialClientNames : ['']
+  );
 
   const trimmedClientNames = clientNames.map(n => n.trim()).filter(Boolean);
   const hasClientName = trimmedClientNames.length > 0;
